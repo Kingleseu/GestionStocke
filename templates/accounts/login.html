@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Connexion - MKARIBU{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center min-vh-100 py-5" style="background-color: var(--bg-body);">
+    <div class="col-md-5 col-lg-4">
+        <div class="text-center mb-4">
+            <img src="{% static 'img/mkaribu_logo.png' %}" alt="MKARIBU" class="img-fluid mb-3"
+                style="height: 150px; width: auto;">
+            <p class="text-muted fw-medium">DISCOVER THE TALENT OF OUR HANDS</p>
+        </div>
+
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                        style="width: 64px; height: 64px;">
+                        <i class="bi bi-person-fill display-6"></i>
+                    </div>
+                    <h4 class="fw-bold">Bon retour !</h4>
+                    <p class="text-muted small">Connectez-vous pour gérer votre boutique</p>
+                </div>
+
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                    <div class="alert alert-danger py-2 small rounded-3 mb-3">
+                        <i class="bi bi-exclamation-circle me-1"></i> Identifiants incorrects
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label text-muted small fw-bold text-uppercase">Nom
+                            d'utilisateur</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i
+                                    class="bi bi-person text-muted"></i></span>
+                            <input type="text" class="form-control bg-light border-start-0 ps-0" id="username"
+                                name="username" required autofocus placeholder="Votre identifiant">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label text-muted small fw-bold text-uppercase">Mot de
+                            passe</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i
+                                    class="bi bi-lock text-muted"></i></span>
+                            <input type="password" class="form-control bg-light border-start-0 ps-0" id="password"
+                                name="password" required placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-sm mb-3">
+                        Se connecter <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 border-top pt-4">
+                    <p class="small text-muted mb-0">Vous n'avez pas de compte ?</p>
+                    <a href="{% url 'accounts:signup' %}" class="fw-bold text-decoration-none text-primary">Créer un
+                        compte boutique</a>
+                </div>
+            </div>
+            <div class="card-footer bg-light p-3 text-center border-top-0">
+                <small class="text-muted d-inline-flex align-items-center gap-2" style="font-size: 0.75rem;">
+                    <img src="{% static 'img/mkaribu_logo.png' %}" alt="MKARIBU" style="height: 18px; width: auto;">
+                    &copy; {% now "Y" %} POS v1.2
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

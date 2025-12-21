@@ -1,0 +1,100 @@
+{% extends 'store/admin/base_admin.html' %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h4 class="h5 mb-0">{% if form.instance.pk %}Modifier la Collection{% else %}Ajouter une Collection{% endif %}</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Titre</label>
+                        {{ form.title }}
+                        {% if form.title.help_text %}
+                        <div class="form-text">{{ form.title.help_text }}</div>
+                        {% endif %}
+                        {% if form.title.errors %}
+                        <div class="text-danger">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.subtitle.id_for_label }}" class="form-label">Sous-titre</label>
+                        {{ form.subtitle }}
+                        {% if form.subtitle.help_text %}
+                        <div class="form-text">{{ form.subtitle.help_text }}</div>
+                        {% endif %}
+                        {% if form.subtitle.errors %}
+                        <div class="text-danger">{{ form.subtitle.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">Catégorie liée</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <div class="text-danger">{{ form.category.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">Image</label>
+                        {{ form.image }}
+                        {% if form.image.help_text %}
+                        <div class="form-text">{{ form.image.help_text }}</div>
+                        {% endif %}
+                        {% if form.image.errors %}
+                        <div class="text-danger">{{ form.image.errors }}</div>
+                        {% endif %}
+
+                        {% if form.instance.image %}
+                        <div class="mt-2">
+                            <p>Image actuelle :</p>
+                            <img src="{{ form.instance.image.url }}" alt="Aperçu"
+                                style="max-height: 150px; border-radius: 8px;">
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">Ordre d'affichage</label>
+                                {{ form.order }}
+                                {% if form.order.errors %}
+                                <div class="text-danger">{{ form.order.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3 pt-4">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'store:admin_collections' %}" class="btn btn-outline-secondary me-2">Annuler</a>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

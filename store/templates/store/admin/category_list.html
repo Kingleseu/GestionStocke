@@ -1,0 +1,75 @@
+{% extends 'store/admin/dashboard.html' %}
+{% load static %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>Gestion des Catégories</h1>
+    <a href="{% url 'store:admin_category_add' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nouvelle Catégorie
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if categories %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Aperçu</th>
+                        <th>Nom</th>
+                        <th>Description</th>
+                        <th>Ordre</th>
+                        <th>Affichée</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <tr>
+                        <td>
+                            {% if category.image %}
+                            <img src="{{ category.image.url }}" alt="{{ category.name }}"
+                                style="width: 60px; height: 60px; object-fit: cover; border-radius: 50%;">
+                            {% else %}
+                            <div
+                                style="width: 60px; height: 60px; background: #7d1f1f; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                <i class="bi bi-image"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ category.name }}</strong></td>
+                        <td>{{ category.description|truncatewords:10|default:"-" }}</td>
+                        <td>{{ category.order }}</td>
+                        <td>
+                            {% if category.is_active %}
+                            <span class="badge bg-success">Oui</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Non</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'store:admin_category_update' category.pk %}"
+                                class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i> Modifier
+                            </a>
+                            <a href="{% url 'store:admin_category_delete' category.pk %}"
+                                class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> Supprimer
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-folder2-open" style="font-size: 3rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">Aucune catégorie pour le moment.</p>
+            <a href="{% url 'store:admin_category_add' %}" class="btn btn-primary">Créer la première catégorie</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

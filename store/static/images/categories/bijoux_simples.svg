@@ -1,0 +1,29 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond bordeaux -->
+  <circle cx="200" cy="200" r="200" fill="#7d1f1f"/>
+  
+  <!-- Gradient overlay -->
+  <defs>
+    <radialGradient id="grad1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#8d2f2f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5d0f0f;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  <circle cx="200" cy="200" r="200" fill="url(#grad1)"/>
+  
+  <!-- Bracelet simple -->
+  <g transform="translate(200, 200)">
+    <!-- Chaîne du bracelet -->
+    <ellipse cx="0" cy="0" rx="80" ry="60" fill="none" stroke="#d4af37" stroke-width="8" opacity="0.9"/>
+    <ellipse cx="0" cy="0" rx="75" ry="55" fill="none" stroke="#f4cf57" stroke-width="3" opacity="0.7"/>
+    
+    <!-- Maillons décoratifs -->
+    <circle cx="-60" cy="0" r="6" fill="#d4af37"/>
+    <circle cx="60" cy="0" r="6" fill="#d4af37"/>
+    <circle cx="0" cy="-45" r="6" fill="#d4af37"/>
+    <circle cx="0" cy="45" r="6" fill="#d4af37"/>
+    
+    <!-- Fermoir -->
+    <rect x="-4" y="-70" width="8" height="15" fill="#d4af37" rx="2"/>
+  </g>
+</svg>

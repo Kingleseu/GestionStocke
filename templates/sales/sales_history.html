@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historique des Ventes - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock-history"></i> Historique des Ventes</h2>
+    </div>
+
+    <!-- Filtres -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Date de début</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ filters.start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date de fin</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ filters.end_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Caissier</label>
+                    <select name="cashier" class="form-select">
+                        <option value="">Tous les caissiers</option>
+                        {% for cashier in cashiers %}
+                        <option value="{{ cashier.id }}" {% if
+                            filters.cashier|stringformat:"s"==cashier.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cashier.get_full_name|default:cashier.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Paiement</label>
+                    <select name="payment_method" class="form-select">
+                        <option value="">Tous</option>
+                        {% for method_code, method_name in payment_methods %}
+                        <option value="{{ method_code }}" {% if filters.payment_method==method_code %}selected{% endif
+                            %}>
+                            {{ method_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-uppercase opacity-75">Total des ventes</h6>
+                    <h2>{{ total_sales }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-uppercase opacity-75">Montant total</h6>
+                    <h2>{{ total_amount|floatformat:2 }} $</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des ventes -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#ID</th>
+                            <th>Date</th>
+                            <th>Caissier</th>
+                            <th>Paiement</th>
+                            <th>Articles</th>
+                            <th>Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td><strong>#{{ sale.id }}</strong></td>
+                            <td>{{ sale.sale_date|date:"d/m/Y H:i" }}</td>
+                            <td>{{ sale.cashier.get_full_name|default:sale.cashier.username }}</td>
+                            <td>
+                                {% if sale.payment_method == 'CASH' %}
+                                <span class="badge bg-success">Espèces</span>
+                                {% elif sale.payment_method == 'CARD' %}
+                                <span class="badge bg-primary">Carte</span>
+                                {% elif sale.payment_method == 'MOBILE' %}
+                                <span class="badge bg-info">Mobile</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ sale.items.count }} article(s)</td>
+                            <td class="fw-bold text-success">{{ sale.total|floatformat:2 }} $</td>
+                            <td>
+                                <a href="{% url 'sales:receipt' sale.id %}" class="btn btn-sm btn-outline-primary"
+                                    target="_blank">
+                                    <i class="bi bi-receipt"></i> Ticket
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                Aucune vente trouvée pour ces critères.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon profil - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="mb-4">
+                        <i class="bi bi-person-circle"></i> Mon profil
+                    </h3>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Nom d'utilisateur</div>
+                        <div class="col-md-8"><strong>{{ user.username }}</strong></div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Nom complet</div>
+                        <div class="col-md-8">{{ user.get_full_name|default:"Non renseigné" }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Email</div>
+                        <div class="col-md-8">{{ user.email|default:"Non renseigné" }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Rôle(s)</div>
+                        <div class="col-md-8">
+                            {% if user.is_superuser %}
+                            <span class="badge bg-warning text-dark">Superuser</span>
+                            {% endif %}
+                            {% for group in groups %}
+                            {% if group.name == 'Manager' %}
+                            <span class="badge bg-danger">{{ group.name }}</span>
+                            {% elif group.name == 'Cashier' %}
+                            <span class="badge bg-primary">{{ group.name }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ group.name }}</span>
+                            {% endif %}
+                            {% empty %}
+                            {% if not user.is_superuser %}
+                            <span class="text-muted">Aucun rôle assigné</span>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Date d'inscription</div>
+                        <div class="col-md-8">{{ user.date_joined|date:"d/m/Y à H:i" }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Dernière connexion</div>
+                        <div class="col-md-8">
+                            {% if user.last_login %}
+                            {{ user.last_login|date:"d/m/Y à H:i" }}
+                            {% else %}
+                            Jamais
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex gap-2">
+                        <a href="/admin/auth/user/{{ user.id }}/password/" class="btn btn-outline-primary"
+                            target="_blank">
+                            <i class="bi bi-key"></i> Changer mon mot de passe
+                        </a>
+                        <a href="{% url 'sales:pos' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

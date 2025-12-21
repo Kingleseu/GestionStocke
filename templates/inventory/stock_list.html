@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion du Stock - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="bi bi-boxes"></i> Inventaire & Stock</h2>
+                <p class="text-muted">Aperçu global de l'état des stocks</p>
+            </div>
+            <div>
+                <a href="{% url 'inventory:brain' %}" class="btn btn-outline-primary shadow-sm">
+                    <i class="bi bi-cpu-fill me-2"></i> Le Cerveau <span
+                        class="badge bg-primary rounded-pill ms-1">IA</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertes Stock -->
+    {% if low_stock_count > 0 %}
+    <div class="alert alert-warning shadow-sm border-0 mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-3 me-3"></i>
+            <div>
+                <h5 class="alert-heading fw-bold mb-1">Attention : Stock Faible !</h5>
+                <p class="mb-0">Il y a <strong>{{ low_stock_count }}</strong> produit(s) en dessous du seuil minimum.
+                    Pensez à réapprovisionner.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Table du Stock -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Code-barres</th>
+                            <th>Produit</th>
+                            <th>Catégorie</th>
+                            <th>Stock Actuel</th>
+                            <th>Stock Min.</th>
+                            <th>Valeur Stock</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td><code>{{ product.barcode }}</code></td>
+                            <td class="fw-bold">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                                    class="rounded shadow-sm me-2"
+                                    style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted me-2"
+                                    style="width: 40px; height: 40px;">
+                                    <i class="bi bi-image"></i>
+                                </div>
+                                {% endif %}
+                            </td>
+                                <td>
+                                    {% if product.category %}
+                                    <span class="badge bg-secondary">{{ product.category.name }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            <td class="fw-bold">{{ product.name }}</td>
+                            <td>{{ product.minimum_stock }}</td>
+                            <td class="fw-bold">{{ product.current_stock }}</td>
+                            <td>
+                                {% if product.current_stock == 0 %}
+                                <span class="badge bg-danger">Rupture</span>
+                                {% elif product.is_low_stock %}
+                                <span class="badge bg-warning text-dark">Faible</span>
+                                {% else %}
+                                <span class="badge bg-success">OK</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ product.purchase_price }} $
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">Aucun produit en stock</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

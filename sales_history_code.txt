@@ -1,0 +1,53 @@
+# Ajoutez ce code à la fin du fichier sales/views.py
+
+@login_required
+def sales_history_view(request):
+    """Historique des ventes avec filtres"""
+    from django.contrib.auth.models import User
+    from datetime import datetime, timedelta
+    
+    # Récupérer les paramètres de filtre
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    cashier_id = request.GET.get('cashier')
+    payment_method = request.GET.get('payment_method')
+    
+    # Requête de base
+    sales = Sale.objects.all().select_related('cashier').prefetch_related('items__product')
+    
+    # Appliquer les filtres
+    if start_date:
+        sales = sales.filter(sale_date__gte=start_date)
+    if end_date:
+        # Ajouter 1 jour pour inclure toute la journée
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+        sales = sales.filter(sale_date__lt=end_date_obj)
+    if cashier_id:
+        sales = sales.filter(cashier_id=cashier_id)
+    if payment_method:
+        sales = sales.filter(payment_method=payment_method)
+    
+    # Trier par date décroissante
+    sales = sales.order_by('-sale_date')
+    
+    # Calculer les statistiques
+    total_sales = sales.count()
+    total_amount = sum(sale.total for sale in sales)
+    
+    # Liste des caissiers pour le filtre
+    cashiers = User.objects.filter(groups__name='Cashier') | User.objects.filter(groups__name='Manager')
+    
+    context = {
+        'sales': sales,
+        'cashiers': cashiers,
+        'payment_methods': Sale.PAYMENT_METHODS,
+        'total_sales': total_sales,
+        'total_amount': total_amount,
+        'filters': {
+            'start_date': start_date,
+            'end_date': end_date,
+            'cashier': cashier_id,
+            'payment_method': payment_method,
+        }
+    }
+    return render(request, 'sales/sales_history.html', context)

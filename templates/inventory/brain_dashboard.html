@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Tableau de Bord - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Tableau de Bord</h2>
+        <p class="text-muted mb-0">Vue d'ensemble et prédictions IA</p>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-white text-secondary border px-3 py-2 rounded-pill">
+            <i class="bi bi-calendar3 me-2"></i> {% now "l d F Y" %}
+        </span>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-4 mb-5">
+    <!-- Critical Stock -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body stat-card">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-bold small mb-2">Risque Critique</h6>
+                    <h2 class="fw-bold mb-0 {% if critical_count > 0 %}text-danger{% else %}text-success{% endif %}">
+                        {{ critical_count }}
+                    </h2>
+                    <small class="text-muted">Produits à revoir</small>
+                </div>
+                <div class="stat-icon bg-rose-100 text-danger rounded-circle">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Products (We don't have this count in context, using dummy or derived if possible, or omit) -->
+    <!-- Let's use Total Predictions Count for now -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body stat-card">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-bold small mb-2">Produits Analysés</h6>
+                    <h2 class="fw-bold mb-0 text-dark">{{ predictions|length }}</h2>
+                    <small class="text-muted">Suivis par l'IA</small>
+                </div>
+                <div class="stat-icon bg-blue-100 text-primary rounded-circle">
+                    <i class="bi bi-search"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Healthy -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body stat-card">
+                <div>
+                    <h6 class="text-muted text-uppercase fw-bold small mb-2">Santé du Stock</h6>
+                    <h2 class="fw-bold mb-0 text-success">Bonne</h2>
+                    <small class="text-muted">État général</small>
+                </div>
+                <div class="stat-icon bg-emerald-100 text-success rounded-circle">
+                    <i class="bi bi-heart-pulse"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Table Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0"><i class="bi bi-stars text-warning me-2"></i>Prédictions Intelligentes</h5>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill">
+            <i class="bi bi-download me-1"></i> Exporter
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4 py-3">Produit</th>
+                    <th class="text-center">Stock</th>
+                    <th class="text-center">Vélocité</th>
+                    <th class="text-center">Reste (Jours)</th>
+                    <th class="text-center">Rupture Prévue</th>
+                    <th class="text-center">Statut</th>
+                    <th class="pe-4">Recommendation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in predictions %}
+                <tr class="cursor-pointer" onclick="openChart('{{ item.product.id }}')" style="cursor: pointer;">
+                    <td class="ps-4 fw-bold text-dark">
+                        <div class="d-flex align-items-center">
+                            {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" class="rounded me-3" width="40" height="40"
+                                style="object-fit: cover;">
+                            {% else %}
+                            <div class="rounded bg-light me-3 d-flex align-items-center justify-content-center"
+                                style="width: 40px; height: 40px;">
+                                <i class="bi bi-box text-muted"></i>
+                            </div>
+                            {% endif %}
+                            {{ item.product.name }}
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span
+                            class="badge {% if item.current_stock < 10 %}bg-danger{% else %}bg-secondary{% endif %} bg-opacity-10 text-dark rounded-pill">
+                            {{ item.current_stock }}
+                        </span>
+                    </td>
+                    <td class="text-center text-muted small">{{ item.velocity }} /j</td>
+                    <td class="text-center fw-bold">
+                        {% if item.days_left < 3 %} <span class="text-danger">{{ item.days_left }} j</span>
+                            {% elif item.days_left < 7 %} <span class="text-warning">{{ item.days_left }} j</span>
+                                {% else %}
+                                <span class="text-success">{{ item.days_left }} j</span>
+                                {% endif %}
+                    </td>
+                    <td class="text-center text-muted small">
+                        {% if item.stockout_date %}
+                        {{ item.stockout_date|date:"d M Y" }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if item.risk_level == 'OUT_OF_STOCK' %}
+                        <span class="badge bg-dark">RUPTURE</span>
+                        {% elif item.risk_level == 'CRITICAL' %}
+                        <span class="badge bg-danger">CRITIQUE</span>
+                        {% elif item.risk_level == 'HIGH' %}
+                        <span class="badge bg-warning text-dark">ÉLEVÉ</span>
+                        {% elif item.risk_level == 'MEDIUM' %}
+                        <span class="badge bg-info text-dark">MOYEN</span>
+                        {% else %}
+                        <span class="badge bg-success">SAIN</span>
+                        {% endif %}
+                    </td>
+                    <td class="pe-4">
+                        <small class="text-muted"><i class="bi bi-magic me-1"></i> {{ item.recommendation }}</small>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        Pas assez de données pour l'analyse. Commencez à vendre !
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Chart -->
+<div class="modal fade" id="chartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Analyse des Ventes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <h3 id="productName" class="fw-bold text-primary">Chargement...</h3>
+                    <p class="text-muted">Évolution sur 30 jours</p>
+                </div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let myChart = null;
+
+    function openChart(productId) {
+        const modal = new bootstrap.Modal(document.getElementById('chartModal'));
+        modal.show();
+        document.getElementById('productName').innerText = "Chargement...";
+
+        if (myChart) myChart.destroy();
+
+        fetch(`/inventory/api/history/${productId}/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('productName').innerText = data.product_name;
+                renderChart(data.dates, data.quantities);
+            })
+            .catch(error => {
+                console.error(error);
+                document.getElementById('productName').innerText = "Erreur";
+            });
+    }
+
+    function renderChart(dates, quantities) {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(225, 29, 72, 0.5)'); // Red-600 with opacity
+        gradient.addColorStop(1, 'rgba(225, 29, 72, 0.0)');
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: 'Ventes',
+                    data: quantities,
+                    borderColor: '#E11D48',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#E11D48',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

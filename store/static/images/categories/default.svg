@@ -1,0 +1,24 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond bordeaux -->
+  <defs>
+    <radialGradient id="gradDefault" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#8d2f2f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5d0f0f;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  <circle cx="200" cy="200" r="200" fill="url(#gradDefault)"/>
+  
+  <!-- Icône générique de bijou -->
+  <g transform="translate(200, 200)">
+    <!-- Diamant stylisé -->
+    <polygon points="0,-60 -40,-20 -30,40 30,40 40,-20" fill="#d4af37" opacity="0.9"/>
+    <polygon points="0,-60 -40,-20 0,0" fill="#f4cf57" opacity="0.7"/>
+    <polygon points="0,-60 40,-20 0,0" fill="#c49f2f" opacity="0.8"/>
+    <polygon points="-40,-20 -30,40 0,0" fill="#b48f1f" opacity="0.6"/>
+    <polygon points="40,-20 30,40 0,0" fill="#a47f0f" opacity="0.6"/>
+    
+    <!-- Reflets -->
+    <polygon points="0,-60 -10,-40 10,-40" fill="white" opacity="0.4"/>
+    <line x1="0" y1="-60" x2="0" y2="0" stroke="white" stroke-width="2" opacity="0.3"/>
+  </g>
+</svg>

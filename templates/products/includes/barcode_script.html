@@ -1,0 +1,39 @@
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const generateBtn = document.getElementById('generateBarcode');
+        const barcodeInput = document.getElementById('id_barcode');
+
+        if (generateBtn && barcodeInput) {
+            generateBtn.addEventListener('click', function () {
+                // Désactiver le bouton pendant la requête
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                // Appel AJAX
+                fetch("{% url 'products:generate_barcode_ajax' %}")
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.barcode) {
+                            barcodeInput.value = data.barcode;
+                            // Effet visuel
+                            barcodeInput.classList.add('bg-light');
+                            setTimeout(() => {
+                                barcodeInput.classList.remove('bg-light');
+                            }, 500);
+                        } else {
+                            alert('Erreur lors de la génération: ' + (data.error || 'Erreur inconnue'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Une erreur est survenue lors de la communication avec le serveur.');
+                    })
+                    .finally(() => {
+                        // Réactiver le bouton
+                        generateBtn.disabled = false;
+                        generateBtn.innerHTML = '<i class="bi bi-magic"></i>';
+                    });
+            });
+        }
+    });
+</script>

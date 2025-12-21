@@ -1,0 +1,28 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond bordeaux -->
+  <defs>
+    <radialGradient id="grad2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#8d2f2f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5d0f0f;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  <circle cx="200" cy="200" r="200" fill="url(#grad2)"/>
+  
+  <!-- Collection de bijoux -->
+  <g transform="translate(200, 200)">
+    <!-- Collier -->
+    <path d="M -50,-60 Q 0,-80 50,-60" fill="none" stroke="#d4af37" stroke-width="4"/>
+    <circle cx="0" cy="-70" r="8" fill="#d4af37"/>
+    
+    <!-- Bague -->
+    <circle cx="-50" cy="20" r="20" fill="none" stroke="#d4af37" stroke-width="5"/>
+    <circle cx="-50" cy="20" r="8" fill="#ff6b6b"/>
+    
+    <!-- Boucle d'oreille -->
+    <circle cx="50" cy="20" r="15" fill="none" stroke="#d4af37" stroke-width="4"/>
+    <line x1="50" y1="5" x2="50" y2="-5" stroke="#d4af37" stroke-width="3"/>
+    
+    <!-- Bracelet -->
+    <ellipse cx="0" cy="60" rx="35" ry="25" fill="none" stroke="#d4af37" stroke-width="5"/>
+  </g>
+</svg>

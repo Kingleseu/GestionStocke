@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cartes Hero - Administration{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a href="{% url 'store:admin_dashboard' %}" class="text-decoration-none text-muted small">
+                <i class="bi bi-arrow-left me-1"></i> Dashboard
+            </a>
+            <h2 class="fw-bold mt-2">Gérer les Cartes Hero</h2>
+        </div>
+        <a href="{% url 'store:admin_hero_card_add' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i> Nouvelle Carte
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Image</th>
+                        <th>Titre</th>
+                        <th>Ordre</th>
+                        <th>Lien</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for card in cards %}
+                    <tr>
+                        <td class="ps-4">
+                            {% if card.image %}
+                            <img src="{{ card.image.url }}" alt="" class="rounded"
+                                style="width: 60px; height: 40px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted"
+                                style="width: 60px; height: 40px;">
+                                <i class="bi bi-image"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">{{ card.title }}</td>
+                        <td><span class="badge bg-secondary rounded-pill">{{ card.order }}</span></td>
+                        <td><small class="text-muted">{{ card.link_url }}</small></td>
+                        <td class="text-end pe-4">
+                            <a href="{% url 'store:admin_hero_card_update' card.pk %}"
+                                class="btn btn-sm btn-outline-primary me-1">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'store:admin_hero_card_delete' card.pk %}"
+                                class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-grid display-4 opacity-25 mb-3 d-block"></i>
+                            Aucune carte créée.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

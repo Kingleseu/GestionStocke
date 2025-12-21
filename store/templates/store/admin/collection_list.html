@@ -1,0 +1,79 @@
+{% extends 'store/admin/base_admin.html' %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h4 mb-0">Vos Collections</h2>
+    <div>
+        <a href="{% url 'store:admin_collections_sync' %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-repeat me-2"></i>Synchroniser
+        </a>
+        <a href="{% url 'store:admin_collection_add' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Nouvelle Collection
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Image</th>
+                        <th>Titre</th>
+                        <th>Catégorie Liée</th>
+                        <th>Ordre</th>
+                        <th>Statut</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for collection in collections %}
+                    <tr>
+                        <td class="ps-4">
+                            {% if collection.image %}
+                            <img src="{{ collection.image.url }}" alt="{{ collection.title }}"
+                                class="rounded object-fit-cover" width="60" height="60">
+                            {% else %}
+                            <span class="badge bg-light text-secondary">Aucune</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-medium">{{ collection.title }}</td>
+                        <td>
+                            <span class="badge bg-info bg-opacity-10 text-info">
+                                {{ collection.category.name }}
+                            </span>
+                        </td>
+                        <td>{{ collection.order }}</td>
+                        <td>
+                            {% if collection.is_active %}
+                            <span class="badge bg-success-subtle text-success">Actif</span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <a href="{% url 'store:admin_collection_update' collection.pk %}"
+                                class="btn btn-sm btn-outline-primary me-2">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'store:admin_collection_delete' collection.pk %}"
+                                class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-collection display-6 mb-3 d-block"></i>
+                            Aucune collection trouvée. Commencez par en ajouter une.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

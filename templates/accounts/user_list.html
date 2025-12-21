@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Utilisateurs - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-people"></i> Gestion des Utilisateurs</h2>
+            <p class="text-muted">Gérez les comptes, invitez des caissiers et contrôlez les accès.</p>
+        </div>
+        <button class="btn btn-primary" onclick="generateInvite()">
+            <i class="bi bi-person-plus"></i> Inviter un Caissier
+        </button>
+    </div>
+
+    <!-- Stats Cartes -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Total Utilisateurs</h6>
+                            <h2 class="mb-0">{{ total_users }}</h2>
+                        </div>
+                        <i class="bi bi-people fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">En Attente (Inactifs)</h6>
+                            <h2 class="mb-0">{{ pending_count }}</h2>
+                        </div>
+                        <i class="bi bi-hourglass-split fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-1 opacity-75">Actifs</h6>
+                            <h2 class="mb-0">{{ active_count }}</h2>
+                        </div>
+                        <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste -->
+    <div class="card shadow mb-4 border-0">
+        <div class="card-header py-3 bg-white">
+            <h6 class="m-0 font-weight-bold text-primary">Liste du personnel</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Utilisateur</th>
+                            <th>Email</th>
+                            <th>Rôle</th>
+                            <th>Statut</th>
+                            <th>Date d'inscription</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-secondary text-white me-3 d-flex align-items-center justify-content-center shadow-sm"
+                                        style="width: 40px; height: 40px; border-radius: 50%;">
+                                        {{ u.username|make_list|first|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ u.get_full_name|default:u.username }}</div>
+                                        <div class="small text-muted">@{{ u.username }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-muted">{{ u.email|default:"-" }}</td>
+                            <td>
+                                {% if u.is_superuser %}
+                                <span class="badge bg-danger">Admin</span>
+                                {% elif u.groups.all.0.name == 'Manager' %}
+                                <span class="badge bg-primary">Manager</span>
+                                {% else %}
+                                <span class="badge bg-info text-dark">Caissier</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u.is_active %}
+                                <span class="badge bg-success rounded-pill"><i
+                                        class="bi bi-check-circle me-1"></i>Actif</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark rounded-pill"><i class="bi bi-lock me-1"></i>En
+                                    attente / Bloqué</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted">{{ u.date_joined|date:"d/m/Y" }}</td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group btn-group-sm">
+                                    {% if u.id != user.id %}
+                                    {% if not u.is_active %}
+                                    <a href="{% url 'accounts:user_toggle_active' u.id %}"
+                                        class="btn btn-outline-success" title="Activer / Approuver le compte">
+                                        <i class="bi bi-check-lg"></i> Activer
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'accounts:user_toggle_active' u.id %}"
+                                        class="btn btn-outline-danger" title="Bloquer l'accès">
+                                        <i class="bi bi-slash-circle"></i> Bloquer
+                                    </a>
+                                    {% endif %}
+                                    {% endif %}
+
+                                    <a href="{% url 'accounts:cashier_dashboard' u.id %}"
+                                        class="btn btn-outline-primary" title="Voir le tableau de bord">
+                                        <i class="bi bi-speedometer2"></i> Dashboard
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">Aucun utilisateur trouvé.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Invitation -->
+<div class="modal fade" id="inviteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Inviter un Caissier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center pt-4 pb-5">
+                <i class="bi bi-envelope-paper text-primary mb-3" style="font-size: 3rem;"></i>
+                <p class="mb-4 text-muted">Générez un lien unique à envoyer au futur caissier.<br>Il pourra créer son
+                    compte via ce lien.</p>
+
+                <div class="input-group mb-3 shadow-sm">
+                    <span class="input-group-text bg-white"><i class="bi bi-link-45deg"></i></span>
+                    <input type="text" class="form-control" id="inviteLink" readonly onclick="this.select()">
+                    <button class="btn btn-primary" type="button" onclick="copyLink()">
+                        <i class="bi bi-clipboard"></i> Copier
+                    </button>
+                </div>
+
+                <div
+                    class="alert alert-warning d-flex align-items-center justify-content-start small text-start mt-4 mb-0 border-0 bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <div>
+                        <strong>Attention :</strong> Le compte sera créé <span
+                            class="text-decoration-underline">Inactif</span>.<br>
+                        Vous devrez revenir sur cette page pour l'<strong>Activer</strong> avant qu'il puisse se
+                        connecter.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generateInvite() {
+        // Afficher un état de chargement si voulu, mais c'est rapide
+        fetch("{% url 'accounts:create_invitation' %}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('inviteLink').value = data.invite_url;
+                    new bootstrap.Modal(document.getElementById('inviteModal')).show();
+                } else {
+                    showToast('error', 'Erreur', 'Impossible de générer le lien');
+                }
+            })
+            .catch(err => showToast('error', 'Erreur', 'Erreur réseau'));
+    }
+
+    function copyLink() {
+        var copyText = document.getElementById("inviteLink");
+        copyText.select();
+        document.execCommand("copy");
+        showToast('success', 'Succès', 'Lien copié dans le presse-papier !');
+    }
+</script>
+{% endblock %}

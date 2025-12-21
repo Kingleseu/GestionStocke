@@ -1,0 +1,74 @@
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Nouveau Produit</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <form id="addProductForm" method="post" enctype="multipart/form-data"
+                    action="{% url 'products:product_create' %}">
+                    {% csrf_token %}
+                    <div id="formErrors" class="alert alert-danger d-none"></div>
+
+                    <!-- Layout similar to previous but cleaner -->
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Nom du produit</label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Code-barres</label>
+                            <div class="input-group">
+                                <input type="text" name="barcode" class="form-control" id="barcodeInput">
+                                <button type="button" class="btn btn-outline-secondary" onclick="generateBarcode()"><i
+                                        class="bi bi-magic"></i></button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Prix Achat</label>
+                            <input type="number" name="purchase_price" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Prix Vente</label>
+                            <input type="number" name="selling_price" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Stock Actuel</label>
+                            <input type="number" name="current_stock" class="form-control" value="0" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Stock Min.</label>
+                            <input type="number" name="minimum_stock" class="form-control" value="5" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Catégorie</label>
+                            <select name="category" class="form-select">
+                                <option value="">Choisir...</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Image</label>
+                            <input type="file" name="image" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="isActive" checked>
+                                <label class="form-check-label" for="isActive">Produit Actif</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 bg-white">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary px-4 fw-bold"
+                    onclick="submitProductForm()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>

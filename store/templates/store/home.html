@@ -1,0 +1,1073 @@
+{% extends 'store/base.html' %}
+{% load static store_tags %}
+
+{% block content %}
+<style>
+    /* Categories Showcase Section */
+    .categories-showcase {
+        background: #ffffff;
+        /* Clean white background */
+        padding: 60px 20px;
+        margin: 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .categories-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 25px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+        .categories-container {
+            grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
+            gap: 20px;
+        }
+
+        .categories-showcase {
+            padding: 30px 15px;
+        }
+    }
+
+    .category-circle {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        overflow: hidden;
+        cursor: pointer;
+        background: #f8f8f8;
+        /* Softer background */
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .category-circle:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border-color: #E21717;
+    }
+
+    .category-circle img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .category-circle:hover img {
+        transform: scale(1.1);
+    }
+
+    .category-overlay {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.05) 100%);
+        pointer-events: none;
+    }
+
+    .category-circle h3 {
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #333;
+        font-size: 13px;
+        font-weight: 500;
+        text-align: center;
+        z-index: 2;
+        margin: 0;
+        width: 120%;
+        text-shadow: none;
+        font-family: 'Inter', sans-serif;
+        transition: color 0.3s ease;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .category-circle h3::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 2px;
+        background: #E21717;
+        transition: width 0.3s ease;
+    }
+
+    .category-circle:hover h3 {
+        color: #E21717;
+    }
+
+    .category-circle:hover h3::after {
+        width: 100%;
+    }
+
+    @media (max-width: 480px) {
+        .category-circle h3 {
+            font-size: 11px;
+            bottom: -28px;
+        }
+    }
+
+    /* ========================================
+       CATEGORY NAVIGATOR - Premium Interface
+       ======================================== */
+
+    .category-navigator-section {
+        background: linear-gradient(135deg, #f8f8f8 0%, #ececec 100%);
+        padding: 80px 20px 60px;
+    }
+
+    .navigator-header {
+        text-align: center;
+        margin-bottom: 70px;
+        animation: fadeInDown 0.6s ease-out;
+    }
+
+    .navigator-header h2 {
+        font-size: 42px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+        font-family: 'Poppins', sans-serif;
+        letter-spacing: -1px;
+    }
+
+    .navigator-header p {
+        font-size: 18px;
+        color: #666;
+        font-weight: 400;
+    }
+
+    .navigator-grid {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        /* Allow wrapping */
+        gap: 25px;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .universe-card {
+        background: transparent;
+        padding: 15px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        position: relative;
+        width: 160px;
+        flex-shrink: 0;
+    }
+
+    .universe-card:nth-child(n) {
+        animation-delay: 0s;
+    }
+
+    .universe-card::before {
+        display: none;
+    }
+
+    .universe-card:hover {
+        transform: translateY(-8px);
+    }
+
+    .universe-image {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: linear-gradient(135deg, #7d1f1f 0%, #5d0f0f 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.4s ease;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .universe-card:hover .universe-image {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 15px 35px rgba(226, 23, 23, 0.3);
+    }
+
+    .universe-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .universe-card h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 5px;
+        font-family: 'Poppins', sans-serif;
+        transition: color 0.3s ease;
+        position: relative;
+        display: inline-block;
+    }
+
+    .universe-card h3::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: #E21717;
+        transition: width 0.3s ease;
+    }
+
+    .universe-card:hover h3 {
+        color: #E21717;
+    }
+
+    .universe-card:hover h3::after {
+        width: 100%;
+    }
+
+    .universe-card p {
+        font-size: 13px;
+        color: #666;
+        font-weight: 400;
+        margin: 0;
+        opacity: 0.8;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .navigator-grid {
+            gap: 15px;
+        }
+
+        .universe-card {
+            width: 130px;
+        }
+
+        .universe-image {
+            width: 90px;
+            height: 90px;
+        }
+
+        .universe-card h3 {
+            font-size: 16px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .category-navigator {
+            padding: 60px 15px 40px;
+        }
+
+        .navigator-header {
+            margin-bottom: 50px;
+        }
+
+        .navigator-header h1 {
+            font-size: 28px;
+        }
+
+        .navigator-grid {
+            flex-direction: column;
+            /* Stack on very small screens? Or just wrap? */
+            align-items: center;
+            gap: 20px;
+        }
+
+        .universe-card {
+            padding: 35px 20px;
+        }
+
+        .universe-image {
+            width: 100px;
+            height: 100px;
+        }
+    }
+</style>
+
+<!-- Django Content View (Backward Compatibility) -->
+<div id="djangoView" class="view {% if is_django_view %}active{% endif %}">
+    <!-- Content injected by Django if any -->
+</div>
+
+<!-- Home View - SPA Navigation -->
+<div id="homeView" class="view {% if not is_django_view and not request.GET.view %}active{% endif %}">
+
+
+    <!-- CONTENT SECTIONS -->
+    <section class="hero-main">
+        {% if hero.image %}
+        <img id="heroMainImage" src="{{ hero.image.url }}" alt="Hero">
+        {% else %}
+        <img id="heroMainImage" src="{% static 'images/hero.png' %}" alt="Hero">
+        {% endif %}
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-text reveal">
+                <h1 id="heroMainTitle" class="reveal delay-1">{{ hero.title|default:"L'élégance redéfinie" }}</h1>
+                <p id="heroMainSubtitle" class="reveal delay-2">{{ hero.subtitle|default:"Découvrez notre nouvelle
+                    collection..." }}</p>
+                <div class="reveal delay-3">
+                    <button class="btn-primary" onclick="showView('catalogue')">
+                        {{ hero.button_text|default:"Découvrir la collection" }}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ZAG STYLE COLLECTIONS SECTION -->
+    <section class="zag-collections-section reveal">
+        <div class="zag-header">
+            <h2>Nos Collections</h2>
+            <p>Laissez-vous inspirer par nos sélections</p>
+        </div>
+
+        <div class="zag-carousel-wrapper">
+            <button class="zag-nav-btn prev" aria-label="Précédent">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="zag-grid">
+                {% for collection in collections %}
+                <div class="zag-card reveal" onclick="selectUniverse('{{ collection.category.name|escapejs }}')">
+                    <div class="zag-image-wrapper">
+                        {% if collection.image %}
+                        <img src="{{ collection.image.url }}" alt="{{ collection.title }}">
+                        {% else %}
+                        {# mapping for default images based on category name #}
+                        {% with cat_name=collection.category.name|upper %}
+                        {% if "BAGUE" in cat_name %}
+                        <img src="https://images.unsplash.com/photo-1605100804763-247f67b3f41e?auto=format&fit=crop&q=80&w=800"
+                            alt="Bagues">
+                        {% elif "COLLIER" in cat_name %}
+                        <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800"
+                            alt="Colliers">
+                        {% elif "BRACELET" in cat_name %}
+                        <img src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=800"
+                            alt="Bracelets">
+                        {% elif "BOUCLE" in cat_name or "OREILLE" in cat_name %}
+                        <img src="https://www.histoiredor.com/fr_FR/c/boucles-d-oreilles/0"
+                            alt="Boucles d'oreilles">
+                        {% elif "MONTRE" in cat_name %}
+                        <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800"
+                            alt="Montres">
+                        {% elif "CADEAU" in cat_name %}
+                        <img src="https://images.unsplash.com/photo-1549439602-43ebcb23281f?auto=format&fit=crop&q=80&w=800"
+                            alt="Cadeaux">
+                        {% elif "HOMME" in cat_name %}
+                        <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=800"
+                            alt="Hommes">
+                        {% elif "COMPLET" in cat_name or "ENSEMBLE" in cat_name %}
+                        <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800"
+                            alt="Complets">
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=800"
+                            alt="Bijou">
+                        {% endif %}
+                        {% endwith %}
+                        {% endif %}
+                        <div class="zag-overlay">
+                            <span>Découvrir</span>
+                        </div>
+                    </div>
+                    <div class="zag-content">
+                        <h3>{{ collection.title }}</h3>
+                        {% if collection.subtitle %}
+                        <p>{{ collection.subtitle }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <!-- Fallback static content so it's not empty initially -->
+                <div class="zag-card reveal">
+                    <div class="zag-image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1620656763407-735f12e83b48?auto=format&fit=crop&q=80&w=500"
+                            alt="Boucles d'oreilles">
+                        <div class="zag-overlay"><span>Découvrir</span></div>
+                    </div>
+                    <div class="zag-content">
+                        <h3>Boucles d'oreilles</h3>
+                        <p>L'art du détail</p>
+                    </div>
+                </div>
+                <div class="zag-card reveal">
+                    <div class="zag-image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1605100804763-247f67b3f41e?auto=format&fit=crop&q=80&w=500"
+                            alt="Bagues">
+                        <div class="zag-overlay"><span>Découvrir</span></div>
+                    </div>
+                    <div class="zag-content">
+                        <h3>Bagues</h3>
+                        <p>Habillez vos mains</p>
+                    </div>
+                </div>
+                <div class="zag-card reveal">
+                    <div class="zag-image-wrapper">
+                        <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=500"
+                            alt="Colliers">
+                        <div class="zag-overlay"><span>Découvrir</span></div>
+                    </div>
+                    <div class="zag-content">
+                        <h3>Colliers</h3>
+                        <p>Près du cœur</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="zag-nav-btn next" aria-label="Suivant">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+
+    <!-- CATEGORY NAVIGATOR - Integrated as Section -->
+    <section class="category-navigator-section reveal">
+        <div class="navigator-header">
+            <h1>Découvrez nos univers</h1>
+            <p>Sélectionnez une catégorie pour explorer nos créations</p>
+        </div>
+
+        <div class="navigator-grid">
+            {% for universe in universes %}
+            <div class="universe-card reveal" onclick="selectUniverse('{{ universe.identifier }}')">
+                <div class="universe-image">
+                    {% if universe.image %}
+                    <img src="{{ universe.image.url }}" alt="{{ universe.title }}">
+                    {% else %}
+                    <img src="{% static 'images/categories/bijoux_simples.svg' %}" alt="{{ universe.title }}">
+                    {% endif %}
+                </div>
+                <h3>{{ universe.title }}</h3>
+                <p>{{ universe.subtitle }}</p>
+            </div>
+            {% empty %}
+            <!-- Fallback if no universes in DB -->
+            <div class="universe-card" onclick="selectUniverse('BIJOUX SIMPLES')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/bijoux_simples.svg' %}" alt="Bijoux Simples">
+                </div>
+                <h3>Bijoux Simples</h3>
+                <p>Élégance intemporelle</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('COLLECTIONS')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/collections.svg' %}" alt="Collections">
+                </div>
+                <h3>Collections</h3>
+                <p>Nos créations exclusives</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('PORTRAITS')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/portraits.svg' %}" alt="Portraits">
+                </div>
+                <h3>Portraits</h3>
+                <p>Médaillons personnalisés</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('BIJOUX PERSONNALISÉS')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/bijoux_personnalises.svg' %}" alt="Bijoux Personnalisés">
+                </div>
+                <h3>Bijoux Personnalisés</h3>
+                <p>Gravure et photo</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('MONTRES')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/montres.svg' %}" alt="Montres">
+                </div>
+                <h3>Montres</h3>
+                <p>Horlogerie de luxe</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('EMBALLAGES')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/emballages.svg' %}" alt="Emballages">
+                </div>
+                <h3>Emballages</h3>
+                <p>Coffrets cadeaux</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('SCULPTURES')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/sculptures.svg' %}" alt="Sculptures">
+                </div>
+                <h3>Sculptures</h3>
+                <p>Pièces artistiques</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="hero-grid reveal">
+        {% for card in hero_cards %}
+        <div class="hero-card" data-hero-card="{{ forloop.counter0 }}">
+            {% if card.image %}
+            <img id="heroCard{{ forloop.counter0 }}Image" src="{{ card.image.url }}" alt="{{ card.title }}">
+            {% endif %}
+            <div class="hero-card-overlay"></div>
+            <div class="hero-card-content">
+                <h2 id="heroCard{{ forloop.counter0 }}Title">{{ card.title }}</h2>
+                <p id="heroCard{{ forloop.counter0 }}Subtitle">{{ card.subtitle }}</p>
+                <span class="hero-card-link">{{ card.link_text }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Fallback if no cards in DB -->
+        <div class="hero-card">
+            <div class="hero-card-content">
+                <h2>Aucune carte configurée</h2>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+
+
+
+
+
+    <section class="featured-section reveal">
+        <div class="section-header">
+            <h2>Nouveautés</h2>
+            <p>Les dernières créations de notre atelier</p>
+        </div>
+        <div id="featuredProducts" class="products-grid">
+            <!-- Javascript rendered content -->
+        </div>
+    </section>
+
+    <section class="trust-section reveal">
+        <div class="trust-features">
+            <div class="trust-item">
+                <div class="trust-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
+                </div>
+                <h3>Livraison Gratuite</h3>
+                <p>Dès 100€ d'achat</p>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                </div>
+                <h3>Retour 30 jours</h3>
+                <p>Satisfait ou remboursé</p>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <h3>Paiement Sécurisé</h3>
+                <p>SSL & 3D Secure</p>
+            </div>
+            <div class="trust-item">
+                <div class="trust-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="7"></circle>
+                        <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                    </svg>
+                </div>
+                <h3>Garantie 2 ans</h3>
+                <p>Sur tous nos produits</p>
+            </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="reviews-section reveal">
+            <div class="section-header">
+                <h2>Nos Clients Témoignent</h2>
+                <div class="rating-stars">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717" stroke-width="2">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                        </polygon>
+                    </svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717" stroke-width="2">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                        </polygon>
+                    </svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717" stroke-width="2">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                        </polygon>
+                    </svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717" stroke-width="2">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                        </polygon>
+                    </svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717" stroke-width="2">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                        </polygon>
+                    </svg>
+                </div>
+                <p>4.9/5 basé sur 2,847 avis</p>
+            </div>
+            <div class="reviews-grid">
+                <div class="review-card">
+                    <div class="review-stars">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                    </div>
+                    <p>Qualité exceptionnelle ! La gravure personnalisée est magnifique. Je recommande vivement.
+                    </p>
+                    <div class="review-author">
+                        <p class="author-name">Sophie Martin</p>
+                        <p class="author-product">Bracelet Diamant Prestige</p>
+                    </div>
+                </div>
+                <div class="review-card">
+                    <div class="review-stars">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#E21717" stroke="#E21717">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                    </div>
+                    <p>Ma troisième commande chez Mkaribu. Toujours la même qualité et le même
+                        professionnalisme.
+                    </p>
+                    <div class="review-author">
+                        <p class="author-name">Emma Rousseau</p>
+                        <p class="author-product">Collier Chaîne Or Rose</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- About Brand -->
+        <div class="about-section reveal">
+            <div class="about-content">
+                <h2 id="aboutTitle">{{ about.title|default:"L'excellence depuis 1985" }}</h2>
+                <p id="aboutParagraph1">{{ about.paragraph1|default:"Mkaribu est une maison..." }}</p>
+                {% if about.paragraph2 %}
+                <p id="aboutParagraph2">{{ about.paragraph2 }}</p>
+                {% endif %}
+                <div class="about-stats">
+                    {% for stat in about_stats %}
+                    <div class="stat" data-about-stat="{{ forloop.counter0 }}">
+                        <p class="stat-number" id="aboutStat{{ forloop.counter0 }}Value">{{ stat.value }}</p>
+                        <p class="stat-label" id="aboutStat{{ forloop.counter0 }}Label">{{ stat.label }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="about-image">
+                {% if about.image %}
+                <img id="aboutImage" src="{{ about.image.url }}" alt="Notre Atelier">
+                {% else %}
+                <img id="aboutImage"
+                    src="https://images.unsplash.com/photo-1761207300250-a71b2ff68b99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxqZXdlbHJ5JTIwc3RvcmUlMjBkaXNwbGF5fGVufDF8fHx8MTc2NTg5MTA3Nnww&ixlib=rb-4.1.0&q=80&w=1080"
+                    alt="Notre Atelier">
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Payment Methods -->
+
+        <div class="payment-methods reveal">
+            <p>Moyens de paiement acceptés</p>
+            <div class="payment-icons">
+                <div class="payment-icon">VISA</div>
+                <div class="payment-icon">MASTERCARD</div>
+                <div class="payment-icon">AMEX</div>
+                <div class="payment-icon">PayPal</div>
+            </div>
+        </div>
+</div>
+
+<!-- Catalogue View -->
+<div id="catalogueView" class="view">
+    <div class="catalogue-container">
+        <div class="catalogue-header">
+            <h1>Notre Collection</h1>
+            <p id="productCount">Chargement...</p>
+        </div>
+
+        <div class="catalogue-controls-mobile">
+            <button class="filter-toggle-btn" onclick="toggleFilters()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                Filtres
+            </button>
+            <select id="sortMobile" onchange="handleSort(this.value)">
+                <option value="newest">Nouveautés</option>
+                <option value="popularity">Popularité</option>
+                <option value="price-asc">Prix croissant</option>
+                <option value="price-desc">Prix décroissant</option>
+            </select>
+        </div>
+
+        <div class="catalogue-layout">
+            <!-- Sidebar Filters -->
+            <aside id="filtersSidebar" class="filters-sidebar">
+                <div class="filters-header">
+                    <h3>Filtres</h3>
+                    <button onclick="toggleFilters()" class="md:hidden">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="filter-group">
+                    <h4>Catégorie</h4>
+                    <div class="filter-options">
+                        <label><input type="radio" name="category" value="Tous" checked onchange="applyFilters()">
+                            Tout
+                            voir</label>
+                        {% get_active_categories as filter_categories_fallback %}
+                        {% if filter_categories or categories or filter_categories_fallback %}
+                        {% for category in filter_categories|default:categories|default:filter_categories_fallback %}
+                        <label><input type="radio" name="category" value="{{ category.name }}"
+                                onchange="applyFilters()"> {{ category.name }}</label>
+                        {% endfor %}
+                        {% else %}
+                        <span class="text-muted small">Aucune catégorie</span>
+                        {% endif %}
+
+
+
+
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4>Matière</h4>
+                    <div class="filter-options">
+                        <label><input type="radio" name="material" value="Tous" checked onchange="applyFilters()">
+                            Tout
+                            voir</label>
+                        <label><input type="radio" name="material" value="Or" onchange="applyFilters()">
+                            Or</label>
+                        <label><input type="radio" name="material" value="Argent" onchange="applyFilters()">
+                            Argent</label>
+                        <label><input type="radio" name="material" value="Diamant" onchange="applyFilters()">
+                            Diamant</label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4>Prix</h4>
+                    <div class="filter-options">
+                        <label><input type="radio" name="price" value="Tous" checked onchange="applyFilters()">
+                            Tous
+                            les
+                            prix</label>
+                        <label><input type="radio" name="price" value="0-500" onchange="applyFilters()">
+                            < €500</label>
+                                <label><input type="radio" name="price" value="500-1000" onchange="applyFilters()">
+                                    €500
+                                    - €1000</label>
+                                <label><input type="radio" name="price" value="1000-2000" onchange="applyFilters()">
+                                    €1000 - €2000</label>
+                                <label><input type="radio" name="price" value="2000+" onchange="applyFilters()">
+                                    >
+                                    €2000</label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4>Personnalisable</h4>
+                    <div class="filter-options">
+                        <label><input type="radio" name="customizable" value="Tous" checked onchange="applyFilters()">
+                            Tout</label>
+                        <label><input type="radio" name="customizable" value="Oui" onchange="applyFilters()">
+                            Oui</label>
+                        <label><input type="radio" name="customizable" value="Non" onchange="applyFilters()">
+                            Non</label>
+                    </div>
+                </div>
+
+                <button onclick="resetFilters()"
+                    style="color: #6b7280; text-decoration: underline; font-size: 14px;">Réinitialiser les
+                    filtres</button>
+            </aside>
+
+            <!-- Products Grid -->
+            <div class="catalogue-content">
+                <div class="catalogue-sort-desktop">
+                    <h3 id="resultCount">Tous les produits</h3>
+                    <select id="sortDesktop" onchange="handleSort(this.value)"
+                        style="border: none; background: transparent; font-weight: 500; cursor: pointer;">
+                        <option value="newest">Trier par: Nouveautés</option>
+                        <option value="popularity">Popularité</option>
+                        <option value="price-asc">Prix croissant</option>
+                        <option value="price-desc">Prix décroissant</option>
+                    </select>
+                </div>
+
+                <div id="catalogueProducts" class="products-grid">
+                    <!-- JS Rendered -->
+                </div>
+
+                <div id="noResults" class="no-results" style="display: none;">
+                    <p>Aucun produit ne correspond à vos critères.</p>
+                    <button onclick="resetFilters()">Effacer les filtres</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Checkout View -->
+<div id="checkoutView" class="view">
+    <div class="catalogue-container">
+        <div class="checkout-header">
+            <h1>Finaliser la commande</h1>
+            <p>Complétez vos informations pour l'expédition</p>
+        </div>
+
+        <div class="checkout-layout">
+            <div class="checkout-main">
+                <div class="checkout-section">
+                    <div class="checkout-section-header">
+                        <div class="checkout-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="1" y="3" width="15" height="13"></rect>
+                                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                            </svg>
+                        </div>
+                        <h2>Livraison</h2>
+                    </div>
+                    <form method="post" action="{% url 'store:checkout' %}" id="checkoutForm">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="firstName">Prénom</label>
+                                <input type="text" id="firstName" name="first_name" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="lastName">Nom</label>
+                                <input type="text" id="lastName" name="last_name" required>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="phone">Téléphone</label>
+                            <input type="tel" id="phone" name="phone" required>
+                        </div>
+                        <div class="form-field">
+                            <label for="address">Adresse</label>
+                            <input type="text" id="address" name="address" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="city">Ville</label>
+                                <input type="text" id="city" name="city" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="postalCode">Code postal</label>
+                                <input type="text" id="postalCode" name="postal_code" required>
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label for="notes">Notes (optionnel)</label>
+                            <textarea id="notes" name="notes" rows="3"
+                                placeholder="Instructions de livraison..."></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="checkout-section">
+                    <div class="checkout-section-header">
+                        <div class="checkout-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                            </svg>
+                        </div>
+                        <h2>Paiement</h2>
+                    </div>
+                    <div class="payment-options">
+                        <label class="payment-option selected">
+                            <input type="radio" name="paymentMethod" value="cash" checked form="checkoutForm">
+                            <span class="radio-custom"></span>
+                            <div class="payment-details">
+                                <span class="payment-title">Paiement à la livraison</span>
+                                <span class="payment-desc">Payer en espèces à la réception de votre
+                                    commande</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkout-sidebar">
+                <div class="order-summary-card">
+                    <h3>Résumé de la commande</h3>
+                    <div class="order-items" id="checkoutOrderItems">
+                        <!-- JS will populate -->
+                    </div>
+                    <div class="order-totals">
+                        <div class="total-row"><span>Sous-total</span><span id="checkoutSubtotal">€0.00</span>
+                        </div>
+                        <div class="total-row"><span>Livraison</span><span id="checkoutDelivery">€0.00</span>
+                        </div>
+                        <div class="total-row"><span>TVA (16%)</span><span id="checkoutTax">€0.00</span></div>
+                        <div class="total-row final-total"><span>Total</span><span id="checkoutTotal">€0.00</span>
+                        </div>
+                    </div>
+                    <button type="submit" form="checkoutForm" class="btn-primary w-100">Confirmer la
+                        commande</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ========================================
+    // NAVIGATION LOGIC - Unified View
+    // ========================================
+
+    // Universe to Category Mapping
+    const universeMapping = {
+        'IDÉES CADEAUX': ['IDÉES CADEAUX'],
+        'COLLIERS': ['COLLIERS'],
+        'BRACELETS': ['BRACELETS'],
+        'BAGUES': ['BAGUES'],
+        'BOUCLES D’OREILLES': ['BOUCLES D’OREILLES'],
+        'MONTRES': ['MONTRES'],
+        'COMPLETS': ['COMPLETS']
+    };
+
+
+    // Filter products based on selected universe
+    function filterProductsByUniverse(universeName) {
+        const categoryNames = universeMapping[universeName] || [];
+
+        // Reset other filters
+        if (typeof filters !== 'undefined') {
+            filters.search = '';
+            filters.minPrice = '';
+            filters.maxPrice = '';
+
+            // Find matching category
+            const categoryRadios = document.querySelectorAll('input[name="category"]');
+            let matched = false;
+
+            categoryRadios.forEach(radio => {
+                const radioValue = radio.value;
+                if (categoryNames.some(cat => radioValue.toLowerCase().includes(cat.toLowerCase()))) {
+                    radio.checked = true;
+                    filters.category = radioValue;
+                    matched = true;
+                }
+            });
+
+            if (!matched) {
+                filters.category = 'Tous';
+            }
+
+            // Apply filters
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            }
+        }
+
+        // Update result count and header with personalized "Universe" feel
+        const resultCount = document.getElementById('resultCount');
+        if (resultCount) {
+            resultCount.textContent = universeName;
+        }
+
+        const catalogTitle = document.querySelector('.catalogue-header h1');
+        if (catalogTitle) {
+            catalogTitle.innerHTML = `<span style="font-weight: 300; font-size: 0.8em; display: block; letter-spacing: 2px;">L'UNIVERS</span> ${universeName}`;
+        }
+
+        // Scroll to top of catalog
+        const catalogueView = document.getElementById('catalogueView');
+        if (catalogueView) {
+            catalogueView.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        // Standard initialization if needed
+    });
+</script>
+
+{% endblock %}

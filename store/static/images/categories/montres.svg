@@ -1,0 +1,41 @@
+<svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond bordeaux -->
+  <defs>
+    <radialGradient id="grad5" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#8d2f2f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5d0f0f;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  <circle cx="200" cy="200" r="200" fill="url(#grad5)"/>
+  
+  <!-- Montre de luxe -->
+  <g transform="translate(200, 200)">
+    <!-- Bracelet -->
+    <rect x="-45" y="-80" width="90" height="25" fill="#d4af37" rx="3"/>
+    <rect x="-45" y="55" width="90" height="25" fill="#d4af37" rx="3"/>
+    
+    <!-- Boîtier -->
+    <rect x="-50" y="-55" width="100" height="110" fill="#2a2a2a" rx="8"/>
+    <rect x="-45" y="-50" width="90" height="100" fill="#1a1a1a" rx="6"/>
+    
+    <!-- Cadran -->
+    <circle cx="0" cy="0" r="40" fill="#f5f5f5"/>
+    <circle cx="0" cy="0" r="38" fill="white"/>
+    
+    <!-- Marqueurs d'heures -->
+    <circle cx="0" cy="-30" r="2" fill="#2a2a2a"/>
+    <circle cx="30" cy="0" r="2" fill="#2a2a2a"/>
+    <circle cx="0" cy="30" r="2" fill="#2a2a2a"/>
+    <circle cx="-30" cy="0" r="2" fill="#2a2a2a"/>
+    
+    <!-- Aiguilles -->
+    <line x1="0" y1="0" x2="0" y2="-20" stroke="#d4af37" stroke-width="3" stroke-linecap="round"/>
+    <line x1="0" y1="0" x2="15" y2="10" stroke="#2a2a2a" stroke-width="2" stroke-linecap="round"/>
+    
+    <!-- Centre -->
+    <circle cx="0" cy="0" r="4" fill="#d4af37"/>
+    
+    <!-- Couronne -->
+    <rect x="50" y="-8" width="8" height="16" fill="#d4af37" rx="2"/>
+  </g>
+</svg>

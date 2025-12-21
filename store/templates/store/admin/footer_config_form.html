@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuration Pied de Page - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <a href="{% url 'store:admin_dashboard' %}" class="text-decoration-none text-muted small">
+            <i class="bi bi-arrow-left me-1"></i> Retour au Tableau de bord
+        </a>
+        <h2 class="fw-bold mt-2">Configuration Globale du Pied de Page</h2>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <h5 class="text-primary mb-3">Newsletter</h5>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Titre Newsletter</label>
+                        {{ form.newsletter_title }}
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Texte Newsletter</label>
+                        {{ form.newsletter_text }}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="text-primary mb-3">Informations Entreprise (Colonne 1)</h5>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Description courte</label>
+                    {{ form.company_description }}
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="text-primary mb-3">Contact (Colonne 4)</h5>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Adresse</label>
+                        {{ form.address }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Téléphone</label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        {{ form.email }}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="text-primary mb-3">Bas de page</h5>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Copyright</label>
+                    {{ form.copyright_text }}
+                </div>
+
+                <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                    <a href="{% url 'store:admin_dashboard' %}" class="btn btn-light">Annuler</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mkaribu - Boutique</title>
+    {% load static store_tags %}
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap"
+        rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #BE123C;
+            /* Rose-700 from des-store */
+            --primary-hover: #BE123C;
+            --dark: #0F172A;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --bg: #F8FAFC;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #FFFFFF;
+            overflow: hidden;
+            /* Prevent body scroll, use inner scrolling */
+        }
+
+        /* Two-Panel Layout (Product Grid + Cart Drawer) */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        /* CENTER CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .content-header {
+            padding: 1.5rem;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        .brand-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .brand-subtitle {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-bar {
+            position: relative;
+            max-width: 600px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s;
+            background: var(--bg);
+        }
+
+        .search-bar input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
+            background: white;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .category-tabs {
+            display: flex;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            background: white;
+            scrollbar-width: none;
+            /* Firefox */
+        }
+
+        .category-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-tab {
+            padding: 0.625rem 1.25rem;
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            /* Pill shape */
+            background: var(--bg);
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .category-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .category-tab.active {
+            background: var(--dark);
+            border-color: var(--dark);
+            color: white;
+        }
+
+        .products-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: grid;
+            /* Adaptive Grid: Desktop 4, Tablet 2-3, Mobile 1 */
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.25rem;
+            align-content: start;
+            /* Smooth scrolling */
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar for products */
+        .products-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .products-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .products-list::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 20px;
+            border: 3px solid transparent;
+            background-clip: content-box;
+        }
+
+        /* PRODUCT CARD */
+        .product-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary);
+            grid-row: span 2;
+            /* Option to make selected larger, or keep standard */
+        }
+
+        .product-main {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            /* Slightly smaller for density */
+            object-fit: cover;
+            background: var(--bg);
+        }
+
+        .product-info {
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.3;
+            margin-bottom: auto;
+            /* Push footer down */
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 0.75rem;
+        }
+
+        .product-price {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .product-stock {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .product-stock.in-stock {
+            color: #10B981;
+        }
+
+        .product-stock.low-stock {
+            color: #F59E0B;
+        }
+
+        .product-stock.out-of-stock {
+            color: #EF4444;
+        }
+
+        .btn-add-quick {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--dark);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-add-quick:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* CUSTOMIZATION PANEL (Inside Card) */
+        .customization-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #FAFAFA;
+            border-top: 1px solid var(--border);
+        }
+
+        .product-card.selected .customization-panel {
+            max-height: 500px;
+            /* Enough for content */
+            overflow: visible;
+        }
+
+        .customization-content {
+            padding: 1rem;
+        }
+
+        .custom-field {
+            margin-bottom: 1rem;
+        }
+
+        .custom-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            color: var(--text-muted);
+            display: block;
+        }
+
+        .custom-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        .option-pills {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .option-pill {
+            padding: 0.35rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .option-pill.selected {
+            background: var(--dark);
+            color: white;
+            border-color: var(--dark);
+        }
+
+        .btn-add-cart {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+        }
+
+        .btn-add-cart:hover {
+            background: var(--primary-hover);
+        }
+
+        /* RIGHT PANEL - CART DRAWER */
+        .bills-panel {
+            width: 400px;
+            background: white;
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .bills-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: #F8FAFC;
+        }
+
+        .bills-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .cart-item {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-item-header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .cart-item-details {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0.25rem 0;
+        }
+
+        .bills-summary {
+            padding: 1.5rem;
+            background: #F8FAFC;
+            border-top: 1px solid var(--border);
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVENESS */
+        @media (max-width: 1024px) {
+            .bills-panel {
+                position: fixed;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                transform: translateX(100%);
+                /* Hidden by default */
+                box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+            }
+
+            .bills-panel.show {
+                transform: translateX(0);
+            }
+
+            /* Toggle Button for Mobile Cart */
+            .cart-toggle-btn {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: var(--primary);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+                box-shadow: 0 4px 12px rgba(225, 29, 72, 0.4);
+                z-index: 1000;
+                cursor: pointer;
+            }
+
+            .cart-count-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                background: var(--dark);
+                color: white;
+                font-size: 0.75rem;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: 700;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .products-list {
+                grid-template-columns: 1fr;
+                /* Single column on mobile */
+                padding: 1rem;
+            }
+
+            .content-header {
+                padding: 1rem;
+            }
+
+            .bills-panel {
+                width: 100%;
+                /* Full screen drawer on mobile */
+            }
+
+            .brand-title {
+                font-size: 1.25rem;
+            }
+
+            /* Ensure expanded card fits */
+            .product-card.selected .customization-panel {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- NO SIDEBAR, FULL CONTENT -->
+        <div class="main-content">
+            <div class="content-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="brand-title">
+                            <img src="{% static 'img/mkaribu_logo.png' %}" alt="Mkaribu" style="height: 40px;">
+                        </div>
+                        <div class="brand-subtitle d-none d-sm-block">Système de Commande Simplifié</div>
+                    </div>
+                </div>
+                <div class="search-bar mt-3">
+                    <i class="bi bi-search"></i>
+                    <input type="text" placeholder="Rechercher des produits..." id="searchInput">
+                </div>
+            </div>
+
+            <div class="category-tabs">
+                <div class="category-tab active" data-category="all" onclick="selectUniverse('Tous')">Tous</div>
+                {% get_active_categories as fallback_categories %}
+                {% with category_list=categories|default:fallback_categories %}
+                {% for category in category_list %}
+                <div class="category-tab" data-category="{{ category.id }}"
+                    onclick="selectUniverse('{{ category.name|escapejs }}')">{{ category.name }}</div>
+                {% empty %}
+                <div class="category-tab" data-category="none">Aucune categorie</div>
+                {% endfor %}
+                {% endwith %}
+            </div>
+
+
+
+            <div class="products-list" id="productsList">
+                {% for product in products %}
+                <div class="product-card" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                    data-price="{{ product.selling_price }}">
+                    <div class="product-main">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" class="product-image" alt="{{ product.name }}">
+                        {% else %}
+                        <div class="product-image"
+                            style="display: flex; align-items: center; justify-content: center; color: #CBD5E1; font-size: 2.5rem;">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        {% endif %}
+
+                        <div class="product-info">
+                            <div class="product-name">{{ product.name }}</div>
+
+                            <div class="product-footer">
+                                <div class="product-price-section">
+                                    <div class="product-price">${{ product.selling_price }}</div>
+                                    {% if product.current_stock > 0 %}
+                                    <div class="product-stock in-stock">Stock: {{ product.current_stock }}</div>
+                                    {% else %}
+                                    <div class="product-stock out-of-stock">Rupture</div>
+                                    {% endif %}
+                                </div>
+                                <button class="btn-add-quick" title="Ajout Rapide" onclick="event.stopPropagation();">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="customization-panel">
+                        <div class="customization-content">
+                            <div class="custom-field">
+                                <label class="custom-label">Texte à graver (optionnel)</label>
+                                <input type="text" class="custom-input" placeholder="Ex: Prénom, Date..."
+                                    data-custom="text">
+                            </div>
+
+                            <div class="custom-field">
+                                <label class="custom-label">Matériau</label>
+                                <div class="option-pills">
+                                    <div class="option-pill selected" data-custom="material" data-value="Or">Or</div>
+                                    <div class="option-pill" data-custom="material" data-value="Argent">Argent</div>
+                                    <div class="option-pill" data-custom="material" data-value="Or Rose">Cuivre</div>
+                                </div>
+                            </div>
+
+                            <div class="custom-field">
+                                <label class="custom-label">Quantité</label>
+                                <div class="quantity-control">
+                                    <div class="qty-btn" data-action="minus"><i class="bi bi-dash"></i></div>
+                                    <div class="qty-value">1</div>
+                                    <div class="qty-btn" data-action="plus"><i class="bi bi-plus"></i></div>
+                                </div>
+                            </div>
+
+                            <button class="btn-add-cart">
+                                Ajouter au panier
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL - BILLS (Drawer style on mobile) -->
+        <div class="bills-panel" id="billsPanel">
+            <div class="bills-header d-flex justify-content-between align-items-center">
+                <div class="bills-title">Panier</div>
+                <button class="btn-close d-lg-none"
+                    onclick="document.getElementById('billsPanel').classList.remove('show')"></button>
+            </div>
+
+            <div class="cart-items" id="cartItems">
+                <div class="empty-cart">
+                    <i class="bi bi-bag-x" style="font-size: 2rem; color: var(--text-muted);"></i>
+                    <p class="mt-2 text-muted">Votre panier est vide</p>
+                </div>
+            </div>
+
+            <div class="bills-summary">
+                <div class="summary-row">
+                    <span>Sous-total</span>
+                    <span id="subtotal">$0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Livraison</span>
+                    <span id="deliveryFee" style="color: var(--text);">Calcul...</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total</span>
+                    <span id="total">$0.00</span>
+                </div>
+
+                <button class="checkout-btn mt-3" onclick="window.location.href='{% url 'store:checkout' %}'">
+                    Commander (<span id="btnTotal">$0.00</span>)
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Cart Toggle (Injected via JS or HTML) -->
+        <div class="cart-toggle-btn d-lg-none" onclick="document.getElementById('billsPanel').classList.add('show')">
+            <i class="bi bi-basket"></i>
+            <span class="cart-count-badge" id="mobileCartCount">0</span>
+        </div>
+    </div>
+
+    <!-- Inject Settings -->
+    <script>
+        const DELIVERY_FEE = parseFloat("{{ delivery_fee|default:0 }}");
+    </script>
+
+    <script>
+        let cart = [];
+        let selectedProduct = null;
+
+        // Click outside to deselect
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.product-card') && !e.target.closest('.bills-panel') && !e.target.closest('.cart-toggle-btn')) {
+                document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+                selectedProduct = null;
+            }
+        });
+
+        // Product selection
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', function (e) {
+                if (e.target.closest('.customization-panel')) return;
+                if (e.target.closest('.btn-add-quick')) return;
+
+                document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedProduct = this;
+
+                // On mobile, scroll only if needed, don't jump too much
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 200);
+                }
+            });
+        });
+
+        // Option pills
+        document.querySelectorAll('.option-pill').forEach(pill => {
+            pill.addEventListener('click', function (e) {
+                e.stopPropagation();
+                this.closest('.option-pills').querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Quantity (Visual Only, real logic in add to cart)
+        document.querySelectorAll('.qty-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const qtyEl = this.closest('.quantity-control').querySelector('.qty-value');
+                let qty = parseInt(qtyEl.textContent);
+                if (this.dataset.action === 'plus') qty++;
+                else if (this.dataset.action === 'minus' && qty > 1) qty--;
+                qtyEl.textContent = qty;
+            });
+        });
+
+        // ADD TO CART (Detail View)
+        document.querySelectorAll('.btn-add-cart').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const card = this.closest('.product-card');
+                addToCartFromCard(card);
+            });
+        });
+
+        // ADD TO CART (Quick View)
+        document.querySelectorAll('.btn-add-quick').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const card = this.closest('.product-card');
+                addToCartQuick(card);
+            });
+        });
+
+        function addToCartFromCard(card) {
+            const id = card.dataset.id;
+            const name = card.dataset.name;
+            const price = parseFloat(card.dataset.price);
+            const text = card.querySelector('[data-custom="text"]').value;
+            const mat = card.querySelector('[data-custom="material"].selected')?.dataset.value || 'Or';
+            const qty = parseInt(card.querySelector('.qty-value').textContent);
+
+            const item = { id, name, price, customText: text, material: mat, quantity: qty };
+            cart.push(item);
+            updateCart();
+
+            // Visual feedback
+            card.classList.remove('selected');
+
+            // Sync with backend
+            syncCart(item);
+        }
+
+        function addToCartQuick(card) {
+            const id = card.dataset.id;
+            const name = card.dataset.name;
+            const price = parseFloat(card.dataset.price);
+
+            const item = { id, name, price, customText: '', material: 'Or', quantity: 1 };
+            cart.push(item);
+            updateCart();
+            syncCart(item);
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCart();
+        }
+
+        function updateCart() {
+            const container = document.getElementById('cartItems');
+            if (cart.length === 0) {
+                container.innerHTML = `<div class="empty-cart"><p class="text-muted">Vide</p></div>`;
+            } else {
+                container.innerHTML = cart.map((item, idx) => `
+                    <div class="cart-item">
+                        <div class="cart-item-header">
+                            <span style="font-weight:600;">${item.name}</span>
+                            <button class="btn-remove-item" onclick="removeFromCart(${idx})">&times;</button>
+                        </div>
+                        <div class="cart-item-details">
+                            ${item.customText ? `Gravure: ${item.customText}, ` : ''} Mat: ${item.material}
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>x${item.quantity}</span>
+                            <span style="font-weight:700;">$${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Totals
+            const subtotal = cart.reduce((req, item) => req + (item.price * item.quantity), 0);
+
+            // Delivery Logic: Only applies if subtotal > 0? Usually yes.
+            const delivery = subtotal > 0 ? DELIVERY_FEE : 0;
+            const total = subtotal + delivery;
+
+            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('deliveryFee').textContent = delivery > 0 ? `$${delivery.toFixed(2)}` : 'Gratuite';
+            if (delivery > 0) document.getElementById('deliveryFee').style.color = 'var(--text)';
+            else document.getElementById('deliveryFee').style.color = '#10B981';
+
+            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+            document.getElementById('btnTotal').textContent = `$${total.toFixed(2)}`;
+
+            // Update Mobile Badge
+            const totalQty = cart.reduce((req, item) => req + item.quantity, 0);
+            document.getElementById('mobileCartCount').textContent = totalQty;
+
+            // Mobile Drawer Auto-open on first add could be annoying, so purely opt-in
+        }
+
+        function syncCart(item) {
+            // Send to backend to keep session in sync
+            fetch(`/store/add/${item.id}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(item)
+            });
+        }
+    </script>
+</body>
+
+</html>

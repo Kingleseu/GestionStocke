@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion des catégories - MKARIBU{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        border-left: 4px solid var(--primary-red);
+        transition: transform 0.2s;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .table-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <h2><i class="bi bi-tags"></i> Gestion des catégories</h2>
+            <p class="text-muted mb-0">Gérez vos catégories de produits</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'products:category_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Nouvelle catégorie
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Total catégories</h6>
+                            <h3 class="mb-0">{{ total_categories }}</h3>
+                        </div>
+                        <i class="bi bi-tags text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recherche -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <label class="form-label">Recherche</label>
+                    <input type="text" name="search" class="form-control" placeholder="Nom, description..."
+                        value="{{ search }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Rechercher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Table des catégories -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Description</th>
+                            <th>Nombre de produits</th>
+                            <th>Date de création</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td><strong>{{ category.name }}</strong></td>
+                            <td>{{ category.description|default:"-"|truncatewords:10 }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ category.products.count }} produit(s)</span>
+                            </td>
+                            <td>{{ category.created_at|date:"d/m/Y" }}</td>
+                            <td class="table-actions">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'products:category_update' category.pk %}"
+                                        class="btn btn-outline-primary" title="Modifier">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{% url 'products:category_delete' category.pk %}" method="post"
+                                        class="d-inline"
+                                        onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                <p class="mt-2">Aucune catégorie trouvée</p>
+                                <a href="{% url 'products:category_create' %}" class="btn btn-primary mt-3">
+                                    <i class="bi bi-plus-lg"></i> Créer la première catégorie
+                                </a>
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Navigation des pages">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">Première</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Dernière</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

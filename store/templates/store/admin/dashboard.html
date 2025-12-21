@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Administration Site Web - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Administration Site Web</h2>
+            <p class="text-muted mb-0">Gérer le contenu visible sur la boutique en ligne</p>
+        </div>
+        <div>
+            <a href="{% url 'store:admin_settings_update' %}" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-gear me-2"></i> Paramètres
+            </a>
+            <a href="{% url 'store:catalog' %}" target="_blank" class="btn btn-outline-primary">
+                <i class="bi bi-box-arrow-up-right me-2"></i> Voir le site
+            </a>
+        </div>
+    </div>
+
+    <!-- Section Hero -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-images me-2 text-primary"></i>Section Hero (Bannière)</h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <p class="mb-0 text-muted">Gérez l'image principale, le titre et le sous-titre de la page d'accueil.
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'store:admin_hero_update' %}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i> Modifier la Bannière
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Hero Cards -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-grid me-2 text-primary"></i>Cartes Hero</h5>
+                    <span class="badge bg-primary rounded-pill">{{ hero_cards_count }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Les cartes promotionnelles affichées sous la bannière principale.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'store:admin_hero_cards' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-list-ul me-2"></i> Gérer les Cartes
+                        </a>
+                        <a href="{% url 'store:admin_hero_card_add' %}" class="btn btn-sm btn-light text-primary">
+                            <i class="bi bi-plus-lg me-2"></i> Ajouter une carte
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-tags me-2 text-primary"></i>Catégories</h5>
+                    <span class="badge bg-primary rounded-pill">{{ categories.count }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gérez les catégories de produits affichées sur la page d'accueil.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'store:admin_categories' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-list-ul me-2"></i> Gérer les Catégories
+                        </a>
+                        <a href="{% url 'store:admin_category_add' %}" class="btn btn-sm btn-light text-primary">
+                            <i class="bi bi-plus-lg me-2"></i> Ajouter une catégorie
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collections (Nos Collections) -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-collection-play me-2 text-primary"></i>Nos Collections</h5>
+                    <span class="badge bg-primary rounded-pill">{{ collections_count }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gérez les collections mises en avant (style Zag Bijoux).</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'store:admin_collections' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-collection me-2"></i> Gérer les Collections
+                        </a>
+                        <a href="{% url 'store:admin_collection_add' %}" class="btn btn-sm btn-light text-primary">
+                            <i class="bi bi-plus-lg me-2"></i> Ajouter une collection
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Navigator (Universes) -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i>Navigateur de
+                        Catégories</h5>
+                    <span class="badge bg-primary rounded-pill">{{ universes_count }}</span>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Modifiez les images et titres des "Univers" de la page d'accueil.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'store:admin_universes' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil-square me-2"></i> Gérer les Univers
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>Section "À Propos"</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Texte et image de la section de présentation.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'store:admin_about_update' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil me-2"></i> Modifier le contenu
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-bold">Statistiques</h6>
+                        <span class="badge bg-secondary rounded-pill">{{ stats_count }}</span>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'store:admin_about_stats' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-list-ol me-2"></i> Gérer les chiffres clés
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-layout-three-columns me-2 text-primary"></i>Pied de Page (Footer)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="p-3 border rounded bg-light h-100">
+                        <h6 class="fw-bold mb-2">Configuration Globale</h6>
+                        <p class="text-muted small mb-3">Infos contact, newsletter, copyright.</p>
+                        <a href="{% url 'store:admin_footer_config' %}" class="btn btn-sm btn-primary w-100">
+                            <i class="bi bi-gear me-2"></i> Modifier
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 border rounded bg-light h-100">
+                        <h6 class="fw-bold mb-2">Réseaux Sociaux</h6>
+                        <p class="text-muted small mb-3">Liens vers Facebook, Instagram, etc.</p>
+                        <a href="{% url 'store:admin_social_links' %}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-share me-2"></i> Gérer les liens
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-3 border rounded bg-light h-100">
+                        <h6 class="fw-bold mb-2">Liens de Navigation</h6>
+                        <p class="text-muted small mb-3">Liens des colonnes Boutique, Aide, Légal.</p>
+                        <a href="{% url 'store:admin_footer_links' %}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-link-45deg me-2"></i> Gérer les menus
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

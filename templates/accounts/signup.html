@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscription Manager - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3 class="mb-0 fw-bold">Créer votre Boutique</h3>
+                    <p class="mb-0 opacity-75">Inscription Manager</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Shop Name -->
+                        <div class="mb-4">
+                            <label for="shop_name" class="form-label fw-bold">Nom de la Boutique</label>
+                            <input type="text" name="shop_name" id="shop_name" class="form-control form-control-lg"
+                                placeholder="Ma Super Boutique" required>
+                            <div class="form-text">Ce nom sera affiché sur vos tickets et documents.</div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- User Fields -->
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <div class="form-text small text-muted">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                                S'inscrire et Créer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3 bg-light">
+                    <div class="small">
+                        <a href="{% url 'accounts:login' %}">Déjà un compte ? Se connecter</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

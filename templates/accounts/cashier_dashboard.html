@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord Caissier - {{ cashier.username }} - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1"><i class="bi bi-person-badge"></i> {{ cashier.get_full_name|default:cashier.username }}
+            </h2>
+            <p class="text-muted mb-0">Caissier depuis le {{ cashier.date_joined|date:"d/m/Y" }}</p>
+        </div>
+        <div>
+            <span class="badge {% if cashier.is_active %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                {% if cashier.is_active %}Actif{% else %}Inactif{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-primary h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Aujourd'hui</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="display-6 fw-bold text-primary">{{ stats.today.total|floatformat:2 }} $</h3>
+                    <p class="mb-0 text-muted">{{ stats.today.count }} ventes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-info h-100 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Cette Semaine</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="display-6 fw-bold text-info">{{ stats.week.total|floatformat:2 }} $</h3>
+                    <p class="mb-0 text-muted">{{ stats.week.count }} ventes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-success h-100 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Ce Mois</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h3 class="display-6 fw-bold text-success">{{ stats.month.total|floatformat:2 }} $</h3>
+                    <p class="mb-0 text-muted">{{ stats.month.count }} ventes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Activity Log -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Journal d'activité</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for activity in activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    {% if activity.activity_type == 'LOGIN' %}
+                                    <span class="text-success"><i class="bi bi-box-arrow-in-right"></i> Connexion</span>
+                                    {% else %}
+                                    <span class="text-danger"><i class="bi bi-box-arrow-right"></i> Déconnexion</span>
+                                    {% endif %}
+                                </h6>
+                                <small class="text-muted">{{ activity.timestamp|date:"d/m/Y H:i:s" }}</small>
+                            </div>
+                            <p class="mb-1 small">{{ activity.details }}</p>
+                            {% if activity.ip_address %}
+                            <small class="text-muted">IP: {{ activity.ip_address }}</small>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <div class="p-4 text-center text-muted">
+                            Aucune activité enregistrée récemment.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Sales -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-receipt"></i> Ventes Récentes</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>Heure</th>
+                                <th>Montant</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in recent_sales %}
+                            <tr>
+                                <td>#{{ sale.id }}</td>
+                                <td>{{ sale.sale_date|date:"d/m/Y H:i" }}</td>
+                                <td class="fw-bold">{{ sale.total|floatformat:2 }} $</td>
+                                <td>
+                                    <a href="{% url 'sales:receipt' sale.id %}" class="btn btn-sm btn-outline-primary"
+                                        target="_blank">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">Aucune vente récente.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'sales:sales_history' %}?cashier={{ cashier.id }}" class="btn btn-sm btn-link">Voir
+                        tout
+                        l'historique</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

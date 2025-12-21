@@ -1,0 +1,205 @@
+{% extends 'store/admin/dashboard.html' %}
+{% load static %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h1>{% if object %}Modifier{% else %}Nouvelle{% endif %} Catégorie</h1>
+    <a href="{% url 'store:admin_categories' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Nom de la catégorie *</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="text-danger">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <div class="text-danger">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.order.id_for_label }}" class="form-label">Ordre d'affichage</label>
+                                {{ form.order }}
+                                <small class="form-text text-muted">Les catégories sont triées par ordre
+                                    croissant</small>
+                                {% if form.order.errors %}
+                                <div class="text-danger">{{ form.order.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check mt-4">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Afficher sur la page d'accueil
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if form.shop %}
+                    <div class="mb-3">
+                        <label for="{{ form.shop.id_for_label }}" class="form-label">Boutique</label>
+                        {{ form.shop }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Aperçu</h6>
+                            <div id="imagePreview"
+                                style="width: 150px; height: 150px; margin: 0 auto; border-radius: 50%; overflow: hidden; background: #7d1f1f; display: flex; align-items: center; justify-content: center;">
+                                {% if object.image %}
+                                <img src="{{ object.image.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                <i class="bi bi-image" style="font-size: 3rem; color: white;"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <h5 class="mb-3">Choisir une image</h5>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Galerie d'images par défaut</label>
+                <p class="text-muted small">Sélectionnez une illustration prédéfinie pour votre catégorie</p>
+
+                <div class="row g-3">
+                    {% for value, label in form.default_image_choice.field.choices %}
+                    {% if value %}
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <label class="category-image-option">
+                            <input type="radio" name="default_image_choice" value="{{ value }}"
+                                class="default-image-radio"
+                                data-image-url="{% static 'images/categories/' %}{{ value }}">
+                            <div class="category-image-card">
+                                <img src="{% static 'images/categories/' %}{{ value }}" alt="{{ label }}">
+                                <div class="category-image-label">{{ label }}</div>
+                            </div>
+                        </label>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">OU Upload personnalisé</label>
+                <p class="text-muted small">Téléchargez votre propre image (remplacera la sélection par défaut)</p>
+                {{ form.image }}
+                {% if form.image.errors %}
+                <div class="text-danger">{{ form.image.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'store:admin_categories' %}" class="btn btn-secondary">Annuler</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .category-image-option {
+        cursor: pointer;
+        display: block;
+    }
+
+    .category-image-card {
+        border: 3px solid transparent;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .category-image-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .category-image-option input[type="radio"] {
+        display: none;
+    }
+
+    .category-image-option input[type="radio"]:checked+.category-image-card {
+        border-color: #E21717;
+        box-shadow: 0 4px 16px rgba(226, 23, 23, 0.3);
+    }
+
+    .category-image-card img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+    }
+
+    .category-image-label {
+        padding: 8px;
+        text-align: center;
+        font-size: 0.85rem;
+        font-weight: 500;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const radioButtons = document.querySelectorAll('.default-image-radio');
+        const customUpload = document.getElementById('customImageUpload');
+        const preview = document.getElementById('imagePreview');
+
+        // Update preview when selecting default image
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.checked) {
+                    const imageUrl = this.dataset.imageUrl;
+                    preview.innerHTML = `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                }
+            });
+        });
+
+        // Update preview when uploading custom image
+        customUpload.addEventListener('change', function (e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    preview.innerHTML = `<img src="${event.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+
+                // Uncheck all radio buttons when custom upload is used
+                radioButtons.forEach(radio => radio.checked = false);
+            }
+        });
+    });
+</script>
+{% endblock %}

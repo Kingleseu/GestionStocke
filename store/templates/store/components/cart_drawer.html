@@ -1,0 +1,59 @@
+<!-- Cart Drawer -->
+<div id="cartDrawer" class="cart-drawer">
+    <div class="cart-backdrop" onclick="toggleCart()"></div>
+    <div class="cart-content">
+        <div class="cart-header">
+            <div class="cart-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                <h2>Panier (<span id="cartCount">0</span>)</h2>
+            </div>
+            <button class="cart-close" onclick="toggleCart()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div id="cartItems" class="cart-items">
+            <!-- JS Rendered -->
+        </div>
+
+        <div id="cartFooter" class="cart-footer">
+            <div id="shippingProgress" class="shipping-progress">
+                <!-- JS Rendered -->
+            </div>
+
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Sous-total</span>
+                    <span id="cartSubtotal">€0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Livraison</span>
+                    <span id="cartDelivery">Calculé à la prochaine étape</span>
+                </div>
+                <div class="summary-row">
+                    <span>TVA (estimée)</span>
+                    <span id="cartTax">€0.00</span>
+                </div>
+                <div class="summary-total">
+                    <span>Total</span>
+                    <span id="cartTotal">€0.00</span>
+                </div>
+            </div>
+
+            <button class="checkout-btn" onclick="proceedToCheckout()">
+                Procéder au paiement
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>

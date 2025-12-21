@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirmer la suppression{% endblock %}
+
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+    <div class="card border-0 shadow-lg" style="max-width: 500px; width: 100%;">
+        <div class="card-body p-5 text-center">
+            <div class="mb-4 text-danger">
+                <i class="bi bi-exclamation-circle display-1"></i>
+            </div>
+            <h3 class="fw-bold mb-3">Êtes-vous sûr ?</h3>
+            <p class="text-muted mb-4">
+                Vous êtes sur le point de supprimer "{{ object }}". Cette action est irréversible.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-danger fw-bold py-2">Oui, supprimer</button>
+                    <a href="javascript:history.back()" class="btn btn-light fw-bold py-2">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

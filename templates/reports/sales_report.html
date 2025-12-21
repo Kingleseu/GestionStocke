@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Rapports - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Rapports de Ventes</h2>
+            <p class="text-muted mb-0">Analyse des performances</p>
+        </div>
+
+        <!-- Date Filter Form -->
+        <form method="get" class="d-flex gap-2">
+            <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+            <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-filter"></i> Filtrer</button>
+        </form>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-1">Chiffre d'Affaires</h6>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_revenue|floatform:2 }}$</h2>
+                    </div>
+                    <div class="bg-rose-100 rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 50px; height: 50px;">
+                        <i class="bi bi-currency-dollar fs-4 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-1">Total Ventes</h6>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_transactions }}</h2>
+                    </div>
+                    <div class="bg-blue-100 rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 50px; height: 50px;">
+                        <i class="bi bi-receipt fs-4 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-muted text-uppercase fw-bold small mb-1">Panier Moyen</h6>
+                        <h2 class="fw-bold mb-0 text-dark">{{ avg_basket|floatform:2 }}$</h2>
+                    </div>
+                    <div class="bg-emerald-100 rounded-circle d-flex align-items-center justify-content-center"
+                        style="width: 50px; height: 50px;">
+                        <i class="bi bi-basket fs-4 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="fw-bold mb-0">Tendance des Ventes</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="salesChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Transactions Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">Historique des Transactions</h5>
+            <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-download me-1"></i> Exporter</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 text-uppercase small fw-bold text-muted ps-4">ID</th>
+                        <th class="border-0 text-uppercase small fw-bold text-muted">Date</th>
+                        <th class="border-0 text-uppercase small fw-bold text-muted">Vendeur</th>
+                        <th class="border-0 text-uppercase small fw-bold text-muted">Paiement</th>
+                        <th class="border-0 text-uppercase small fw-bold text-muted text-end pe-4">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in recent_sales %}
+                    <tr>
+                        <td class="ps-4 fw-medium text-dark">#{{ sale.id }}</td>
+                        <td class="text-muted">{{ sale.sale_date|date:"d M Y, H:i" }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center text-secondary fw-bold small"
+                                    style="width: 28px; height: 28px;">
+                                    {{ sale.cashier.username|make_list|first|upper }}
+                                </div>
+                                <span class="small">{{ sale.cashier.username }}</span>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ sale.payment_method }}</span></td>
+                        <td class="text-end pe-4 fw-bold text-dark">{{ sale.total }}$</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">Aucune vente sur cette période</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels| safe }},
+    datasets: [{
+        label: 'Chiffre d\'Affaires ($)',
+        data: {{ chart_data| safe }},
+        borderColor: '#E11D48',
+        backgroundColor: 'rgba(225, 29, 72, 0.05)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 4,
+        pointBackgroundColor: '#FFFFFF',
+        pointBorderColor: '#E11D48',
+        pointBorderWidth: 2
+            }]
+        },
+    options: {
+        responsive: true,
+            plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                    grid: { borderDash: [4, 4], color: '#F1F5F9' },
+                ticks: { color: '#64748B' }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: '#64748B' }
+            }
+        }
+    }
+    });
+</script>
+{% endblock %}

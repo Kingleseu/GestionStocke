@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestion des achats - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-cart"></i> Gestion des achats</h2>
+            <p class="text-muted">Gérez vos achats fournisseurs et entrées de stock</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'purchases:purchase_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Nouvel achat
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Total achats</h6>
+                    <h3 class="mb-0">{{ total_purchases }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Montant total</h6>
+                    <h3 class="mb-0 text-danger">{{ total_amount|floatformat:2 }}$</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">Reçus</h6>
+                    <h3 class="mb-0 text-success">{{ received_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted">En attente</h6>
+                    <h3 class="mb-0 text-warning">{{ pending_count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table des achats -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Fournisseur</th>
+                        <th>N° Facture</th>
+                        <th>Articles</th>
+                        <th>Total</th>
+                        <th>Créé par</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchase in purchases %}
+                    <tr>
+                        <td><strong>#{{ purchase.id }}</strong></td>
+                        <td>{{ purchase.purchase_date|date:"d/m/Y H:i" }}</td>
+                        <td><strong>{{ purchase.supplier }}</strong></td>
+                        <td>
+                            {% if purchase.invoice_number %}
+                            <code>{{ purchase.invoice_number }}</code>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ purchase.item_count }} article{{ purchase.item_count|pluralize }}</td>
+                        <td><strong class="text-danger">{{ purchase.total }}$</strong></td>
+                        <td>{{ purchase.created_by.username }}</td>
+                        <td>
+                            {% if purchase.is_received %}
+                            <span class="badge bg-success">Reçu</span>
+                            {% else %}
+                            <span class="badge bg-warning">En attente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'purchases:purchase_detail' purchase.pk %}"
+                                    class="btn btn-outline-primary" title="Détails">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                            <p class="mt-2">Aucun achat enregistré</p>
+                            <a href="{% url 'purchases:purchase_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Créer le premier achat
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Navigation des pages">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
