@@ -6,6 +6,7 @@ __pycache__/
 
 # Django
 *.sqlite3
+db.sqlite3
 media/
 staticfiles/
 .env
@@ -13,7 +14,17 @@ staticfiles/
 # Virtual environment
 venv/
 .env/
+env/
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
