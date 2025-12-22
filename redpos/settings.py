@@ -72,14 +72,21 @@ WSGI_APPLICATION = 'redpos.wsgi.application'
 
 
 # Database
-# Use PostgreSQL in production (Railway), SQLite in development
-if os.environ.get('DATABASE_URL'):
-    # Production: PostgreSQL from Railway
+# Use PostgreSQL in production (Render), SQLite in development
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Production: PostgreSQL from Render
+    # Render uses postgres:// but psycopg2 needs postgresql://
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
+            default=DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
+            ssl_require=True,
         )
     }
 else:
@@ -90,6 +97,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 
 
 # Password validation
@@ -172,8 +180,8 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# CSRF Trusted Origins for Railway
+# CSRF Trusted Origins for Railway and Render
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     'CSRF_TRUSTED_ORIGINS', 
-    'https://*.railway.app'
+    'https://*.railway.app,https://*.onrender.com'
 ).split(',')
