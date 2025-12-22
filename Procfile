@@ -1,2 +1,2 @@
-web: gunicorn redpos.wsgi --log-file -
+web: gunicorn redpos.wsgi:application --log-file -
 release: python manage.py migrate --noinput
