@@ -73,25 +73,25 @@ WSGI_APPLICATION = 'redpos.wsgi.application'
 
 # Database
 # Use PostgreSQL in production (Render), SQLite in development
-DATABASE_URL = os.environ.get('DATABASE_URL')
+import dj_database_url
+import os
 
-if DATABASE_URL:
-    # Production: PostgreSQL from Render
-    # Render uses postgres:// but psycopg2 needs postgresql://
-    if DATABASE_URL.startswith('postgres://'):
-        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-    
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=True,
-        )
-    }
-else:
+DATABASES = {
+    "default": dj_database_url.parse(
+        os.environ.get(
+            "DATABASE_URL",
+            "postgresql://redpos_postgres_user:D6RQ1GiQZEqMYWr9pgAPwvQCnsZu3xp5@dpg-d54tjau3jp1c739gf5jg-a/redpos_postgres"
+        ),
+        conn_max_age=600,
+        ssl_require=not os.environ.get("DEBUG", False)
+    )
+}
+
+
+
+
     # Development: Local PostgreSQL
-    DATABASES = {
+""" DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': 'redpos_db',
@@ -101,7 +101,7 @@ else:
             'PORT': '5432',
         }
     }
-
+ """
 
 
 
