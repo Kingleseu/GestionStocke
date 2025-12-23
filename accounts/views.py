@@ -37,6 +37,13 @@ def login_view(request):
                 return render(request, 'accounts/login.html')
         except User.DoesNotExist:
             pass
+        except Exception as e:
+            # Handle database errors gracefully (e.g., tables don't exist yet)
+            from django.db import DatabaseError
+            if isinstance(e, DatabaseError):
+                messages.error(request, 'Erreur de base de données. Veuillez contacter l\'administrateur.')
+                return render(request, 'accounts/login.html')
+            raise
 
         user = authenticate(request, username=username, password=password)
         

@@ -76,16 +76,25 @@ WSGI_APPLICATION = 'redpos.wsgi.application'
 import dj_database_url
 import os
 
+# Parse database URL
+database_url = os.environ.get(
+    "DATABASE_URL",
+    "postgresql://redpos_postgres_user:D6RQ1GiQZEqMYWr9pgAPwvQCnsZu3xp5@dpg-d54tjau3jp1c739gf5jg-a/redpos_postgres"
+)
+
 DATABASES = {
     "default": dj_database_url.parse(
-        os.environ.get(
-            "DATABASE_URL",
-            "postgresql://redpos_postgres_user:D6RQ1GiQZEqMYWr9pgAPwvQCnsZu3xp5@dpg-d54tjau3jp1c739gf5jg-a/redpos_postgres"
-        ),
+        database_url,
         conn_max_age=600,
-        ssl_require=not os.environ.get("DEBUG", False)
+        conn_health_checks=True,
     )
 }
+
+# SSL configuration for PostgreSQL on Render
+if not DEBUG and database_url.startswith('postgres'):
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'require',
+    }
 
 
 
