@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-CHANGE-THIS-IN-PRODUC
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,gestionstocke.onrender.com,.onrender.com').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,.railway.app,.up.railway.app').split(',')
 
 
 # Application definition
@@ -72,28 +72,29 @@ WSGI_APPLICATION = 'redpos.wsgi.application'
 
 
 # Database
-# Use PostgreSQL in production (Render), SQLite in development
+# Railway provides DATABASE_URL automatically when you add PostgreSQL
 import dj_database_url
 import os
 
-# Parse database URL
-database_url = os.environ.get(
-    "DATABASE_URL",
-    "postgresql://redpos_postgres_user:D6RQ1GiQZEqMYWr9pgAPwvQCnsZu3xp5@dpg-d54tjau3jp1c739gf5jg-a/redpos_postgres"
-)
+# Get database URL from environment (Railway sets this automatically)
+database_url = os.environ.get("DATABASE_URL")
 
-DATABASES = {
-    "default": dj_database_url.parse(
-        database_url,
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-}
-
-# SSL configuration for PostgreSQL on Render
-if not DEBUG and database_url.startswith('postgres'):
-    DATABASES['default']['OPTIONS'] = {
-        'sslmode': 'require',
+if database_url:
+    # Production: Use Railway PostgreSQL
+    DATABASES = {
+        "default": dj_database_url.parse(
+            database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    # Development: Use SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
 
 
@@ -194,8 +195,8 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-# CSRF Trusted Origins for Railway and Render
+# CSRF Trusted Origins for Railway
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     'CSRF_TRUSTED_ORIGINS', 
-    'https://*.railway.app,https://*.onrender.com'
+    'https://*.railway.app,https://*.up.railway.app'
 ).split(',')

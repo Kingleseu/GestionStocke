@@ -1,2 +1,2 @@
-web: gunicorn redpos.wsgi:application --log-file -
-release: python manage.py migrate --noinput
+web: bash railway.sh
+release: python manage.py migrate --noinput && python manage.py collectstatic --noinput
