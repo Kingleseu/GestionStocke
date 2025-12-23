@@ -73,7 +73,7 @@ WSGI_APPLICATION = 'redpos.wsgi.application'
 
 # Database
 # Use PostgreSQL in production (Render), SQLite in development
-DATABASE_URL = os.environ.get('postgresql://redpos_postgres_user:D6RQ1GiQZEqMYWr9pgAPwvQCnsZu3xp5@dpg-d54tjau3jp1c739gf5jg-a/redpos_postgres')
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
     # Production: PostgreSQL from Render
@@ -90,17 +90,17 @@ if DATABASE_URL:
         )
     }
 else:
-    # Development: SQLite
+    # Development: Local PostgreSQL
     DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'redpos_db',
-        'USER': 'redpos_user',
-        'PASSWORD': 'Eben@1999',
-        'HOST': '127.0.0.1',   # IMPORTANT : pas localhost
-        'PORT': '5432',
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'redpos_db',
+            'USER': 'redpos_user',
+            'PASSWORD': 'Eben@1999',
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
+        }
     }
-}
 
 
 
