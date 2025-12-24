@@ -77,7 +77,7 @@ import dj_database_url
 import os
 
 # Get database URL from environment (Railway sets this automatically)
-database_url = os.environ.get("postgresql://postgres:PPfzMssLAlYWmSpuhyNOTktEUaTqFXUa@postgres.railway.internal:5432/railway")
+database_url = os.environ.get("DATABASE_URL")
 
 if database_url:
     # Production: Use Railway PostgreSQL

@@ -18,16 +18,18 @@
                             <label for="id_name" class="form-label">Nom de la catégorie *</label>
                             <input type="text" name="name" id="id_name" class="form-control"
                                 value="{{ form.name.value|default:'' }}" required>
-                            {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors }}</div>{% endif
-                            %}
+                            {% if form.name.errors %}
+                            <div class="text-danger small">{{ form.name.errors }}</div>
+                            {% endif %}
                         </div>
 
                         <div class="mb-3">
                             <label for="id_description" class="form-label">Description</label>
                             <textarea name="description" id="id_description" class="form-control"
                                 rows="3">{{ form.description.value|default:'' }}</textarea>
-                            {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors }}
-                            </div>{% endif %}
+                            {% if form.description.errors %}
+                            <div class="text-danger small">{{ form.description.errors }}</div>
+                            {% endif %}
                         </div>
 
                         <div class="row">
@@ -39,21 +41,23 @@
                                     <img src="{{ form.instance.image.url }}" alt="Preview" style="max-height: 100px;">
                                 </div>
                                 {% endif %}
-                                {% if form.image.errors %}<div class="text-danger small">{{ form.image.errors }}</div>{%
-                                endif %}
+                                {% if form.image.errors %}
+                                <div class="text-danger small">{{ form.image.errors }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="id_order" class="form-label">Ordre d'affichage</label>
                                 <input type="number" name="order" id="id_order" class="form-control"
                                     value="{{ form.order.value|default:0 }}">
-                                {% if form.order.errors %}<div class="text-danger small">{{ form.order.errors }}</div>{%
-                                endif %}
+                                {% if form.order.errors %}
+                                <div class="text-danger small">{{ form.order.errors }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
                         <div class="mb-3 form-check">
-                            <input type="checkbox" name="is_active" id="id_is_active" class="form-check-input" {% if
-                                form.is_active.value %}checked{% endif %}>
+                            <input type="checkbox" name="is_active" id="id_is_active" class="form-check-input"
+                                {% if form.is_active.value %}checked{% endif %}>
                             <label for="id_is_active" class="form-check-label">Afficher sur la boutique</label>
                         </div>
 
