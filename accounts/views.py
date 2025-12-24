@@ -79,8 +79,10 @@ def signup_view(request):
             from .models import Shop, UserProfile
             shop = Shop.objects.create(name=shop_name, created_by=user)
             
-            # 3. Créer le profil et lier à la boutique
-            UserProfile.objects.create(user=user, shop=shop)
+            # 3. Récupérer le profil créé par le signal et lier à la boutique
+            profile = user.profile  # Le signal l'a déjà créé
+            profile.shop = shop
+            profile.save()
             
             # 4. Assigner le groupe Manager
             manager_group, _ = Group.objects.get_or_create(name='Manager')
@@ -142,9 +144,10 @@ def register_cashier_view(request, token):
             cashier_group, _ = Group.objects.get_or_create(name='Cashier')
             user.groups.add(cashier_group)
             
-            # Lier à la boutique du Manager qui a invité
+            # Lier à la boutique du Manager qui a invité (le signal a déjà créé le profil)
             inviter_profile = invitation.created_by.profile
-            UserProfile.objects.create(user=user, shop=inviter_profile.shop)
+            user.profile.shop = inviter_profile.shop
+            user.profile.save()
             
             # Marquer l'invitation comme utilisée
             invitation.is_used = True
