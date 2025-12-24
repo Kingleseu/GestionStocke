@@ -1,20 +1,7 @@
 # Nixpacks configuration for Railway
 [phases.setup]
-nixPkgs = ["python313", "postgresql"]
-
-[phases.install]
-cmds = [
-  "pip install --upgrade pip",
-  "pip install -r requirements.txt"
-]
-
-[phases.build]
-cmds = [
-  "python manage.py collectstatic --noinput"
-]
+nixPkgs = ["python313"]
 
 [start]
-cmd = "python railway.sh"
+cmd = "bash railway.sh"
 
-[variables]
-NIXPACKS_PYTHON_VERSION = "3.13"
