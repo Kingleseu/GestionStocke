@@ -89,7 +89,7 @@ if database_url:
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
         
-    print(f"🔍 Found DATABASE_URL: {database_url[:20]}...")
+    print(f"[DB] Found DATABASE_URL: {database_url[:20]}...")
     
     DATABASES = {
         "default": dj_database_url.parse(
@@ -103,8 +103,8 @@ if database_url:
     # Specific SSL for Render/Supabase
     DATABASES['default'].setdefault('OPTIONS', {})['sslmode'] = 'require'
     
-    print(f"🚀 Database Engine: {DATABASES['default']['ENGINE']}")
-    print(f"🏠 Database Host: {DATABASES['default'].get('HOST')}")
+    print(f"[DB] Engine: {DATABASES['default']['ENGINE']}")
+    print(f"[DB] Host: {DATABASES['default'].get('HOST')}")
 else:
     # Development: Use SQLite
     DATABASES = {
@@ -113,7 +113,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    print("⚠️  CRITICAL: DATABASE_URL not found! Falling back to SQLite (Data will be lost).")
+    print("WARNING: DATABASE_URL not found! Falling back to SQLite (Data will be lost).")
 
 
 
