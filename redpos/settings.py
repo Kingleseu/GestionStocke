@@ -158,7 +158,9 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Cloudinary Storage Configuration
-if not DEBUG or os.environ.get('CLOUDINARY_URL'):
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+
+if CLOUDINARY_URL and CLOUDINARY_URL.startswith('cloudinary://'):
     STORAGES = {
         "default": {
             "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
@@ -167,8 +169,10 @@ if not DEBUG or os.environ.get('CLOUDINARY_URL'):
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
+    if not DEBUG:
+        print("[STORAGE] Using Cloudinary for Media files")
 else:
-    # WhiteNoise configuration for static files in production
+    # Use local storage if Cloudinary is not configured correctly
     STORAGES = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -177,6 +181,8 @@ else:
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
+    if not DEBUG:
+        print("[STORAGE] WARNING: CLOUDINARY_URL is missing or invalid. Media files won't persist!")
 
 
 # Default primary key field type
