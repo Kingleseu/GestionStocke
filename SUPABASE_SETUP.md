@@ -14,16 +14,17 @@ Render Free PostgreSQL expire après **90 jours**.
 4. Choisissez un mot de passe pour la base de données (**Notez-le bien !**).
 5. Cliquez sur **"Create new project"**.
 
-## Étape 2 : Récupérer l'URL de connexion
+## Étape 2 : Récupérer l'URL du "Transaction Pooler" (IMPORTANT)
 
-1. Attendez que le projet soit prêt (2 minutes).
-2. Cliquez sur l'icône **Settings** (Engrenage) en bas à gauche.
-3. Allez dans **"Database"**.
-4. Cherchez la section **"Connection string"**.
-5. Cliquez sur l'onglet **"URI"**.
-6. Copiez l'URL qui ressemble à ceci :
-   `postgresql://postgres:[YOUR-PASSWORD]@db.xxxxxxxx.supabase.co:5432/postgres`
-   *(Remplacez `[YOUR-PASSWORD]` par le mot de passe que vous avez choisi à l'étape 1)*.
+Sur Render, la connexion échoue car l'adresse par défaut est en **IPv6** (non supporté par Render). Vous devez utiliser le **Pooler Host** :
+
+1. Allez dans **Settings** -> **Database** sur Supabase.
+2. Dans **Connection string**, sélectionnez l'onglet **"URI"**.
+3. **TRÈS IMPORTANT** : Changez le mode de "Direct Connection" à **"Transaction Pooler"**.
+4. L'URL doit changer complètement. 
+   - **Direct (ne marche pas)** : `db.zgtfp...supabase.co:5432`
+   - **Pooler (à utiliser)** : `aws-0-xxxx.pooler.supabase.com:6543`
+5. Copiez cette nouvelle URL (veillez à ce que le mot de passe soit correct).
 
 ## Étape 3 : Configurer Render.com
 
