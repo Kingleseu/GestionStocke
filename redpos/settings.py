@@ -80,18 +80,26 @@ WSGI_APPLICATION = 'redpos.wsgi.application'
 import dj_database_url
 import os
 
-# Get database URL from environment (Railway sets this automatically)
+# Get database URL from environment (Render/Railway sets this automatically)
 database_url = os.environ.get("DATABASE_URL")
 
 if database_url:
-    # Production: Use Railway PostgreSQL
+    # Force postgresql:// for compatibility with some drivers
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+        
     DATABASES = {
         "default": dj_database_url.parse(
             database_url,
             conn_max_age=600,
             conn_health_checks=True,
+            ssl_require=not DEBUG
         )
     }
+    
+    # Render specifically needs this for SSL
+    if not DEBUG:
+        DATABASES['default'].setdefault('OPTIONS', {})['sslmode'] = 'require'
 else:
     # Development: Use SQLite
     DATABASES = {
