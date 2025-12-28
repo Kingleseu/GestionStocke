@@ -35,7 +35,29 @@ J'ai déjà préparé les fichiers nécessaires. Il vous suffit de :
 
 ---
 
-## 💡 Pourquoi Cloudinary ?
-- **Gratuit** : Très large quota pour les petits projets.
-- **Rapide** : Les images sont compressées automatiquement pour charger plus vite.
-- **Fiable** : Vos fichiers sont en sécurité, même si Render redémarre l'application.
+## 📂 Où seront stockées mes photos ?
+
+Une fois configuré, toutes vos photos seront sur votre compte **Cloudinary** :
+1. Dans l'onglet **Media Library**.
+2. Dans un dossier nommé automatiquement par le système (généralement `django_cloudinary_storage/`).
+
+## 🔄 Comment "déplacer" mes photos actuelles ?
+
+Il y a deux façons de synchroniser vos photos locales vers Cloudinary :
+
+### Option A : La méthode simple (Recommandée)
+Comme vous n'avez probablement pas des milliers de produits, le plus sûr est de :
+1. Allez sur votre site en ligne (Render).
+2. Allez dans l'administration des produits.
+3. Cliquez sur un produit, et **téléchargez à nouveau son image**.
+4. Django l'enverra directement sur Cloudinary.
+
+### Option B : La méthode automatique (Avancée)
+Si vous avez beaucoup d'images, je peux vous créer un script spécial (`migrate_to_cloudinary.py`) que vous lancerez sur votre ordinateur. Cela prendra toutes les images de votre dossier `media` et les enverra d'un coup sur Cloudinary.
+
+---
+
+## ✅ Résumé
+- **Nouvelles images** : Automatiquement sur Cloudinary.
+- **Images actuelles** : À re-télécharger une fois ou à migrer via script.
+- **En local** : Si vous n'avez pas de `CLOUDINARY_URL` dans votre fichier `.env`, vos images resteront sur votre PC. Si vous l'ajoutez, même votre PC enverra les images vers Cloudinary !
