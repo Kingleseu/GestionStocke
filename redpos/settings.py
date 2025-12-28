@@ -5,8 +5,11 @@ from pathlib import Path
 import dj_database_url
 
 # Load environment variables from .env file (for local development)
-from dotenv import load_dotenv
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,16 +78,14 @@ WSGI_APPLICATION = 'redpos.wsgi.application'
 
 
 
-# Database
-# Railway provides DATABASE_URL automatically when you add PostgreSQL
+# Database configuration
 import dj_database_url
-import os
 
-# Get database URL from environment (Render/Railway sets this automatically)
-database_url = os.environ.get("DATABASE_URL")
+# Render can use DATABASE_URL or INTERNAL_DATABASE_URL
+database_url = os.environ.get("DATABASE_URL") or os.environ.get("INTERNAL_DATABASE_URL")
 
 if database_url:
-    # Force postgresql:// for compatibility with some drivers
+    # Force postgresql:// for compatibility
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
         
@@ -97,9 +98,11 @@ if database_url:
         )
     }
     
-    # Render specifically needs this for SSL
+    # Specific SSL for Render/Railway
     if not DEBUG:
         DATABASES['default'].setdefault('OPTIONS', {})['sslmode'] = 'require'
+    
+    print(f"🚀 Using Database: {DATABASES['default']['ENGINE']}")
 else:
     # Development: Use SQLite
     DATABASES = {
@@ -108,22 +111,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-
-
-
-
-    # Development: Local PostgreSQL
-""" DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'redpos_db',
-            'USER': 'redpos_user',
-            'PASSWORD': 'Eben@1999',
-            'HOST': '127.0.0.1',
-            'PORT': '5432',
-        }
-    }
- """
+    print("⚠️  Warning: DATABASE_URL not found, using SQLite")
 
 
 
