@@ -287,6 +287,7 @@ class Universe(models.Model):
     title = models.CharField(max_length=100)
     subtitle = models.CharField(max_length=100, blank=True)
     image = models.ImageField(upload_to='universes/')
+    category = models.ForeignKey('products.Category', on_delete=models.SET_NULL, null=True, blank=True, related_name='universes')
     identifier = models.CharField(max_length=50, unique=True, help_text="Internal ID for JS filtering (e.g., 'BIJOUX SIMPLES'). Do not change unless you update the code.")
     order = models.PositiveIntegerField(default=0)
 

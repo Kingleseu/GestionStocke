@@ -633,6 +633,18 @@ class UniverseUpdateView(UpdateView):
         return super().form_valid(form)
 
 
+@method_decorator(manager_required, name='dispatch')
+class UniverseDeleteView(DeleteView):
+    model = Universe
+    success_url = reverse_lazy('store:admin_universes')
+    template_name = 'store/admin/confirm_delete.html'
+
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        messages.warning(request, f"L'univers '{obj.title}' a été supprimé.")
+        return super().delete(request, *args, **kwargs)
+
+
 # --- Collections (Zag Style) ---
 
 @method_decorator(manager_required, name='dispatch')
@@ -681,27 +693,96 @@ class CollectionDeleteView(DeleteView):
 def sync_collections(request):
     """
     Auto-creates Collections from existing Categories.
-    It checks if a Collection linked to a Category exists. If not, it creates it.
+    If duplicates exist (multiple collections for one category), they are automatically removed.
     """
     categories = Category.objects.all()
     created_count = 0
+    deleted_count = 0
     
     for category in categories:
-        # Check if collection exists for this category
-        if not Collection.objects.filter(category=category).exists():
+        existing = Collection.objects.filter(category=category).order_by('id')
+        
+        # Deduplication: keep only the first one, delete others
+        if existing.count() > 1:
+            to_delete = existing[1:]
+            deleted_count += to_delete.count()
+            for obj in to_delete:
+                obj.delete()
+        
+        # Creation: only if none exists
+        if not existing.exists():
             Collection.objects.create(
                 category=category,
                 title=category.name,
-                subtitle="Découvrir", # Default subtitle
-                image=category.image, # Copy image from category if possible
+                subtitle="Découvrir",
+                image=category.image,
                 is_active=True,
                 order=category.order or 0
             )
             created_count += 1
             
+    msg = []
     if created_count > 0:
-        messages.success(request, f"{created_count} collections ont été générées automatiquement depuis vos catégories.")
+        msg.append(f"{created_count} collections générées")
+    if deleted_count > 0:
+        msg.append(f"{deleted_count} doublons supprimés")
+        
+    if msg:
+        messages.success(request, " - ".join(msg) + ".")
     else:
-        messages.info(request, "Vos collections sont déjà synchronisées avec vos catégories.")
+        messages.info(request, "Vos collections sont déjà parfaitement synchronisées.")
         
     return redirect('store:admin_collections')
+
+
+@manager_required
+def sync_universes(request):
+    """
+    Auto-creates Universes (Category Navigator items) from existing Categories.
+    If duplicates exist (multiple universes for one category), they are automatically removed.
+    """
+    categories = Category.objects.all()
+    created_count = 0
+    deleted_count = 0
+    
+    for category in categories:
+        existing = Universe.objects.filter(category=category).order_by('id')
+        
+        # Deduplication: keep only the first one, delete others
+        if existing.count() > 1:
+            to_delete = existing[1:]
+            deleted_count += to_delete.count()
+            for obj in to_delete:
+                obj.delete()
+        
+        # Creation: only if none exists
+        if not existing.exists():
+            identifier = category.name.upper().replace(' ', '_')
+            base_identifier = identifier
+            counter = 1
+            while Universe.objects.filter(identifier=identifier).exists():
+                identifier = f"{base_identifier}_{counter}"
+                counter += 1
+
+            Universe.objects.create(
+                category=category,
+                title=category.name,
+                subtitle="", 
+                image=category.image, 
+                identifier=identifier,
+                order=category.order or 0
+            )
+            created_count += 1
+            
+    msg = []
+    if created_count > 0:
+        msg.append(f"{created_count} univers générés")
+    if deleted_count > 0:
+        msg.append(f"{deleted_count} doublons supprimés")
+        
+    if msg:
+        messages.success(request, " - ".join(msg) + ".")
+    else:
+        messages.info(request, "Tous vos univers sont déjà parfaitement synchronisés.")
+        
+    return redirect('store:admin_universes')

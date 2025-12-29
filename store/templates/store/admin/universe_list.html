@@ -14,7 +14,11 @@
             <p class="text-muted small">Ces éléments apparaissent dans la section "Découvrez nos univers" de la page
                 d'accueil.</p>
         </div>
-        <!-- Note: Adding new universes is disabled as per request -->
+        <div>
+            <a href="{% url 'store:admin_universes_sync' %}" class="btn btn-primary fw-bold shadow-sm">
+                <i class="bi bi-arrow-repeat me-1"></i> Synchroniser avec les catégories
+            </a>
+        </div>
     </div>
 
     <div class="card border-0 shadow-sm">
@@ -49,10 +53,16 @@
                         <td><code>{{ universe.identifier }}</code></td>
                         <td><span class="badge bg-secondary rounded-pill">{{ universe.order }}</span></td>
                         <td class="text-end pe-4">
-                            <a href="{% url 'store:admin_universe_update' universe.pk %}"
-                                class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil me-1"></i> Modifier
-                            </a>
+                            <div class="btn-group">
+                                <a href="{% url 'store:admin_universe_update' universe.pk %}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'store:admin_universe_delete' universe.pk %}"
+                                    class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}

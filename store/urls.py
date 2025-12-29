@@ -54,6 +54,8 @@ urlpatterns = [
     # Category Navigator (Universes)
     path('admin/universes/', views.UniverseListView.as_view(), name='admin_universes'),
     path('admin/universes/<int:pk>/update/', views.UniverseUpdateView.as_view(), name='admin_universe_update'),
+    path('admin/universes/<int:pk>/delete/', views.UniverseDeleteView.as_view(), name='admin_universe_delete'),
+    path('admin/universes/sync/', views.sync_universes, name='admin_universes_sync'),
 
     # Collections (Zag Style)
     path('admin/collections/', views.CollectionListView.as_view(), name='admin_collections'),

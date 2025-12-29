@@ -133,10 +133,11 @@ class CategoryForm(forms.ModelForm):
 class UniverseForm(forms.ModelForm):
     class Meta:
         model = Universe
-        fields = ['title', 'subtitle', 'image', 'order'] # Exclude identifier to prevent breaking JS
+        fields = ['title', 'subtitle', 'category', 'image', 'order'] # Exclude identifier to prevent breaking JS
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'subtitle': forms.TextInput(attrs={'class': 'form-control'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
         }

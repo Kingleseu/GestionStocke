@@ -32,16 +32,14 @@
                                 <label class="form-label fw-bold">Titre</label>
                                 {{ form.title }}
                                 <div class="form-text">Le nom de l'univers affiché sur la carte.</div>
-                                {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{%
-                                endif %}
+                                {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{% endif %}
                             </div>
 
                             <!-- Order -->
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Ordre d'affichage</label>
                                 {{ form.order }}
-                                {% if form.order.errors %}<div class="text-danger small">{{ form.order.errors }}</div>{%
-                                endif %}
+                                {% if form.order.errors %}<div class="text-danger small">{{ form.order.errors }}</div>{% endif %}
                             </div>
 
                             <!-- Subtitle -->
@@ -50,6 +48,15 @@
                                 {{ form.subtitle }}
                                 <div class="form-text">Ex: "Élégance intemporelle"</div>
                                 {% if form.subtitle.errors %}<div class="text-danger small">{{ form.subtitle.errors }}
+                                </div>{% endif %}
+                            </div>
+
+                            <!-- Category -->
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Catégorie liée</label>
+                                {{ form.category }}
+                                <div class="form-text">L'univers affichera les produits de cette catégorie.</div>
+                                {% if form.category.errors %}<div class="text-danger small">{{ form.category.errors }}
                                 </div>{% endif %}
                             </div>
 
@@ -65,15 +72,13 @@
                                 {% endif %}
                                 {{ form.image }}
                                 <div class="form-text">Téléchargez une nouvelle image ou un fichier SVG.</div>
-                                {% if form.image.errors %}<div class="text-danger small">{{ form.image.errors }}</div>{%
-                                endif %}
+                                {% if form.image.errors %}<div class="text-danger small">{{ form.image.errors }}</div>{% endif %}
                             </div>
 
                             <!-- Read-only Identifier Info -->
                             <div class="col-12">
                                 <div class="p-3 bg-light rounded mt-2">
-                                    <label class="form-label fw-bold text-muted small">Identifiant Technique (Non
-                                        modifiable)</label>
+                                    <label class="form-label fw-bold text-muted small">Identifiant Technique (Non modifiable)</label>
                                     <div><code>{{ universe.identifier }}</code></div>
                                 </div>
                             </div>
