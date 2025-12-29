@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ view.model._meta.verbose_name|title }} - Administration{% endblock %}
+{% block title %}{% if object %}Modifier{% else %}Ajouter{% endif %} un lien social - Administration{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -34,10 +34,64 @@
                         {{ form.order }}
                     </div>
                     <div class="col-md-12 mb-3">
-                        <label class="form-label fw-bold">Classe de l'icône (Bootstrap Icons)</label>
+                        <label class="form-label fw-bold">Choisir le réseau social</label>
                         {{ form.icon_class }}
-                        <div class="form-text">Ex: <code>bi bi-instagram</code>. Voir <a
-                                href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>.</div>
+
+                        <!-- Quick Pick Icons -->
+                        <div class="icon-selector-container">
+                            <div class="d-flex flex-wrap gap-2 icon-gallery">
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-instagram" title="Instagram">
+                                    <i class="bi bi-instagram"></i>
+                                    <span class="d-block small mt-1">Instagram</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-facebook" title="Facebook">
+                                    <i class="bi bi-facebook"></i>
+                                    <span class="d-block small mt-1">Facebook</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-whatsapp" title="WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                    <span class="d-block small mt-1">WhatsApp</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-tiktok" title="TikTok">
+                                    <i class="bi bi-tiktok"></i>
+                                    <span class="d-block small mt-1">TikTok</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-twitter-x" title="Twitter/X">
+                                    <i class="bi bi-twitter-x"></i>
+                                    <span class="d-block small mt-1">X</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-youtube" title="YouTube">
+                                    <i class="bi bi-youtube"></i>
+                                    <span class="d-block small mt-1">YouTube</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-linkedin" title="LinkedIn">
+                                    <i class="bi bi-linkedin"></i>
+                                    <span class="d-block small mt-1">LinkedIn</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-pinterest" title="Pinterest">
+                                    <i class="bi bi-pinterest"></i>
+                                    <span class="d-block small mt-1">Pinterest</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-snapchat" title="Snapchat">
+                                    <i class="bi bi-snapchat"></i>
+                                    <span class="d-block small mt-1">Snapchat</span>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary icon-btn-large"
+                                    data-icon="bi bi-globe" title="Site Web">
+                                    <i class="bi bi-globe"></i>
+                                    <span class="d-block small mt-1">Web</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-12 mb-3">
                         <label class="form-label fw-bold">URL du profil</label>
@@ -53,4 +107,72 @@
         </div>
     </div>
 </div>
+</div>
+
+<style>
+    .icon-gallery .icon-btn-large {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        border: 2px solid #dee2e6;
+    }
+
+    .icon-gallery .icon-btn-large i {
+        font-size: 1.8rem;
+    }
+
+    .icon-gallery .icon-btn-large:hover {
+        background-color: #f8f9fa;
+        border-color: #7d1f1f;
+        color: #7d1f1f;
+    }
+
+    .icon-gallery .icon-btn-large.active {
+        background-color: #7d1f1f;
+        color: white;
+        border-color: #7d1f1f;
+        box-shadow: 0 4px 12px rgba(125, 31, 31, 0.3);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const iconField = document.getElementById('iconField');
+        const iconBtns = document.querySelectorAll('.icon-btn-large');
+        const nameField = document.querySelector('input[name="name"]');
+
+        function highlightActive() {
+            const currentVal = iconField.value.trim();
+            iconBtns.forEach(btn => {
+                if (btn.getAttribute('data-icon') === currentVal) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        iconBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const iconClass = this.getAttribute('data-icon');
+                const title = this.getAttribute('title');
+
+                iconField.value = iconClass;
+
+                // Automatic & Dynamic Name Update
+                if (nameField) {
+                    nameField.value = title;
+                }
+
+                highlightActive();
+            });
+        });
+
+        highlightActive();
+    });
+</script>
 {% endblock %}

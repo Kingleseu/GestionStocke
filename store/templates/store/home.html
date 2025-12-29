@@ -327,6 +327,84 @@
         </div>
     </section>
 
+    
+    <!-- CATEGORY NAVIGATOR - Integrated as Section -->
+    <section class="category-navigator-section reveal">
+        
+        <div class="navigator-grid">
+            {% for universe in universes %}
+            <div class="universe-card reveal" onclick="selectUniverse('{{ universe.identifier }}')">
+                <div class="universe-image">
+                    {% if universe.image %}
+                    <img src="{{ universe.image.url }}" alt="{{ universe.title }}">
+                    {% else %}
+                    <img src="{% static 'images/categories/bijoux_simples.svg' %}" alt="{{ universe.title }}">
+                    {% endif %}
+                </div>
+                <h3>{{ universe.title }}</h3>
+                <p>{{ universe.subtitle }}</p>
+            </div>
+            {% empty %}
+            <!-- Fallback if no universes in DB -->
+            <div class="universe-card" onclick="selectUniverse('BIJOUX SIMPLES')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/bijoux_simples.svg' %}" alt="Bijoux Simples">
+                </div>
+                <h3>Bijoux Simples</h3>
+                <p>Élégance intemporelle</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('COLLECTIONS')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/collections.svg' %}" alt="Collections">
+                </div>
+                <h3>Collections</h3>
+                <p>Nos créations exclusives</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('PORTRAITS')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/portraits.svg' %}" alt="Portraits">
+                </div>
+                <h3>Portraits</h3>
+                <p>Médaillons personnalisés</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('BIJOUX PERSONNALISÉS')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/bijoux_personnalises.svg' %}" alt="Bijoux Personnalisés">
+                </div>
+                <h3>Bijoux Personnalisés</h3>
+                <p>Gravure et photo</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('MONTRES')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/montres.svg' %}" alt="Montres">
+                </div>
+                <h3>Montres</h3>
+                <p>Horlogerie de luxe</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('EMBALLAGES')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/emballages.svg' %}" alt="Emballages">
+                </div>
+                <h3>Emballages</h3>
+                <p>Coffrets cadeaux</p>
+            </div>
+
+            <div class="universe-card" onclick="selectUniverse('SCULPTURES')">
+                <div class="universe-image">
+                    <img src="{% static 'images/categories/sculptures.svg' %}" alt="Sculptures">
+                </div>
+                <h3>Sculptures</h3>
+                <p>Pièces artistiques</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
     <!-- ZAG STYLE COLLECTIONS SECTION -->
     <section class="zag-collections-section reveal">
         <div class="zag-header">
@@ -430,86 +508,6 @@
         </div>
     </section>
 
-    <!-- CATEGORY NAVIGATOR - Integrated as Section -->
-    <section class="category-navigator-section reveal">
-        <div class="navigator-header">
-            <h1>Découvrez nos univers</h1>
-            <p>Sélectionnez une catégorie pour explorer nos créations</p>
-        </div>
-
-        <div class="navigator-grid">
-            {% for universe in universes %}
-            <div class="universe-card reveal" onclick="selectUniverse('{{ universe.identifier }}')">
-                <div class="universe-image">
-                    {% if universe.image %}
-                    <img src="{{ universe.image.url }}" alt="{{ universe.title }}">
-                    {% else %}
-                    <img src="{% static 'images/categories/bijoux_simples.svg' %}" alt="{{ universe.title }}">
-                    {% endif %}
-                </div>
-                <h3>{{ universe.title }}</h3>
-                <p>{{ universe.subtitle }}</p>
-            </div>
-            {% empty %}
-            <!-- Fallback if no universes in DB -->
-            <div class="universe-card" onclick="selectUniverse('BIJOUX SIMPLES')">
-                <div class="universe-image">
-                    <img src="{% static 'images/categories/bijoux_simples.svg' %}" alt="Bijoux Simples">
-                </div>
-                <h3>Bijoux Simples</h3>
-                <p>Élégance intemporelle</p>
-            </div>
-
-            <div class="universe-card" onclick="selectUniverse('COLLECTIONS')">
-                <div class="universe-image">
-                    <img src="{% static 'images/categories/collections.svg' %}" alt="Collections">
-                </div>
-                <h3>Collections</h3>
-                <p>Nos créations exclusives</p>
-            </div>
-
-            <div class="universe-card" onclick="selectUniverse('PORTRAITS')">
-                <div class="universe-image">
-                    <img src="{% static 'images/categories/portraits.svg' %}" alt="Portraits">
-                </div>
-                <h3>Portraits</h3>
-                <p>Médaillons personnalisés</p>
-            </div>
-
-            <div class="universe-card" onclick="selectUniverse('BIJOUX PERSONNALISÉS')">
-                <div class="universe-image">
-                    <img src="{% static 'images/categories/bijoux_personnalises.svg' %}" alt="Bijoux Personnalisés">
-                </div>
-                <h3>Bijoux Personnalisés</h3>
-                <p>Gravure et photo</p>
-            </div>
-
-            <div class="universe-card" onclick="selectUniverse('MONTRES')">
-                <div class="universe-image">
-                    <img src="{% static 'images/categories/montres.svg' %}" alt="Montres">
-                </div>
-                <h3>Montres</h3>
-                <p>Horlogerie de luxe</p>
-            </div>
-
-            <div class="universe-card" onclick="selectUniverse('EMBALLAGES')">
-                <div class="universe-image">
-                    <img src="{% static 'images/categories/emballages.svg' %}" alt="Emballages">
-                </div>
-                <h3>Emballages</h3>
-                <p>Coffrets cadeaux</p>
-            </div>
-
-            <div class="universe-card" onclick="selectUniverse('SCULPTURES')">
-                <div class="universe-image">
-                    <img src="{% static 'images/categories/sculptures.svg' %}" alt="Sculptures">
-                </div>
-                <h3>Sculptures</h3>
-                <p>Pièces artistiques</p>
-            </div>
-            {% endfor %}
-        </div>
-    </section>
 
     <section class="hero-grid reveal">
         {% for card in hero_cards %}
@@ -783,14 +781,11 @@
                 <div class="filter-group">
                     <h4>Catégorie</h4>
                     <div class="filter-options">
-                        <label><input type="radio" name="category" value="Tous" checked onchange="applyFilters()">
-                            Tout
-                            voir</label>
+                        <label><input type="radio" name="category" value="Tous" checked onchange="applyFilters()"> Tout voir</label>
                         {% get_active_categories as filter_categories_fallback %}
                         {% if filter_categories or categories or filter_categories_fallback %}
                         {% for category in filter_categories|default:categories|default:filter_categories_fallback %}
-                        <label><input type="radio" name="category" value="{{ category.name }}"
-                                onchange="applyFilters()"> {{ category.name }}</label>
+                        <label><input type="radio" name="category" value="{{ category.name }}" onchange="applyFilters()"> {{ category.name }}</label>
                         {% endfor %}
                         {% else %}
                         <span class="text-muted small">Aucune catégorie</span>

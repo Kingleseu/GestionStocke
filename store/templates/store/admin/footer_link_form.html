@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ view.model._meta.verbose_name|title }} - Administration{% endblock %}
+{% block title %}{% if object %}Modifier{% else %}Ajouter{% endif %} un lien footer - Administration{% endblock %}
 
 {% block content %}
 <div class="container-fluid">

@@ -182,8 +182,7 @@
                 </div>
 
                 <div class="logo" onclick="showView('home')">
-                    <img src="{% static 'img/mkaribu_logo.png' %}" alt="Mkaribu"
-                        style="height: 50px; object-fit: contain;">
+                    <img src="{% static 'img/mkaribu_logo.png' %}" alt="Mkaribu" style="height: 50px; object-fit: contain;">
                 </div>
 
                 <div class="desktop-menu-tabs">
@@ -195,22 +194,18 @@
                         ];
                     </script>
                     <div class="category-tabs-wrapper">
-                        <button
-                            class="tab-item {% if not request.GET.category or request.GET.category == 'Tous' %}active{% endif %}"
-                            onclick="selectUniverse('Tous')">TOUS</button>
+                        <button class="tab-item {% if not request.GET.category or request.GET.category == 'Tous' %}active{% endif %}" onclick="selectUniverse('Tous')">TOUS</button>
 
                         {% get_active_categories as all_cats %}
                         {% for univ in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS"|split:"," %}
-                        <button class="tab-item" data-category="{{ univ }}"
-                            onclick="selectUniverse('{{ univ|escapejs }}')">
+                        <button class="tab-item" data-category="{{ univ }}" onclick="selectUniverse('{{ univ|escapejs }}')">
                             {{ univ }}
                         </button>
                         {% endfor %}
 
                         {% for category in all_cats %}
                         {% if category.name|upper not in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS" %}
-                        <button class="tab-item" data-category="{{ category.name }}"
-                            onclick="selectUniverse('{{ category.name|escapejs }}')">
+                        <button class="tab-item" data-category="{{ category.name }}" onclick="selectUniverse('{{ category.name|escapejs }}')">
                             {{ category.name|upper }}
                         </button>
                         {% endif %}
@@ -220,15 +215,13 @@
 
                 <div class="nav-icons">
                     <button class="icon-btn search-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </button>
                     <button class="icon-btn cart-btn" onclick="toggleCart()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="9" cy="21" r="1"></circle>
                             <circle cx="20" cy="21" r="1"></circle>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -275,17 +268,14 @@
             <div class="mobile-category">
                 <h3>Catalogue</h3>
                 <div class="mobile-subcategories">
-                    <button
-                        onclick="showView('catalogue'); filters.category='Tous'; renderCatalogueProducts(); toggleMobileMenu()">Tout
-                        voir</button>
+                    <button onclick="showView('catalogue'); filters.category='Tous'; renderCatalogueProducts(); toggleMobileMenu()">Tout voir</button>
                     {% get_active_categories as mobile_categories_fallback %}
                     {% with mobile_list=mobile_categories|default:categories|default:mobile_categories_fallback %}
                     {% for category in mobile_list %}
                     <button
-                        onclick="filters.category='{{ category.name|escapejs }}'; showView('catalogue'); renderCatalogueProducts(); toggleMobileMenu()">{{
-                        category.name }}</button>
+                        onclick="filters.category='{{ category.name|escapejs }}'; showView('catalogue'); renderCatalogueProducts(); toggleMobileMenu()">{{category.name }}</button>
                     {% empty %}
-                    <span class="text-muted small px-2">Aucune catÇ¸gorie</span>
+                    <span class="text-muted small px-2">Aucune catégorie</span>
                     {% endfor %}
                     {% endwith %}
                 </div>
@@ -304,8 +294,7 @@
         <div class="footer-container">
             <div class="newsletter">
                 <h4>{{ footer_config.newsletter_title|default:"Restez informé" }}</h4>
-                <p>{{ footer_config.newsletter_text|default:"Inscrivez-vous pour recevoir nos nouveautés et offres
-                    exclusives." }}</p>
+                <p>{{ footer_config.newsletter_text|default:"Inscrivez-vous pour recevoir nos nouveautés et offres exclusives." }}</p>
                 <div class="newsletter-form">
                     <input type="email" placeholder="Votre email">
                     <button class="btn-primary">S'inscrire</button>
@@ -319,8 +308,7 @@
                     <p>{{ footer_config.company_description|default:"L'excellence artisanale depuis 2024." }}</p>
                     <div class="social-links">
                         {% for link in social_links %}
-                        <a href="{{ link.url }}" aria-label="{{ link.name }}" target="_blank"><i
-                                class="{{ link.icon_class }}"></i></a>
+                        <a href="{{ link.url }}" aria-label="{{ link.name }}" target="_blank"><i class="{{ link.icon_class }}"></i></a>
                         {% empty %}
                         <!-- Fallback or empty -->
                         {% endfor %}
@@ -332,8 +320,7 @@
                         <li><button onclick="selectUniverse('Tous')">Catalogue</button></li>
                         {% get_active_categories as f_cats %}
                         {% for category in f_cats %}
-                        <li><button onclick="selectUniverse('{{ category.name|escapejs }}')">{{
-                                category.name }}</button></li>
+                        <li><button onclick="selectUniverse('{{ category.name|escapejs }}')">{{category.name }}</button></li>
                         {% empty %}
                         <li><span class="text-muted small">Aucune catégorie</span></li>
                         {% endfor %}
@@ -358,7 +345,7 @@
                                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 0 0 1 18 0z"></path>
                                 <circle cx="12" cy="10" r="3"></circle>
                             </svg>
-                            Route des huileries<br>
+                        
                             {{ footer_config.address|default:"N° 160, Av. Usoke, C/Lingwala"|linebreaksbr }}
                         </li>
                         <li> <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"

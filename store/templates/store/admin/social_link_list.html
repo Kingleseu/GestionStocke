@@ -33,18 +33,15 @@
                     {% for link in social_links %}
                     <tr>
                         <td class="ps-4 fw-bold">{{ link.name }}</td>
-                        <td><i class="{{ link.icon_class }} fs-5"></i> <small class="text-muted ms-2">({{
-                                link.icon_class }})</small></td>
+                        <td><i class="{{ link.icon_class }} fs-5"></i> </td>
                         <td><a href="{{ link.url }}" target="_blank" class="text-decoration-none">{{ link.url }}</a>
                         </td>
                         <td><span class="badge bg-secondary rounded-pill">{{ link.order }}</span></td>
                         <td class="text-end pe-4">
-                            <a href="{% url 'store:admin_social_link_update' link.pk %}"
-                                class="btn btn-sm btn-outline-primary me-1">
+                            <a href="{% url 'store:admin_social_link_update' link.pk %}" class="btn btn-sm btn-outline-primary me-1">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <a href="{% url 'store:admin_social_link_delete' link.pk %}"
-                                class="btn btn-sm btn-outline-danger">
+                            <a href="{% url 'store:admin_social_link_delete' link.pk %}" class="btn btn-sm btn-outline-danger">
                                 <i class="bi bi-trash"></i>
                             </a>
                         </td>

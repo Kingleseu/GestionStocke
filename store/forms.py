@@ -81,7 +81,7 @@ class SocialLinkForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'url': forms.URLInput(attrs={'class': 'form-control'}),
-            'icon_class': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'bi bi-instagram'}),
+            'icon_class': forms.HiddenInput(attrs={'id': 'iconField'}),
             'order': forms.NumberInput(attrs={'class': 'form-control'})
         }
 
