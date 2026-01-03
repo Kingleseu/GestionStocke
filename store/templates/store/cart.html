@@ -51,7 +51,7 @@
                                     </div>
                                 </td>
                                 <td class="text-center align-middle">
-                                    <span class="fw-bold text-primary">${{ item.product.selling_price }}</span>
+                                    <span class="fw-bold text-primary">{{ item.product.selling_price }} FC</span>
                                 </td>
                                 <td class="text-center align-middle">
                                     <div class="d-inline-flex align-items-center gap-2">
@@ -59,7 +59,7 @@
                                     </div>
                                 </td>
                                 <td class="text-end align-middle">
-                                    <span class="fw-bold">${{ item.subtotal }}</span>
+                                    <span class="fw-bold">{{ item.subtotal }} FC</span>
                                 </td>
                                 <td class="text-end align-middle">
                                     <form action="{% url 'store:catalog' %}" method="get" style="display: inline;">
@@ -96,7 +96,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Sous-total</span>
-                    <span class="fw-bold">${{ cart_total }}</span>
+                    <span class="fw-bold">{{ cart_total }} FC</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Livraison</span>
@@ -105,7 +105,7 @@
                 <hr>
                 <div class="d-flex justify-content-between mb-4">
                     <span class="fw-bold fs-5">Total</span>
-                    <span class="fw-bold fs-4 text-primary">${{ cart_total }}</span>
+                    <span class="fw-bold fs-4 text-primary">{{ cart_total }} FC</span>
                 </div>
 
                 {% if cart_items %}

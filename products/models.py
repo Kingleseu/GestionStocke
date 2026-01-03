@@ -77,14 +77,14 @@ class Product(models.Model):
         decimal_places=2,
         validators=[MinValueValidator(Decimal('0.01'))],
         verbose_name="Prix d'achat",
-        help_text="Prix d'achat unitaire HT"
+        help_text="Prix d'achat unitaire en CDF (HT)"
     )
     selling_price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(Decimal('0.01'))],
         verbose_name="Prix de vente",
-        help_text="Prix de vente TTC"
+        help_text="Prix de vente en CDF (TTC)"
     )
     
     # Stock

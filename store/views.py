@@ -5,7 +5,8 @@ from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
 from accounts.decorators import manager_required
 from .models import HeroSection, HeroCard, AboutSection, AboutStat, FooterConfig, SocialLink, FooterLink, StoreSettings, Universe, Collection
-from .forms import HeroSectionForm, HeroCardForm, AboutSectionForm, AboutStatForm, FooterConfigForm, SocialLinkForm, FooterLinkForm, CategoryForm, UniverseForm, CollectionForm
+from accounts.models import Shop
+from .forms import HeroSectionForm, HeroCardForm, AboutSectionForm, AboutStatForm, FooterConfigForm, SocialLinkForm, FooterLinkForm, CategoryForm, UniverseForm, CollectionForm, ShopForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db.models import Q
@@ -42,9 +43,9 @@ class SPAContextMixin:
         store_settings = StoreSettings.objects.first()
         settings_data = {
             'deliveryPrice': float(store_settings.delivery_fee) if store_settings else 5.99,
-            'freeShippingThreshold': 100, 
+            'freeShippingThreshold': 100000, 
             'taxRate': 0.16,
-            'bannerText': '🎁 Livraison gratuite dès 100€ d\'achat',
+            'bannerText': '🎁 Livraison gratuite dès 100 000 FC d\'achat',
             'bannerActive': True,
         }
         ctx['store_settings_json'] = json.dumps(settings_data)
@@ -277,7 +278,22 @@ class WebsiteDashboardView(TemplateView):
         context['categories'] = Category.objects.all()
         context['universes_count'] = Universe.objects.count()
         context['collections_count'] = Collection.objects.count()
+        context['shop'] = self.request.user.profile.shop
         return context
+
+@method_decorator(manager_required, name='dispatch')
+class ShopUpdateView(UpdateView):
+    model = Shop
+    form_class = ShopForm
+    template_name = 'store/admin/shop_form.html'
+    success_url = reverse_lazy('store:admin_dashboard')
+
+    def get_object(self, queryset=None):
+        return self.request.user.profile.shop
+
+    def form_valid(self, form):
+        messages.success(self.request, "Informations de la boutique mises à jour.")
+        return super().form_valid(form)
 
 
 @method_decorator(manager_required, name='dispatch')

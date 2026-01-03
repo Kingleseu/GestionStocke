@@ -56,7 +56,7 @@
                     <div class="fw-bold text-dark text-truncate mb-1" title="{{ product.name }}">{{ product.name }}
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-auto">
-                        <span class="pos-price">{{ product.selling_price }}$</span>
+                        <span class="pos-price">{{ product.selling_price }} FC</span>
                         <span
                             class="badge {% if product.current_stock == 0 %}bg-danger{% elif product.is_low_stock %}bg-warning{% else %}bg-success{% endif %} bg-opacity-10 text-dark rounded-pill"
                             style="font-size: 0.7rem;">
@@ -105,7 +105,7 @@
 
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="text-muted">Total à payer</span>
-                <span class="total-display text-primary mb-0" id="totalAmount">0.00$</span>
+                <span class="total-display text-primary mb-0" id="totalAmount">0.00 FC</span>
             </div>
 
             <button
@@ -253,14 +253,14 @@
             <div class="cart-item">
                 <div class="flex-grow-1">
                     <div class="fw-bold text-dark">${item.name}</div>
-                    <div class="text-muted small">${item.price}$ / unité</div>
+                    <div class="text-muted small">${item.price} FC / unité</div>
                 </div>
                 <div class="d-flex align-items-center gap-2 bg-white rounded-pill border px-1 py-1">
                     <button class="btn btn-sm btn-link text-dark p-0 px-2 text-decoration-none" onclick="updateQuantity(${index}, -1)">-</button>
                     <span class="fw-bold small" style="min-width: 20px; text-align: center;">${item.quantity}</span>
                     <button class="btn btn-sm btn-link text-dark p-0 px-2 text-decoration-none" onclick="updateQuantity(${index}, 1)">+</button>
                 </div>
-                <div class="fw-bold ms-3" style="min-width: 60px; text-align: right;">${(item.price * item.quantity).toFixed(2)}$</div>
+                <div class="fw-bold ms-3" style="min-width: 60px; text-align: right;">${(item.price * item.quantity).toFixed(2)} FC</div>
                 <button class="btn btn-sm text-danger ms-1" onclick="removeFromCart(${index})"><i class="bi bi-x-lg"></i></button>
             </div>
             `).join('');
@@ -268,7 +268,7 @@
         }
 
         const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        document.getElementById('totalAmount').textContent = total.toFixed(2) + '$';
+        document.getElementById('totalAmount').textContent = total.toFixed(2) + ' FC';
     }
 
     function updateQuantity(index, change) {
@@ -328,7 +328,7 @@
             })
             .then(data => {
                 if (data.success) {
-                    showToast('success', 'Vente Validée', `Total: ${data.total}$`);
+                    showToast('success', 'Vente Validée', `Total: ${data.total} FC`);
                     cart = [];
                     updateCart();
                     // Redirect to receipt

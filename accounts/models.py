@@ -20,6 +20,29 @@ class Shop(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_shops')
     created_at = models.DateTimeField(auto_now_add=True)
     
+    # Administrative information
+    address = models.TextField(blank=True, null=True, verbose_name="Adresse")
+    rccm = models.CharField(max_length=100, blank=True, null=True, verbose_name="RCCM")
+    id_nat = models.CharField(max_length=100, blank=True, null=True, verbose_name="ID.NAT")
+    nif = models.CharField(max_length=100, blank=True, null=True, verbose_name="NIF")
+    bureau = models.CharField(max_length=100, blank=True, null=True, verbose_name="Bureau")
+    phone = models.CharField(max_length=50, blank=True, null=True, verbose_name="Téléphone")
+    email = models.EmailField(blank=True, null=True, verbose_name="Email")
+    
+    # Financial settings
+    usd_to_cdf_rate = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=2800.00, 
+        verbose_name="Taux USD vers CDF"
+    )
+    vat_percentage = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=16.00, 
+        verbose_name="Pourcentage TVA (%)"
+    )
+    
     def __str__(self):
         return self.name
 

@@ -25,18 +25,20 @@ def currency(value, user=None):
         currency_code = profile.currency
     
     # Récupérer les informations de la devise
-    currency_info = settings.CURRENCIES.get(currency_code, settings.CURRENCIES[settings.DEFAULT_CURRENCY])
+    currency_info = settings.CURRENCIES.get(currency_code, settings.CURRENCIES.get('CDF', {'symbol': 'FC'}))
     symbol = currency_info['symbol']
     
     # Formater selon la devise
     if currency_code == 'USD':
         # Format: $1,234.56
         formatted = f"{symbol}{amount:,.2f}"
-    elif currency_code == 'FC':
-        # Format: 1 234,56 FC
-        formatted = f"{amount:,.2f} {symbol}".replace(',', ' ').replace('.', ',')
     else:
+        # Format: 1 234,56 FC (Standard CDF format)
+        # Using space as thousand separator and comma as decimal separator
         formatted = f"{amount:,.2f} {symbol}"
+        # We can fine-tune the format if requested, but standard Python format for now
+        # Actually, let's make it look like 1 234.56 FC or similar
+        formatted = f"{amount:,.2f} {symbol}".replace(',', ' ')
     
     return formatted
 

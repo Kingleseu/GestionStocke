@@ -156,18 +156,40 @@ def receipt_view(request, sale_id):
     # Security: Ensure sale belongs to user's shop
     # We allow cashiers to see receipts from their shop
     try:
-        user_shop = request.user.profile.shop
-        sale = Sale.objects.get(id=sale_id, shop=user_shop)
+        shop = request.user.profile.shop
+        sale = Sale.objects.get(id=sale_id, shop=shop)
     except Sale.DoesNotExist:
         messages.error(request, "Vente introuvable ou accès refusé.")
         return redirect('sales:pos')
         
     items = sale.items.select_related('product').all()
+
+    # Calculations for VAT (All in CDF now)
+    vat_rate = shop.vat_percentage / 100
+    
+    # Financial values (All in CDF)
+    total_ttc = sale.total
+    total_ht = total_ttc / (1 + vat_rate)
+    vat_amount = total_ttc - total_ht
+
+    # Prepare items
+    items_with_pricing = []
+    for item in items:
+        items_with_pricing.append({
+            'obj': item,
+            'unit_price': item.unit_price,
+            'subtotal': item.subtotal,
+        })
     
     context = {
         'sale': sale,
-        'items': items,
-        'shop': user_shop
+        'items': items_with_pricing,
+        'shop': shop,
+        'vat_rate_pct': shop.vat_percentage,
+        # Financial Details (Still using named keys for template compatibility)
+        'total_ht_cdf': total_ht,
+        'vat_amount_cdf': vat_amount,
+        'total_ttc_cdf': total_ttc,
     }
     
     return render(request, 'sales/receipt.html', context)

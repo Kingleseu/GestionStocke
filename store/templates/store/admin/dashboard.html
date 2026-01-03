@@ -20,6 +20,29 @@
         </div>
     </div>
 
+    <!-- Section Boutique -->
+    <div class="card border-0 shadow-sm mb-4" style="border-left: 5px solid #0d6efd !important;">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-shop me-2 text-primary"></i>Informations de votre Boutique</h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <p class="mb-0 text-muted">Configurez le nom, l'adresse, les identifiants fiscaux (RCCM, NIF) et le
+                        taux de change pour vos factures.</p>
+                    <div class="mt-2 small">
+                        <strong>Actuel :</strong> {{ shop.name }} | <strong>Taux :</strong> 1 USD = {{ shop.usd_to_cdf_rate }} CDF
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'store:admin_shop_update' %}" class="btn btn-primary">
+                        <i class="bi bi-pencil-square me-2"></i> Modifier les Infos Boutique
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Section Hero -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white py-3">

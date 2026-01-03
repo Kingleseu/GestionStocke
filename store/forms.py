@@ -1,6 +1,24 @@
 from django import forms
 from .models import HeroSection, HeroCard, AboutSection, AboutStat, TrustSignal, FooterConfig, SocialLink, FooterLink, Universe, Collection
+from accounts.models import Shop, UserProfile
 from products.models import Category
+
+class ShopForm(forms.ModelForm):
+    class Meta:
+        model = Shop
+        fields = ['name', 'address', 'rccm', 'id_nat', 'nif', 'bureau', 'phone', 'email', 'usd_to_cdf_rate', 'vat_percentage']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'rccm': forms.TextInput(attrs={'class': 'form-control'}),
+            'id_nat': forms.TextInput(attrs={'class': 'form-control'}),
+            'nif': forms.TextInput(attrs={'class': 'form-control'}),
+            'bureau': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'usd_to_cdf_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'vat_percentage': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }
 
 class HeroSectionForm(forms.ModelForm):
     class Meta:

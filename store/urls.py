@@ -50,6 +50,7 @@ urlpatterns = [
 
     # Settings
     path('admin/settings/', views.StoreSettingsUpdateView.as_view(), name='admin_settings_update'),
+    path('admin/shop/update/', views.ShopUpdateView.as_view(), name='admin_shop_update'),
 
     # Category Navigator (Universes)
     path('admin/universes/', views.UniverseListView.as_view(), name='admin_universes'),

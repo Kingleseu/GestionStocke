@@ -2,9 +2,9 @@
 const products = window.djangoProducts || [];
 let adminSettings = window.storeSettings || {
     deliveryPrice: 5.99,
-    freeShippingThreshold: 100,
+    freeShippingThreshold: 100000,
     taxRate: 0.2,
-    bannerText: '🎁 Free shipping on orders over €100',
+    bannerText: '🎁 Livraison gratuite dès 100 000 FC d\'achat',
     bannerActive: true,
 };
 
@@ -457,7 +457,7 @@ function createProductCardContent(product, isExpanded) {
             <h3>${product.name}</h3>
             <p class="product-meta">${product.material} • ${product.category}</p>
             <div class="product-footer">
-                <p class="product-price">€${product.price ? product.price.toLocaleString() : '0'}</p>
+                <p class="product-price">${product.price ? product.price.toLocaleString() : '0'} FC</p>
                 ${product.customizable ? '<span class="customizable-badge">Personnalisable</span>' : ''}
             </div>
             ${!isExpanded ? `
@@ -542,7 +542,7 @@ function createProductCardContent(product, isExpanded) {
                 <button class="add-to-cart-btn ${isCustomizationComplete(product) ? '' : 'disabled'}" 
                         onclick="addToCart('${product.id}')" 
                         ${isCustomizationComplete(product) ? '' : 'disabled'}>
-                    Ajouter au panier • €${(product.price * customization.quantity).toLocaleString()}
+                    Ajouter au panier • ${(product.price * customization.quantity).toLocaleString()} FC
                 </button>
             </div>
         ` : ''}
@@ -754,7 +754,7 @@ function updateCartUI() {
                                 </svg>
                             </button>
                         </div>
-                        <p class="cart-item-price">€${(item.price * item.quantity).toLocaleString()}</p>
+                        <p class="cart-item-price">${(item.price * item.quantity).toLocaleString()} FC</p>
                     </div>
                 </div>
             </div>
@@ -771,15 +771,15 @@ function updateCartSummary() {
     const tax = subtotal * adminSettings.taxRate;
     const total = subtotal + deliveryFee + tax;
 
-    document.getElementById('cartSubtotal').textContent = `€${subtotal.toFixed(2)}`;
+    document.getElementById('cartSubtotal').textContent = `${subtotal.toFixed(2)} FC`;
     const deliveryEl = document.getElementById('cartDelivery');
     if (deliveryEl) {
         deliveryEl.innerHTML = deliveryFee === 0
             ? '<span class="free-delivery">Gratuit</span>'
-            : `€${deliveryFee.toFixed(2)}`;
+            : `${deliveryFee.toFixed(2)} FC`;
     }
-    document.getElementById('cartTax').textContent = `€${tax.toFixed(2)}`;
-    document.getElementById('cartTotal').textContent = `€${total.toFixed(2)}`;
+    document.getElementById('cartTax').textContent = `${tax.toFixed(2)} FC`;
+    document.getElementById('cartTotal').textContent = `${total.toFixed(2)} FC`;
 }
 
 function toggleCart() {
@@ -824,7 +824,7 @@ function renderCheckoutSummary() {
                 <p>${item.customization ? (item.customization.material || 'Standard') : 'Standard'}</p>
             </div>
             <div class="order-item-price">
-                €${(item.price * item.quantity).toLocaleString()}
+                ${(item.price * item.quantity).toLocaleString()} FC
             </div>
         </div>
     `).join('');
@@ -835,16 +835,16 @@ function renderCheckoutSummary() {
     const total = subtotal + deliveryFee + tax;
 
     const subEl = document.getElementById('checkoutSubtotal');
-    if (subEl) subEl.textContent = `€${subtotal.toFixed(2)}`;
+    if (subEl) subEl.textContent = `${subtotal.toFixed(2)} FC`;
 
     const delEl = document.getElementById('checkoutDelivery');
-    if (delEl) delEl.innerHTML = deliveryFee === 0 ? '<span class="free-delivery">Gratuit</span>' : `€${deliveryFee.toFixed(2)}`;
+    if (delEl) delEl.innerHTML = deliveryFee === 0 ? '<span class="free-delivery">Gratuit</span>' : `${deliveryFee.toFixed(2)} FC`;
 
     const taxEl = document.getElementById('checkoutTax');
-    if (taxEl) taxEl.textContent = `€${tax.toFixed(2)}`;
+    if (taxEl) taxEl.textContent = `${tax.toFixed(2)} FC`;
 
     const totEl = document.getElementById('checkoutTotal');
-    if (totEl) totEl.textContent = `€${total.toFixed(2)}`;
+    if (totEl) totEl.textContent = `${total.toFixed(2)} FC`;
 }
 
 // Filter Functions
@@ -1207,7 +1207,7 @@ function renderProductsTable() {
                     </div>
                 </td>
                 <td>${product.category}</td>
-                <td>€${product.price ? product.price.toLocaleString() : '0'}</td>
+                <td>${product.price ? product.price.toLocaleString() : '0'} FC</td>
                 <td>
                     <span class="stock-status ${stockClass}">${product.stock} unités</span>
                 </td>
@@ -1241,7 +1241,7 @@ function renderTopProducts() {
                 </div>
                 <div class="top-product-right">
                     <p class="top-product-sales">${sales} ventes</p>
-                    <p class="top-product-revenue">€${revenue.toLocaleString()}</p>
+                    <p class="top-product-revenue">${revenue.toLocaleString()} FC</p>
                 </div>
             </div>
         `;

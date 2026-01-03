@@ -327,10 +327,10 @@
         </div>
     </section>
 
-    
+
     <!-- CATEGORY NAVIGATOR - Integrated as Section -->
     <section class="category-navigator-section reveal">
-        
+
         <div class="navigator-grid">
             {% for universe in universes %}
             <div class="universe-card reveal" onclick="selectUniverse('{{ universe.identifier }}')">
@@ -558,7 +558,7 @@
                     </svg>
                 </div>
                 <h3>Livraison Gratuite</h3>
-                <p>Dès 100€ d'achat</p>
+                <p>Dès 100 000 FC d'achat</p>
             </div>
             <div class="trust-item">
                 <div class="trust-icon">
@@ -781,11 +781,13 @@
                 <div class="filter-group">
                     <h4>Catégorie</h4>
                     <div class="filter-options">
-                        <label><input type="radio" name="category" value="Tous" checked onchange="applyFilters()"> Tout voir</label>
+                        <label><input type="radio" name="category" value="Tous" checked onchange="applyFilters()"> Tout
+                            voir</label>
                         {% get_active_categories as filter_categories_fallback %}
                         {% if filter_categories or categories or filter_categories_fallback %}
                         {% for category in filter_categories|default:categories|default:filter_categories_fallback %}
-                        <label><input type="radio" name="category" value="{{ category.name }}" onchange="applyFilters()"> {{ category.name }}</label>
+                        <label><input type="radio" name="category" value="{{ category.name }}"
+                                onchange="applyFilters()"> {{ category.name }}</label>
                         {% endfor %}
                         {% else %}
                         <span class="text-muted small">Aucune catégorie</span>
@@ -819,16 +821,15 @@
                             Tous
                             les
                             prix</label>
-                        <label><input type="radio" name="price" value="0-500" onchange="applyFilters()">
-                            < €500</label>
-                                <label><input type="radio" name="price" value="500-1000" onchange="applyFilters()">
-                                    €500
-                                    - €1000</label>
-                                <label><input type="radio" name="price" value="1000-2000" onchange="applyFilters()">
-                                    €1000 - €2000</label>
-                                <label><input type="radio" name="price" value="2000+" onchange="applyFilters()">
-                                    >
-                                    €2000</label>
+                        <label><input type="radio" name="price" value="0-100000" onchange="applyFilters()">
+                            < 100 000 FC</label>
+                                <label><input type="radio" name="price" value="100000-500000" onchange="applyFilters()">
+                                    100 000 - 500 000 FC</label>
+                                <label><input type="radio" name="price" value="500000-1000000"
+                                        onchange="applyFilters()">
+                                    500 000 - 1 000 000 FC</label>
+                                <label><input type="radio" name="price" value="1000000+" onchange="applyFilters()">
+                                    > 1 000 000 FC</label>
                     </div>
                 </div>
 
@@ -973,12 +974,12 @@
                         <!-- JS will populate -->
                     </div>
                     <div class="order-totals">
-                        <div class="total-row"><span>Sous-total</span><span id="checkoutSubtotal">€0.00</span>
+                        <div class="total-row"><span>Sous-total</span><span id="checkoutSubtotal">0.00 FC</span>
                         </div>
-                        <div class="total-row"><span>Livraison</span><span id="checkoutDelivery">€0.00</span>
+                        <div class="total-row"><span>Livraison</span><span id="checkoutDelivery">0.00 FC</span>
                         </div>
-                        <div class="total-row"><span>TVA (16%)</span><span id="checkoutTax">€0.00</span></div>
-                        <div class="total-row final-total"><span>Total</span><span id="checkoutTotal">€0.00</span>
+                        <div class="total-row"><span>TVA (16%)</span><span id="checkoutTax">0.00 FC</span></div>
+                        <div class="total-row final-total"><span>Total</span><span id="checkoutTotal">0.00 FC</span>
                         </div>
                     </div>
                     <button type="submit" form="checkoutForm" class="btn-primary w-100">Confirmer la

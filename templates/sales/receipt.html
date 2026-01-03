@@ -6,42 +6,22 @@
 {% block extra_css %}
 <style>
     .receipt-container {
-        max-width: 400px;
+        max-width: 450px;
         margin: 2rem auto;
         background: white;
-        padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        border: 1px solid #eee;
+        color: #000;
+        font-family: 'Courier New', Courier, monospace;
     }
 
     .receipt-header {
         text-align: center;
-        border-bottom: 2px dashed #E5E7EB;
-        padding-bottom: 1rem;
         margin-bottom: 1rem;
-    }
-
-    .receipt-items {
-        border-bottom: 2px dashed #E5E7EB;
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .receipt-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
     }
 
     .receipt-total {
-        font-size: 1.5rem;
-        font-weight: bold;
-        text-align: center;
-        background: linear-gradient(135deg, var(--primary-red) 0%, #B91C1C 100%);
-        color: white;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
+        margin-top: 1rem;
     }
 
     @media print {
@@ -70,70 +50,109 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="receipt-container">
-        <!-- En-tête -->
-        <div class="receipt-header">
-            <img src="{% static 'img/mkaribu_logo.png' %}" alt="MKARIBU" style="max-height: 80px; margin-bottom: 10px;">
-            <p class="mb-0 text-muted small" style="letter-spacing: 1px;">DISCOVER THE TALENT OF OUR HANDS</p>
-            <hr>
-            <h4>Ticket #{{ sale.id }}</h4>
-            <p class="text-muted mb-0">{{ sale.sale_date|date:"d/m/Y à H:i" }}</p>
+<div class="container py-4">
+    <div class="receipt-container mx-auto">
+        <!-- Header Section -->
+        <div class="receipt-header text-center">
+            <h4 class="mb-1 font-weight-bold" style="font-size: 1.25rem;"><strong>{{ shop.name }}</strong></h4>
+            <p class="mb-0 small">{{ shop.address|default:'' }}</p>
+            {% if shop.rccm %}<p class="mb-0 small">RCCM : {{ shop.rccm }}</p>{% endif %}
+            {% if shop.id_nat %}<p class="mb-0 small">ID.NAT : {{ shop.id_nat }}</p>{% endif %}
+            {% if shop.nif %}<p class="mb-0 small">NIF : {{ shop.nif }}</p>{% endif %}
+            {% if shop.bureau %}<p class="mb-0 small">Bureau - {{ shop.bureau }}</p>{% endif %}
+            <p class="mb-0 small">DR Congo</p>
+            {% if shop.phone %}<p class="mb-0 small">{{ shop.phone }}</p>{% endif %}
+            {% if shop.email %}<p class="mb-0 small">{{ shop.email }}</p>{% endif %}
         </div>
 
-        <!-- Informations -->
-        <div class="mb-3">
+        <div class="text-center my-2">
+            <div style="border-top: 2px dotted #000; margin: 5px 0;"></div>
+            <h5 class="m-0 py-1" style="letter-spacing: 2px;">FACTURE</h5>
+            <div style="border-top: 2px dotted #000; margin: 5px 0;"></div>
+        </div>
+
+        <!-- Invoice Info -->
+        <div class="mb-3 small">
             <div class="d-flex justify-content-between">
-                <span class="text-muted">Caissier:</span>
-                <strong>{{ sale.cashier.get_full_name|default:sale.cashier.username }}</strong>
+                <span>N° de facture</span>
+                <span>NIV{{ sale.id|stringformat:"04d" }}</span>
             </div>
             <div class="d-flex justify-content-between">
-                <span class="text-muted">Paiement:</span>
-                <strong>{{ sale.get_payment_method_display }}</strong>
+                <span>Date</span>
+                <span>{{ sale.sale_date|date:"d.m.Y" }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Client :</span>
+                <span>{{ sale.notes|default:"Passager" }}</span>
             </div>
         </div>
 
-        <!-- Articles -->
-        <div class="receipt-items">
-            <h5 class="mb-3">Articles</h5>
-            {% for item in items %}
-            <div class="receipt-item">
-                <div>
-                    <strong>{{ item.product.name }}</strong>
-                    <div class="small text-muted">{{ item.unit_price }}$ × {{ item.quantity }}</div>
-                </div>
-                <div class="text-end">
-                    <strong>{{ item.subtotal }}$</strong>
-                </div>
+        <div style="border-top: 2px dotted #000; margin: 10px 0;"></div>
+
+        <!-- Items Table -->
+        <table class="table table-borderless table-sm small mb-0">
+            <thead>
+                <tr style="border-bottom: 1px dotted #000;">
+                    <th class="ps-0">#</th>
+                    <th>Article</th>
+                    <th class="text-center">Quantité</th>
+                    <th class="text-end">Taux</th>
+                    <th class="text-end pe-0">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="ps-0">{{ forloop.counter }}</td>
+                    <td>{{ item.obj.product.name }}</td>
+                    <td class="text-center">{{ item.obj.quantity|floatformat:2 }}</td>
+                    <td class="text-end">{{ item.unit_price|floatformat:2 }}</td>
+                    <td class="text-end pe-0">{{ item.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="border-top: 1px dotted #000; margin: 5px 0;"></div>
+
+        <!-- Subtotal & VAT -->
+        <div class="small w-100 ps-4">
+            <div class="d-flex justify-content-between">
+                <span style="margin-left: auto;">Sous-total (HT)</span>
+                <span class="text-end" style="width: 100px;">{{ total_ht_cdf|floatformat:2 }}</span>
             </div>
-            {% endfor %}
+            <div class="d-flex justify-content-between">
+                <span style="margin-left: auto;">TVA ({{ vat_rate_pct }}%)</span>
+                <span class="text-end" style="width: 100px;">{{ vat_amount_cdf|floatformat:2 }}</span>
+            </div>
         </div>
 
-        <!-- Total -->
-        <div class="receipt-total">
-            <div>TOTAL</div>
-            <div style="font-size: 2rem;">{{ sale.total }}$</div>
+        <div style="border-top: 2px solid #000; margin: 10px 0;"></div>
+
+        <!-- Total Section -->
+        <div class="d-flex justify-content-between align-items-center py-2">
+            <h3 class="m-0"><strong>TOTAL</strong></h3>
+            <div class="text-end">
+                <h3 class="m-0"><strong>CDF {{ total_ttc_cdf|floatformat:2 }}</strong></h3>
+            </div>
         </div>
+
+        <div style="border-top: 2px solid #000; margin: 10px 0;"></div>
 
         <!-- Footer -->
-        <div class="text-center text-muted small">
-            <p class="mb-1">Merci de votre visite !</p>
-            <p class="mb-0 d-inline-flex align-items-center gap-2 justify-content-center">
-                À bientôt
-                <img src="{% static 'img/mkaribu_logo.png' %}" alt="MKARIBU" style="height: 20px; width: auto;">
-            </p>
+        <div class="text-center small px-2 mt-4">
+            <p>Merci de votre confiance. Nous aurions le plaisir de collaborer de nouveau avec vous dans un futur
+                proche.</p>
         </div>
 
-        <!-- Boutons (non imprimés) -->
-        <div class="no-print mt-4">
-            <div class="d-grid gap-2">
-                <button onclick="window.print()" class="btn btn-primary btn-lg">
-                    <i class="bi bi-printer"></i> Imprimer le ticket
-                </button>
-                <a href="{% url 'sales:pos' %}" class="btn btn-outline-secondary btn-lg">
-                    <i class="bi bi-arrow-left"></i> Retour à la caisse
-                </a>
-            </div>
+        <!-- Action Buttons (no-print) -->
+        <div class="no-print mt-4 d-grid gap-2">
+            <button onclick="window.print()" class="btn btn-dark btn-lg">
+                <i class="bi bi-printer"></i> Imprimer la facture
+            </button>
+            <a href="{% url 'sales:pos' %}" class="btn btn-outline-dark">
+                <i class="bi bi-arrow-left"></i> Retour à la caisse
+            </a>
         </div>
     </div>
 </div>
