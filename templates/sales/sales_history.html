@@ -68,7 +68,7 @@
             <div class="card bg-success text-white shadow-sm">
                 <div class="card-body">
                     <h6 class="text-uppercase opacity-75">Montant total</h6>
-                    <h2>{{ total_amount|floatformat:2 }} $</h2>
+                    <h2>{{ total_amount|floatformat:2 }} FC</h2>
                 </div>
             </div>
         </div>
@@ -106,7 +106,7 @@
                                 {% endif %}
                             </td>
                             <td>{{ sale.items.count }} article(s)</td>
-                            <td class="fw-bold text-success">{{ sale.total|floatformat:2 }} $</td>
+                            <td class="fw-bold text-success">{{ sale.total|floatformat:2 }} FC</td>
                             <td>
                                 <a href="{% url 'sales:receipt' sale.id %}" class="btn btn-sm btn-outline-primary"
                                     target="_blank">

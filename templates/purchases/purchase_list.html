@@ -31,7 +31,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <h6 class="text-muted">Montant total</h6>
-                    <h3 class="mb-0 text-danger">{{ total_amount|floatformat:2 }}$</h3>
+                    <h3 class="mb-0 text-danger">{{ total_amount|floatformat:2 }} FC</h3>
                 </div>
             </div>
         </div>
@@ -84,7 +84,7 @@
                             {% endif %}
                         </td>
                         <td>{{ purchase.item_count }} article{{ purchase.item_count|pluralize }}</td>
-                        <td><strong class="text-danger">{{ purchase.total }}$</strong></td>
+                        <td><strong class="text-danger">{{ purchase.total }} FC</strong></td>
                         <td>{{ purchase.created_by.username }}</td>
                         <td>
                             {% if purchase.is_received %}

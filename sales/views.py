@@ -164,10 +164,10 @@ def receipt_view(request, sale_id):
         
     items = sale.items.select_related('product').all()
 
-    # Calculations for VAT (All in CDF now)
+    # Calculations for VAT (All in FC now)
     vat_rate = shop.vat_percentage / 100
     
-    # Financial values (All in CDF)
+    # Financial values (All in FC)
     total_ttc = sale.total
     total_ht = total_ttc / (1 + vat_rate)
     vat_amount = total_ttc - total_ht

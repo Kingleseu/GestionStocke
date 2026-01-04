@@ -16,9 +16,9 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="card-title mb-0">Ventes du jour</h6>
-                        <i class="bi bi-currency-dollar fs-4"></i>
+                        <i class="bi bi-cash-stack fs-4"></i>
                     </div>
-                    <h2 class="display-6 fw-bold mb-0">{{ daily_total|floatformat:2 }} $</h2>
+                    <h2 class="display-6 fw-bold mb-0">{{ daily_total|floatformat:2 }} FC</h2>
                     <p class="mb-0 mt-2 opacity-75">
                         <i class="bi bi-receipt"></i> {{ daily_count }} transaction{{ daily_count|pluralize }}
                     </p>
@@ -70,7 +70,7 @@
                                         <span class="badge bg-light text-dark border">{{ item.total_qty }}</span>
                                     </td>
                                     <td class="text-end pe-4 fw-bold text-success">
-                                        {{ item.total_revenue|floatformat:2 }} $
+                                        {{ item.total_revenue|floatformat:2 }} FC
                                     </td>
                                 </tr>
                                 {% empty %}

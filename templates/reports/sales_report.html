@@ -28,11 +28,11 @@
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
                         <h6 class="text-muted text-uppercase fw-bold small mb-1">Chiffre d'Affaires</h6>
-                        <h2 class="fw-bold mb-0 text-dark">{{ total_revenue|floatform:2 }}$</h2>
+                        <h2 class="fw-bold mb-0 text-dark">{{ total_revenue|floatform:2 }} FC</h2>
                     </div>
                     <div class="bg-rose-100 rounded-circle d-flex align-items-center justify-content-center"
                         style="width: 50px; height: 50px;">
-                        <i class="bi bi-currency-dollar fs-4 text-primary"></i>
+                        <i class="bi bi-cash-stack fs-4 text-primary"></i>
                     </div>
                 </div>
             </div>
@@ -56,7 +56,7 @@
                 <div class="card-body d-flex align-items-center justify-content-between">
                     <div>
                         <h6 class="text-muted text-uppercase fw-bold small mb-1">Panier Moyen</h6>
-                        <h2 class="fw-bold mb-0 text-dark">{{ avg_basket|floatform:2 }}$</h2>
+                        <h2 class="fw-bold mb-0 text-dark">{{ avg_basket|floatform:2 }} FC</h2>
                     </div>
                     <div class="bg-emerald-100 rounded-circle d-flex align-items-center justify-content-center"
                         style="width: 50px; height: 50px;">
@@ -109,7 +109,7 @@
                             </div>
                         </td>
                         <td><span class="badge bg-light text-dark border">{{ sale.payment_method }}</span></td>
-                        <td class="text-end pe-4 fw-bold text-dark">{{ sale.total }}$</td>
+                        <td class="text-end pe-4 fw-bold text-dark">{{ sale.total }} FC</td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -130,7 +130,7 @@
         data: {
             labels: {{ chart_labels| safe }},
     datasets: [{
-        label: 'Chiffre d\'Affaires ($)',
+        label: 'Chiffre d\'Affaires (FC)',
         data: {{ chart_data| safe }},
         borderColor: '#E11D48',
         backgroundColor: 'rgba(225, 29, 72, 0.05)',

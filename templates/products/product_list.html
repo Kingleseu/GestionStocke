@@ -58,16 +58,14 @@
             <div class="col-md-5">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" name="search" class="form-control border-start-0"
-                        placeholder="Rechercher par nom ou code-barres..." value="{{ request.GET.search }}">
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Rechercher par nom ou code-barres..." value="{{ request.GET.search }}">
                 </div>
             </div>
             <div class="col-md-3">
                 <select name="category" class="form-select">
                     <option value="">Toutes les catégories</option>
                     {% for cat in categories %}
-                    <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}
-                    </option>
+                    <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -75,8 +73,7 @@
                 <select name="status" class="form-select">
                     <option value="">Tous les statuts</option>
                     <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Actifs</option>
-                    <option value="low_stock" {% if selected_status == 'low_stock' %}selected{% endif %}>Stock faible
-                    </option>
+                    <option value="low_stock" {% if selected_status == 'low_stock' %}selected{% endif %}>Stock faible</option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -116,8 +113,7 @@
             <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden product-card-hover">
                 <!-- Checkbox (Absolute) -->
                 <div class="position-absolute top-0 start-0 p-3 z-10">
-                    <input type="checkbox" name="selected_products" value="{{ product.id }}"
-                        class="form-check-input product-checkbox shadow-sm" style="width: 1.25em; height: 1.25em;">
+                    <input type="checkbox" name="selected_products" value="{{ product.id }}" class="form-check-input product-checkbox shadow-sm" style="width: 1.25em; height: 1.25em;">
                 </div>
 
                 <!-- Status Badge (Absolute) -->
@@ -161,7 +157,7 @@
 
                     <div class="mt-auto d-flex justify-content-between align-items-center">
                         <div>
-                            <span class="fs-5 fw-bold text-primary">{{ product.selling_price }}$</span>
+                            <span class="fs-5 fw-bold text-primary">{{ product.selling_price }} FC</span>
                             <div class="mt-1">
                                 <span
                                     class="badge {% if product.current_stock == 0 %}bg-danger{% elif product.current_stock < product.minimum_stock %}bg-warning{% else %}bg-success{% endif %} bg-opacity-10 text-dark rounded-pill"

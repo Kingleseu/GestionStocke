@@ -34,7 +34,7 @@ class Shop(models.Model):
         max_digits=10, 
         decimal_places=2, 
         default=2800.00, 
-        verbose_name="Taux USD vers CDF"
+        verbose_name="Taux de conversion FC"
     )
     vat_percentage = models.DecimalField(
         max_digits=5, 
@@ -49,7 +49,6 @@ class Shop(models.Model):
 class UserProfile(models.Model):
     """Profil utilisateur avec préférences"""
     CURRENCY_CHOICES = [
-        ('USD', 'Dollar Américain ($)'),
         ('FC', 'Franc Congolais (FC)'),
     ]
     

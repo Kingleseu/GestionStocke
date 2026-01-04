@@ -854,10 +854,10 @@ function filterProducts() {
         if (filters.material !== 'Tous' && product.material !== filters.material) return false;
 
         if (filters.priceRange !== 'Tous') {
-            if (filters.priceRange === '0-500' && product.price >= 500) return false;
-            if (filters.priceRange === '500-1000' && (product.price < 500 || product.price >= 1000)) return false;
-            if (filters.priceRange === '1000-2000' && (product.price < 1000 || product.price >= 2000)) return false;
-            if (filters.priceRange === '2000+' && product.price < 2000) return false;
+            if (filters.priceRange === '0-100000' && product.price >= 100000) return false;
+            if (filters.priceRange === '100000-500000' && (product.price < 100000 || product.price >= 500000)) return false;
+            if (filters.priceRange === '500000-1000000' && (product.price < 500000 || product.price >= 1000000)) return false;
+            if (filters.priceRange === '1000000+' && product.price < 1000000) return false;
         }
 
         if (filters.customizable === 'Oui' && !product.customizable) return false;

@@ -69,7 +69,7 @@ class Purchase(models.Model):
         ordering = ['-purchase_date']
     
     def __str__(self):
-        return f"Achat #{self.id} - {self.supplier} - {self.purchase_date.strftime('%d/%m/%Y')} - {self.total}$"
+        return f"Achat #{self.id} - {self.supplier} - {self.purchase_date.strftime('%d/%m/%Y')} - {self.total} FC"
     
     def calculate_total(self):
         """Calcule le total de l'achat à partir des items"""
@@ -127,7 +127,7 @@ class PurchaseItem(models.Model):
         verbose_name_plural = "Lignes d'achat"
     
     def __str__(self):
-        return f"{self.product.name} x{self.quantity} - {self.subtotal}$"
+        return f"{self.product.name} x{self.quantity} - {self.subtotal} FC"
     
     def save(self, *args, **kwargs):
         """Calcule automatiquement le sous-total et met à jour le stock"""

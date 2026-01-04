@@ -199,7 +199,7 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 # Currency settings
 CURRENCIES = {
     'USD': {'symbol': '$', 'name': 'Dollar Américain', 'code': 'USD'},
-    'CDF': {'symbol': 'FC', 'name': 'Franc Congolais', 'code': 'CDF'},
+    'CDF': {'symbol': 'FC', 'name': 'Franc Congolais (FC)', 'code': 'CDF'},
 }
 DEFAULT_CURRENCY = 'CDF'  # Devise par défaut
 

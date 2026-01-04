@@ -121,7 +121,7 @@
                             <h5 class="mb-1">Total de l'achat</h5>
                             <small>Nombre d'articles : <span id="itemCount">0</span></small>
                         </div>
-                        <h2 id="totalAmount">0.00$</h2>
+                        <h2 id="totalAmount">0.00 FC</h2>
                     </div>
                 </div>
 
@@ -219,7 +219,7 @@
 
         const subtotal = item.quantity * item.price;
         const subtotalEl = document.getElementById(`subtotal_${rowId}`);
-        if (subtotalEl) subtotalEl.textContent = subtotal.toFixed(2) + '$';
+        if (subtotalEl) subtotalEl.textContent = subtotal.toFixed(2) + ' FC';
     }
 
     // Mettre à jour le total général
@@ -228,7 +228,7 @@
         const totalEl = document.getElementById('totalAmount');
         const itemCountEl = document.getElementById('itemCount');
 
-        if (totalEl) totalEl.textContent = total.toFixed(2) + '$';
+        if (totalEl) totalEl.textContent = total.toFixed(2) + ' FC';
         if (itemCountEl) itemCountEl.textContent = items.length;
     }
 
@@ -269,11 +269,11 @@
                     <input type="number" class="form-control" id="price_${item.id}" 
                            step="0.01" min="0" value="${item.price}" 
                            onchange="updateItem(${item.id}, 'price', this.value)" required>
-                    <span class="input-group-text">$</span>
+                    <span class="input-group-text">FC</span>
                 </div>
             </td>
             <td>
-                <strong id="subtotal_${item.id}">${(item.quantity * item.price).toFixed(2)}$</strong>
+                <strong id="subtotal_${item.id}">${(item.quantity * item.price).toFixed(2)} FC</strong>
             </td>
             <td>
                 <button type="button" class="btn btn-sm btn-outline-danger" 

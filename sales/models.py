@@ -69,7 +69,7 @@ class Sale(models.Model):
         ordering = ['-sale_date']
     
     def __str__(self):
-        return f"Vente #{self.id} - {self.sale_date.strftime('%d/%m/%Y %H:%M')} - {self.total}$"
+        return f"Vente #{self.id} - {self.sale_date.strftime('%d/%m/%Y %H:%M')} - {self.total} FC"
     
     def calculate_total(self):
         """Calcule le total de la vente à partir des items"""
@@ -127,7 +127,7 @@ class SaleItem(models.Model):
         verbose_name_plural = "Lignes de vente"
     
     def __str__(self):
-        return f"{self.product.name} x{self.quantity} - {self.subtotal}$"
+        return f"{self.product.name} x{self.quantity} - {self.subtotal} FC"
     
     def save(self, *args, **kwargs):
         """Calcule automatiquement le sous-total et met à jour le stock"""

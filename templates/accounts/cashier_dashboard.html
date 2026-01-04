@@ -26,7 +26,7 @@
                     <h5 class="card-title mb-0">Aujourd'hui</h5>
                 </div>
                 <div class="card-body text-center">
-                    <h3 class="display-6 fw-bold text-primary">{{ stats.today.total|floatformat:2 }} $</h3>
+                    <h3 class="display-6 fw-bold text-primary">{{ stats.today.total|floatformat:2 }} FC</h3>
                     <p class="mb-0 text-muted">{{ stats.today.count }} ventes</p>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                     <h5 class="card-title mb-0">Cette Semaine</h5>
                 </div>
                 <div class="card-body text-center">
-                    <h3 class="display-6 fw-bold text-info">{{ stats.week.total|floatformat:2 }} $</h3>
+                    <h3 class="display-6 fw-bold text-info">{{ stats.week.total|floatformat:2 }} FC</h3>
                     <p class="mb-0 text-muted">{{ stats.week.count }} ventes</p>
                 </div>
             </div>
@@ -48,7 +48,7 @@
                     <h5 class="card-title mb-0">Ce Mois</h5>
                 </div>
                 <div class="card-body text-center">
-                    <h3 class="display-6 fw-bold text-success">{{ stats.month.total|floatformat:2 }} $</h3>
+                    <h3 class="display-6 fw-bold text-success">{{ stats.month.total|floatformat:2 }} FC</h3>
                     <p class="mb-0 text-muted">{{ stats.month.count }} ventes</p>
                 </div>
             </div>
@@ -112,7 +112,7 @@
                             <tr>
                                 <td>#{{ sale.id }}</td>
                                 <td>{{ sale.sale_date|date:"d/m/Y H:i" }}</td>
-                                <td class="fw-bold">{{ sale.total|floatformat:2 }} $</td>
+                                <td class="fw-bold">{{ sale.total|floatformat:2 }} FC</td>
                                 <td>
                                     <a href="{% url 'sales:receipt' sale.id %}" class="btn btn-sm btn-outline-primary"
                                         target="_blank">

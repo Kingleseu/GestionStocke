@@ -54,28 +54,33 @@
                         {% for product in products %}
                         <tr>
                             <td><code>{{ product.barcode }}</code></td>
-                            <td class="fw-bold">
-                                {% if product.image %}
-                                <img src="{{ product.image.url }}" alt="{{ product.name }}"
-                                    class="rounded shadow-sm me-2"
-                                    style="width: 40px; height: 40px; object-fit: cover;">
-                                {% else %}
-                                <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted me-2"
-                                    style="width: 40px; height: 40px;">
-                                    <i class="bi bi-image"></i>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if product.image %}
+                                    <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                                        class="rounded shadow-sm me-2"
+                                        style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted me-2"
+                                        style="width: 41px; height: 41px;">
+                                        <i class="bi bi-box"></i>
+                                    </div>
+                                    {% endif %}
+                                    <span class="fw-bold text-dark">{{ product.name }}</span>
                                 </div>
+                            </td>
+                            <td>
+                                {% if product.category %}
+                                <span class="badge bg-secondary">{{ product.category.name }}</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
-                                <td>
-                                    {% if product.category %}
-                                    <span class="badge bg-secondary">{{ product.category.name }}</span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                            <td class="fw-bold">{{ product.name }}</td>
-                            <td>{{ product.minimum_stock }}</td>
                             <td class="fw-bold">{{ product.current_stock }}</td>
+                            <td>{{ product.minimum_stock }}</td>
+                            <td class="fw-bold text-success">
+                                {{ product.purchase_price }} FC
+                            </td>
                             <td>
                                 {% if product.current_stock == 0 %}
                                 <span class="badge bg-danger">Rupture</span>
@@ -86,12 +91,15 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {{ product.purchase_price }} $
+                                <a href="{% url 'products:product_update' product.id %}"
+                                    class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-4">Aucun produit en stock</td>
+                            <td colspan="8" class="text-center py-4">Aucun produit en stock</td>
                         </tr>
                         {% endfor %}
                     </tbody>
