@@ -114,6 +114,13 @@ class Product(models.Model):
         null=True,
         verbose_name="Image du produit"
     )
+    secondary_image = models.ImageField(
+        upload_to='products/',
+        blank=True,
+        null=True,
+        verbose_name="Image au survol",
+        help_text="Image qui s'affiche lorsque la souris passe sur le produit"
+    )
     description = models.TextField(
         blank=True,
         null=True,

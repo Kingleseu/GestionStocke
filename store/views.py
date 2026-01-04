@@ -31,6 +31,7 @@ class SPAContextMixin:
                 'name': product.name,
                 'price': float(product.selling_price),
                 'image': product.image.url if product.image else '',
+                'secondary_image': product.secondary_image.url if product.secondary_image else '',
                 'category': product.category.name if product.category else 'Divers',
                 'material': 'Standard', 
                 'customizable': True, 

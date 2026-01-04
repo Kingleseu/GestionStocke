@@ -4,6 +4,25 @@
 {% block title %}Produits - MKARIBU{% endblock %}
 
 {% block content %}
+<style>
+    /* Hover effect fix for Admin List */
+    .product-image {
+        position: relative !important;
+    }
+
+    .product-image .secondary-img {
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        z-index: 10;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .product-image:hover .secondary-img {
+        opacity: 1 !important;
+    }
+</style>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="fw-bold mb-1">Produits</h2>
@@ -58,14 +77,16 @@
             <div class="col-md-5">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" name="search" class="form-control border-start-0" placeholder="Rechercher par nom ou code-barres..." value="{{ request.GET.search }}">
+                    <input type="text" name="search" class="form-control border-start-0"
+                        placeholder="Rechercher par nom ou code-barres..." value="{{ request.GET.search }}">
                 </div>
             </div>
             <div class="col-md-3">
                 <select name="category" class="form-select">
                     <option value="">Toutes les catégories</option>
                     {% for cat in categories %}
-                    <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -73,7 +94,8 @@
                 <select name="status" class="form-select">
                     <option value="">Tous les statuts</option>
                     <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Actifs</option>
-                    <option value="low_stock" {% if selected_status == 'low_stock' %}selected{% endif %}>Stock faible</option>
+                    <option value="low_stock" {% if selected_status == 'low_stock' %}selected{% endif %}>Stock faible
+                    </option>
                 </select>
             </div>
             <div class="col-md-2">
@@ -113,7 +135,8 @@
             <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden product-card-hover">
                 <!-- Checkbox (Absolute) -->
                 <div class="position-absolute top-0 start-0 p-3 z-10">
-                    <input type="checkbox" name="selected_products" value="{{ product.id }}" class="form-check-input product-checkbox shadow-sm" style="width: 1.25em; height: 1.25em;">
+                    <input type="checkbox" name="selected_products" value="{{ product.id }}"
+                        class="form-check-input product-checkbox shadow-sm" style="width: 1.25em; height: 1.25em;">
                 </div>
 
                 <!-- Status Badge (Absolute) -->
@@ -128,9 +151,14 @@
                 </div>
 
                 <!-- Image -->
-                <div class="bg-light ratio ratio-4x3">
+                <div class="bg-light ratio ratio-4x3 product-image">
                     {% if product.image %}
-                    <img src="{{ product.image.url }}" class="card-img-top object-fit-cover" alt="{{ product.name }}">
+                    <img src="{{ product.image.url }}" class="card-img-top object-fit-cover primary-img"
+                        alt="{{ product.name }}">
+                    {% if product.secondary_image %}
+                    <img src="{{ product.secondary_image.url }}" class="card-img-top object-fit-cover secondary-img"
+                        alt="{{ product.name }}">
+                    {% endif %}
                     {% else %}
                     <div class="d-flex align-items-center justify-content-center h-100 text-muted">
                         <i class="bi bi-box-seam display-4 opacity-25"></i>
@@ -250,7 +278,7 @@
     // I'll assume the user has the modal logic in a separate file or I need to rewrite it here.
     // For safety, I should probably keep the critical JS for the modal here if I didn't extract the modal file.
     // Wait, the previous file had the modal INLINE. I replaced it with an include in my text above, but I didn't create that file.
-    // I MUST put the modal back inline or create the file. I will put it back INLINE to facilitate the replacement.
+    // I MUST put the modal back inline or create the file. I will put it back INLINE to facilitate the ent.
 </script>
 
 

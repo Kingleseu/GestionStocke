@@ -444,7 +444,8 @@ function createProductCardContent(product, isExpanded) {
 
     return `
         <div class="product-image" onclick="${!isExpanded ? `event.stopPropagation(); toggleProductCard('${product.id}')` : ''}">
-            <img src="${product.image}" alt="${product.name}">
+            <img src="${product.image}" alt="${product.name}" class="primary-img">
+            ${product.secondary_image ? `<img src="${product.secondary_image}" alt="${product.name}" class="secondary-img">` : ''}
             ${product.badge ? `<div class="product-badge ${badgeClass}">${product.badge}</div>` : ''}
             <button class="favorite-btn" onclick="event.stopPropagation(); toggleFavorite('${product.id}')">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -850,7 +851,7 @@ function renderCheckoutSummary() {
 // Filter Functions
 function filterProducts() {
     return products.filter(product => {
-        if (filters.category !== 'Tous' && product.category !== filters.category) return false;
+        if (filters.category !== 'Tous' && product.category.toUpperCase() !== filters.category.toUpperCase()) return false;
         if (filters.material !== 'Tous' && product.material !== filters.material) return false;
 
         if (filters.priceRange !== 'Tous') {

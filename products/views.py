@@ -90,7 +90,7 @@ class ProductCreateView(CreateView):
     template_name = 'products/product_form.html'
     fields = [
         'name', 'barcode', 'category', 'purchase_price', 'selling_price',
-        'current_stock', 'minimum_stock', 'is_active', 'image', 'description'
+        'current_stock', 'minimum_stock', 'is_active', 'image', 'secondary_image', 'description'
     ]
     success_url = reverse_lazy('products:product_list')
     
@@ -111,6 +111,7 @@ class ProductCreateView(CreateView):
                     'stock_status': self.object.stock_status,
                     'is_active': self.object.is_active,
                     'image_url': self.object.image.url if self.object.image else None,
+                    'secondary_image_url': self.object.secondary_image.url if self.object.secondary_image else None,
                 }
             })
         messages.success(self.request, f'Produit "{form.instance.name}" créé avec succès !')
@@ -142,7 +143,7 @@ class ProductUpdateView(UpdateView):
     template_name = 'products/product_form.html'
     fields = [
         'name', 'barcode', 'category', 'purchase_price', 'selling_price',
-        'current_stock', 'minimum_stock', 'is_active', 'image', 'description'
+        'current_stock', 'minimum_stock', 'is_active', 'image', 'secondary_image', 'description'
     ]
     success_url = reverse_lazy('products:product_list')
     

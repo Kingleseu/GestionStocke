@@ -32,6 +32,36 @@
             --bg: #F8FAFC;
         }
 
+        /* CRITICAL: Inline Hover Effect for Catalog */
+        .product-image {
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .product-image img.primary-img,
+        .product-image img.secondary-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease-in-out !important;
+        }
+
+        .product-image .secondary-img {
+            position: absolute !important;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .product-image:hover .secondary-img {
+            opacity: 1 !important;
+        }
+
+        .product-image .primary-img {
+            z-index: 1;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: #FFFFFF;
