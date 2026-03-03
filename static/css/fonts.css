@@ -1,0 +1,34 @@
+@font-face {
+    font-family: 'Myriad Pro Regular';
+    src: url('../css/font/myriad-pro/Myriad Pro Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Myriad Pro Bold';
+    src: url('../css/font/myriad-pro/Myriad Pro Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Myriad Pro Italic';
+    src: url('../css/font/myriad-pro/Myriad Pro Italic.ttf') format('truetype');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Myriad Pro Light';
+    src: url('../css/font/myriad-pro/Myriad Pro Light.otf') format('opentype');
+    font-weight: 300;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Myriad Pro Semibold';
+    src: url('../css/font/myriad-pro/Myriad Pro Semibold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}

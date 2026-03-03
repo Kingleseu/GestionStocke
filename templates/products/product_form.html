@@ -23,6 +23,29 @@
         border-radius: 8px;
         margin-top: 10px;
     }
+
+    .color-swatch-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .color-swatch {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        border: 1px solid #ddd;
+        cursor: pointer;
+    }
+
+    .color-swatch.selected {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+    }
+
+    #customColorField input[type="text"] {
+        display: none;
+    }
 </style>
 {% endblock %}
 
@@ -85,6 +108,38 @@
                         {% if form.category.errors %}
                         <div class="text-danger small">{{ form.category.errors }}</div>
                         {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.color_choice.id_for_label }}" class="form-label">
+                            Couleur
+                        </label>
+                        {{ form.color_choice }}
+                        {% if form.color_choice.errors %}
+                        <div class="text-danger small">{{ form.color_choice.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3" id="customColorField" {% if form.color_choice.value != 'autre' %}style="display:none;"{% endif %}>
+                        <label for="{{ form.custom_color.id_for_label }}" class="form-label">
+                            Couleurs disponibles
+                        </label>
+                        <div class="color-swatch-grid" id="customColorPalette">
+                            <button type="button" class="color-swatch" data-color="#7a0f28" style="background:#7a0f28;"></button>
+                            <button type="button" class="color-swatch" data-color="#b76e79" style="background:#b76e79;"></button>
+                            <button type="button" class="color-swatch" data-color="#d4af37" style="background:#d4af37;"></button>
+                            <button type="button" class="color-swatch" data-color="#c0c0c0" style="background:#c0c0c0;"></button>
+                            <button type="button" class="color-swatch" data-color="#0f172a" style="background:#0f172a;"></button>
+                            <button type="button" class="color-swatch" data-color="#2563eb" style="background:#2563eb;"></button>
+                            <button type="button" class="color-swatch" data-color="#16a34a" style="background:#16a34a;"></button>
+                            <button type="button" class="color-swatch" data-color="#f97316" style="background:#f97316;"></button>
+                            <button type="button" class="color-swatch" data-color="#ffffff" style="background:#ffffff;"></button>
+                        </div>
+                        {{ form.custom_color }}
+                        {% if form.custom_color.errors %}
+                        <div class="text-danger small">{{ form.custom_color.errors }}</div>
+                        {% endif %}
+                    </div>
                     </div>
 
                     <div class="mb-3">
@@ -189,6 +244,34 @@
                             {% endif %}
                         </div>
 
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.extra_image_1.id_for_label }}" class="form-label">
+                                Image supplémentaire 1
+                            </label>
+                            {{ form.extra_image_1 }}
+                            {% if form.instance.extra_image_1 %}
+                            <img src="{{ form.instance.extra_image_1.url }}" alt="Image supplémentaire 1 actuelle"
+                                class="image-preview">
+                            {% endif %}
+                            {% if form.extra_image_1.errors %}
+                            <div class="text-danger small">{{ form.extra_image_1.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.extra_image_2.id_for_label }}" class="form-label">
+                                Image supplémentaire 2
+                            </label>
+                            {{ form.extra_image_2 }}
+                            {% if form.instance.extra_image_2 %}
+                            <img src="{{ form.instance.extra_image_2.url }}" alt="Image supplémentaire 2 actuelle"
+                                class="image-preview">
+                            {% endif %}
+                            {% if form.extra_image_2.errors %}
+                            <div class="text-danger small">{{ form.extra_image_2.errors }}</div>
+                            {% endif %}
+                        </div>
+
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Statut</label>
                             <div class="form-check form-switch">
@@ -201,8 +284,243 @@
                                 Les produits inactifs ne sont pas disponibles à la vente
                             </small>
                         </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Personnalisation</label>
+                            <div
+                                class="form-check form-switch card p-3 border-info-subtle bg-info-subtle bg-opacity-10">
+                                {{ form.is_customizable }}
+                                <label class="form-check-label fw-bold" for="{{ form.is_customizable.id_for_label }}">
+                                    ✨ Activer la Personnalisation (Atelier Studio)
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.engraving_mode.id_for_label }}" class="form-label fw-bold">Type de gravure</label>
+                            {{ form.engraving_mode }}
+                            {% if form.engraving_mode.errors %}
+                            <div class="text-danger small">{{ form.engraving_mode.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Atelier Studio Config Section (Synced with Modal) -->
+                        <div id="customizationConfig"
+                            class="col-12 {% if not form.is_customizable.value %}d-none{% endif %} shadow-sm rounded-3 p-3 bg-white border mt-2">
+                            <h6 class="text-primary fw-bold mb-3"><i class="bi bi-tools me-2"></i>Configuration de
+                                l'Atelier</h6>
+                            <div class="row g-3">
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label small fw-bold mb-2">Composants autorisés (Formes) <span
+                                            class="badge bg-secondary">{{ components.count }}</span></label>
+                                    <div class="component-selector-grid">
+                                        {% for comp in components %}
+                                        {% with is_selected=comp.id|stringformat:"s" in allowed_component_ids %}
+                                        <div class="component-visual-card {% if is_selected %}selected{% endif %}"
+                                            onclick="toggleComponentSelection(this)">
+                                            <input type="checkbox" name="allowed_components" value="{{ comp.id }}"
+                                                class="d-none" {% if is_selected %}checked{% endif %}>
+                                            <div class="card-image-wrapper">
+                                                {% if comp.image %}
+                                                <img src="{{ comp.image.url }}" alt="{{ comp.name }}">
+                                                {% elif comp.shape_identifier %}
+                                                <img src="/media/customization/components/medallion_{{ comp.shape_identifier }}.png"
+                                                    alt="{{ comp.name }}">
+                                                {% else %}
+                                                <div class="no-img-placeholder"><i class="bi bi-image"></i></div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="card-name">{{ comp.name|truncatechars:15 }}</div>
+                                            <div class="selection-indicator"><i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        {% endwith %}
+                                        {% endfor %}
+                                        <div class="component-visual-card add-component-card" onclick="toggleAddComponentForm()">
+                                            <div class="card-image-wrapper add-component-icon">
+                                                <i class="bi bi-plus-lg"></i>
+                                            </div>
+                                            <div class="card-name">Ajouter forme</div>
+                                        </div>
+                                    </div>
+                                    <div class="add-component-form d-none" id="addComponentForm">
+                                        <div class="row g-2">
+                                            <div class="col-md-5">
+                                                <input type="text" name="new_component_name" class="form-control form-control-sm" placeholder="Nom de la forme">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <select name="new_component_type" class="form-select form-select-sm">
+                                                    <option value="medallion">M??daillon</option>
+                                                    <option value="charm">Breloque</option>
+                                                    <option value="bead">Perle</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <input type="file" name="new_component_image" class="form-control form-control-sm">
+                                            </div>
+                                            <div class="col-12">
+                                                <small class="text-muted">Ajoutez une forme et elle sera automatiquement s??lectionn??e.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label small fw-bold mb-2">Polices autorisées</label>
+                                    <div class="font-selector-pills">
+                                        {% for font in fonts %}
+                                        {% with is_selected=font.id|stringformat:"s" in allowed_font_ids %}
+                                        <div class="font-pill {% if is_selected %}selected{% endif %}"
+                                            onclick="toggleFontSelection(this)">
+                                            <input type="checkbox" name="allowed_fonts" value="{{ font.id }}"
+                                                class="d-none" {% if is_selected %}checked{% endif %}>
+                                            <span style="font-family: '{{ font.name }}', cursive;">{{ font.name
+                                                }}</span>
+                                        </div>
+                                        {% endwith %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <style>
+                    .component-selector-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                        gap: 12px;
+                    }
+
+                    .component-visual-card {
+                        position: relative;
+                        background: #fff;
+                        border: 2px solid #eee;
+                        border-radius: 12px;
+                        padding: 8px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: center;
+                        user-select: none;
+                    }
+
+                    .component-visual-card.selected {
+                        border-color: #0d6efd;
+                        background: #f0f7ff;
+                    }
+
+                    .card-image-wrapper {
+                        aspect-ratio: 1;
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        margin-bottom: 6px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+
+                    .card-image-wrapper img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: contain;
+                        padding: 4px;
+                    }
+
+                    .card-name {
+                        font-size: 11px;
+                        font-weight: 600;
+                        color: #444;
+                    }
+
+                    .selection-indicator {
+                        position: absolute;
+                        top: -6px;
+                        right: -6px;
+                        color: #0d6efd;
+                        font-size: 18px;
+                        opacity: 0;
+                        transform: scale(0);
+                        transition: 0.2s;
+                    }
+
+                    .component-visual-card.selected .selection-indicator {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+
+                    .font-selector-pills {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 8px;
+                    }
+
+                    .font-pill {
+                        border: 1px solid #ddd;
+                        padding: 4px 12px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        transition: 0.2s;
+                        font-size: 13px;
+                        background: white;
+                    }
+
+                    .font-pill.selected {
+                        background: #0d6efd;
+                        color: white;
+                        border-color: #0d6efd;
+                    }
+
+                    .add-component-card {
+                        border-style: dashed;
+                        background: #f9fafb;
+                    }
+
+                    .add-component-icon {
+                        font-size: 20px;
+                        color: #0d6efd;
+                    }
+
+                    .add-component-form {
+                        margin-top: 10px;
+                    }
+                </style>
+
+                <script>
+                    function toggleComponentSelection(card) {
+                        const input = card.querySelector('input');
+                        const grid = card.closest('.component-selector-grid');
+                        if (grid) {
+                            grid.querySelectorAll('.component-visual-card').forEach(c => {
+                                if (c === card || c.classList.contains('add-component-card')) return;
+                                const otherInput = c.querySelector('input');
+                                if (otherInput) otherInput.checked = false;
+                                c.classList.remove('selected');
+                            });
+                        }
+                        input.checked = true;
+                        card.classList.add('selected');
+                    }
+                    function toggleFontSelection(pill) {
+                        const input = pill.querySelector('input');
+                        input.checked = !input.checked;
+                        pill.classList.toggle('selected', input.checked);
+                    }
+                    function toggleAddComponentForm() {
+                        const form = document.getElementById('addComponentForm');
+                        if (form) form.classList.toggle('d-none');
+                    }
+
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const customCheck = document.getElementById('{{ form.is_customizable.id_for_label }}');
+                        const configSection = document.getElementById('customizationConfig');
+                        if (customCheck) {
+                            customCheck.addEventListener('change', function () {
+                                configSection.classList.toggle('d-none', !this.checked);
+                            });
+                        }
+                    });
+                </script>
 
                 <!-- Boutons -->
                 <div class="d-flex gap-2 mb-4">
@@ -235,6 +553,50 @@
         document.querySelectorAll('input[type="file"]').forEach(function (el) {
             el.classList.add('form-control');
         });
+
+        // Couleur personnalis??e toggle + palette
+        const colorSelect = document.getElementById('{{ form.color_choice.id_for_label }}');
+        const customColorField = document.getElementById('customColorField');
+        const customColorInput = document.getElementById('{{ form.custom_color.id_for_label }}');
+        const customColorPalette = document.getElementById('customColorPalette');
+
+        const selectSwatch = (btn) => {
+            if (!customColorInput) return;
+            const color = btn.getAttribute('data-color');
+            customColorInput.value = color || '';
+            if (customColorPalette) {
+                customColorPalette.querySelectorAll('.color-swatch')
+                    .forEach(s => s.classList.toggle('selected', s === btn));
+            }
+        };
+
+        if (customColorPalette) {
+            customColorPalette.querySelectorAll('.color-swatch').forEach(btn => {
+                btn.addEventListener('click', () => selectSwatch(btn));
+            });
+        }
+
+        if (customColorPalette && customColorInput && customColorInput.value) {
+            const preset = customColorPalette.querySelector(`[data-color="${customColorInput.value}"]`);
+            if (preset) selectSwatch(preset);
+        }
+
+        const toggleCustomColor = () => {
+            if (!colorSelect || !customColorField) return;
+            const isCustom = colorSelect.value === 'autre';
+            customColorField.style.display = isCustom ? '' : 'none';
+            if (customColorInput) customColorInput.required = isCustom;
+            if (!isCustom && customColorInput) customColorInput.value = '';
+            if (isCustom && customColorPalette && !customColorInput.value) {
+                const first = customColorPalette.querySelector('.color-swatch');
+                if (first) selectSwatch(first);
+            }
+        };
+
+        if (colorSelect) {
+            colorSelect.addEventListener('change', toggleCustomColor);
+            toggleCustomColor();
+        }
     });
 </script>
 {% include 'products/includes/barcode_script.html' %}

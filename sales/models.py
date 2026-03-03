@@ -100,9 +100,11 @@ class SaleItem(models.Model):
     )
     product = models.ForeignKey(
         Product,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name='sale_items',
-        verbose_name="Produit"
+        verbose_name="Produit",
+        null=True,
+        blank=True
     )
     quantity = models.IntegerField(
         validators=[MinValueValidator(1)],
@@ -127,7 +129,8 @@ class SaleItem(models.Model):
         verbose_name_plural = "Lignes de vente"
     
     def __str__(self):
-        return f"{self.product.name} x{self.quantity} - {self.subtotal} FC"
+        product_name = self.product.name if self.product else "Produit supprimé"
+        return f"{product_name} x{self.quantity} - {self.subtotal} FC"
     
     def save(self, *args, **kwargs):
         """Calcule automatiquement le sous-total et met à jour le stock"""
@@ -139,7 +142,7 @@ class SaleItem(models.Model):
         super().save(*args, **kwargs)
         
         # Déduire du stock si c'est une nouvelle vente
-        if is_new and not self.sale.is_cancelled:
+        if is_new and not self.sale.is_cancelled and self.product:
             self.product.current_stock -= self.quantity
             self.product.save()
         

@@ -1,0 +1,2061 @@
+﻿{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Commande confirmée – Paiement sécurisé{% endblock %}
+
+{% block content %}
+<div class="payment-page">
+
+    <!-- === HERO SECTION === -->
+    <div class="payment-hero">
+        <div class="hero-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+        </div>
+        <div class="hero-content text-center">
+            <div class="success-ring mb-4">
+                <div class="success-ring__inner">
+                    <svg class="success-ring__check" viewBox="0 0 52 52" fill="none">
+                        <circle cx="26" cy="26" r="24" stroke="white" stroke-width="2.5" fill="none" />
+                        <path class="check-path" d="M14 26.5l8.5 8.5 16-17" stroke="white" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+            </div>
+            <div class="hero-badge mb-3">✦ Commande enregistrée avec succès</div>
+            <h1 class="hero-title">Merci pour<br>votre confiance</h1>
+            <p class="hero-sub">Commande <strong>#{{ order.id }}</strong> · {{ order.total_amount|floatformat:0 }} FC
+            </p>
+        </div>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                <path d="M0,60 C360,120 1080,0 1440,60 L1440,120 L0,120 Z" fill="#f4f4f8" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- === MAIN CONTENT === -->
+    <div class="payment-body">
+        <div class="container" style="max-width: 820px;">
+
+            <!-- PROGRESS TRACKER -->
+            <div class="progress-track mb-5" data-aos="fade-up">
+                <div class="progress-step done">
+                    <div class="ps-icon"><i class="bi bi-bag-check-fill"></i></div>
+                    <div class="ps-label">Commande</div>
+                    <div class="ps-sub">Validée</div>
+                </div>
+                <div class="progress-connector active"></div>
+                <div class="progress-step active">
+                    <div class="ps-icon"><i class="bi bi-credit-card-2-back-fill"></i></div>
+                    <div class="ps-label">Paiement</div>
+                    <div class="ps-sub">En cours</div>
+                </div>
+                <div class="progress-connector"></div>
+                <div class="progress-step">
+                    <div class="ps-icon"><i class="bi bi-shield-check"></i></div>
+                    <div class="ps-label">Vérification</div>
+                    <div class="ps-sub">En attente</div>
+                </div>
+                <div class="progress-connector"></div>
+                <div class="progress-step">
+                    <div class="ps-icon"><i class="bi bi-truck"></i></div>
+                    <div class="ps-label">Livraison</div>
+                    <div class="ps-sub">Bientôt</div>
+                </div>
+            </div>
+
+            <!-- TOTAL AMOUNT HERO CARD -->
+            <div class="amount-card mb-4" data-aos="fade-up">
+                <div class="amount-card__left">
+                    <span class="amount-card__label">Montant exact à envoyer</span>
+                    <div class="amount-card__value">{{ order.total_amount|floatformat:0 }} <span>FC</span></div>
+                    <span class="amount-card__ref">Référence : <strong>#{{ order.id }}</strong></span>
+                </div>
+                <div class="amount-card__right">
+                    <div class="amount-pulse">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAYMENT METHODS -->
+            <h2 class="section-heading" data-aos="fade-up">
+                <span>Choisissez votre mode de paiement</span>
+            </h2>
+
+            <!-- PAYMENT METHOD CARDS -->
+            <div class="methods-list" data-aos="fade-up">
+
+                <!-- ======= M-PESA ======= -->
+                <div class="method-card" id="pane-mpesa">
+                    <div class="method-card__header" onclick="toggleMethod('mpesa')">
+                        <div class="method-card__icon method-icon--orange">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/240px-M-PESA_LOGO-01.svg.png"
+                                alt="M-Pesa" style="height:28px;width:auto;"
+                                onerror="this.outerHTML='<i class=\'bi bi-phone-fill\' style=\'font-size:1.5rem;color:#ff6b1a;\'></i>'">
+                        </div>
+                        <div class="method-card__info">
+                            <strong>M-Pesa</strong>
+                            <span>Via *1122# · Sans frais de retrait</span>
+                        </div>
+
+                        <div class="method-card__toggle"><i class="bi bi-chevron-down" id="icon-mpesa"></i></div>
+                    </div>
+                    <div class="method-card__body" id="body-mpesa">
+                        <div class="merchant-info-box">
+                            <div class="merchant-info-box__left">
+                                <div class="merchant-label">Numéro Marchand (M-Pesa)</div>
+                                <div class="merchant-number">8000443262</div>
+                                <div class="merchant-name"><i class="bi bi-shop me-1"></i>ETS MKARIBU</div>
+                            </div>
+                            <button class="copy-btn" onclick="copyText('8000443262', this)">
+                                <i class="bi bi-copy"></i> Copier
+                            </button>
+                        </div>
+                        <div class="method-hint">
+                            <button class="info-icon-btn" onclick="openPopup('mpesa')" title="Instructions">
+                                <span class="info-icon-ring"></span>
+                                <i class="bi bi-info-circle-fill"></i>
+                            </button>
+                            <span>Voir les instructions de paiement</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ======= AIRTEL MONEY ======= -->
+                <div class="method-card" id="pane-airtel">
+                    <div class="method-card__header" onclick="toggleMethod('airtel')">
+                        <div class="method-card__icon method-icon--red">
+                            <i class="bi bi-phone-fill" style="font-size:1.5rem;color:#e00000;"></i>
+                        </div>
+                        <div class="method-card__info">
+                            <strong>Airtel Money</strong>
+                            <span>Envoi direct · Ligne Airtel</span>
+                        </div>
+
+                        <div class="method-card__toggle"><i class="bi bi-chevron-down" id="icon-airtel"></i></div>
+                    </div>
+                    <div class="method-card__body" id="body-airtel">
+                        <div class="merchant-info-box merchant-info-box--red">
+                            <div class="merchant-info-box__left">
+                                <div class="merchant-label merchant-label--red">Numéro Airtel Money</div>
+                                <div class="merchant-number">+243 97 67 97 748</div>
+                                <div class="merchant-name"><i class="bi bi-person-fill me-1"></i>MUSEBA FRANCK</div>
+                            </div>
+                            <button class="copy-btn" onclick="copyText('243976797748', this)">
+                                <i class="bi bi-copy"></i> Copier
+                            </button>
+                        </div>
+                        <div class="method-hint">
+                            <button class="info-icon-btn info-icon-btn--red" onclick="openPopup('airtel')"
+                                title="Instructions">
+                                <span class="info-icon-ring"></span>
+                                <i class="bi bi-info-circle-fill"></i>
+                            </button>
+                            <span>Voir les instructions de paiement</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ======= CASH ======= -->
+                <div class="method-card" id="pane-cash">
+                    <div class="method-card__header" onclick="toggleMethod('cash')">
+                        <div class="method-card__icon method-icon--green">
+                            <i class="bi bi-cash-coin" style="font-size:1.5rem;color:#16a34a;"></i>
+                        </div>
+                        <div class="method-card__info">
+                            <strong>Cash / Paiement sur place</strong>
+                            <span>En boutique · Simple et rapide</span>
+                        </div>
+                        <div class="method-card__toggle"><i class="bi bi-chevron-down" id="icon-cash"></i></div>
+                    </div>
+                    <div class="method-card__body" id="body-cash">
+                        <div class="step-list">
+                            <div class="step-item">
+                                <div class="step-num">1</div>
+                                <div>Préparez exactement <strong>{{ order.total_amount|floatformat:0 }} FC</strong>
+                                </div>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-num">2</div>
+                                <div>Présentez-vous en boutique avec votre numéro de commande <strong>#{{ order.id
+                                        }}</strong></div>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-num">3</div>
+                                <div>Récupérez votre reçu officiel et photographiez-le comme preuve</div>
+                            </div>
+                        </div>
+                        <div class="address-card">
+                            <div class="address-card__icon"><i class="bi bi-geo-alt-fill"></i></div>
+                            <div class="address-card__info">
+                                <div class="address-title">ETS MKARIBU — Boutique officielle</div>
+                                <div class="address-line">Route des huileries, N°&nbsp;160</div>
+                                <div class="address-line">Usoke, C/Kinshasa · Immeuble Nathalie, 2ème étage</div>
+                                <div class="address-line">Réf : Food Market</div>
+                                <a href="tel:+243976797748" class="address-phone"><i
+                                        class="bi bi-telephone-fill me-1"></i>+243 97 67 977 48</a>
+                            </div>
+                        </div>
+                        <div class="important-note mt-3">
+                            <i class="bi bi-clock-fill"></i>
+                            Horaires : Lun–Sam · 8h00 – 18h00
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA CARD -->
+            <div class="cta-section" data-aos="fade-up">
+                <div class="cta-card">
+                    <div class="cta-card__left">
+                        <div class="cta-card__icon"><i class="bi bi-cloud-upload-fill"></i></div>
+                        <div>
+                            <strong>Paiement effectué ?</strong>
+                            <span>Envoyez-nous votre preuve pour valider la commande</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'store:payment_submit' order.id %}" class="cta-btn">
+                        Soumettre ma preuve <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="timer-note">
+                    <i class="bi bi-clock me-1"></i>
+                    Validation dans les <strong>2&nbsp;à&nbsp;24&nbsp;heures</strong> après réception de votre preuve.
+                </div>
+                <a href="{% url 'store:catalog' %}" class="back-link">← Retourner à la boutique</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- =============================================
+     POPUP OVERLAY — M-PESA INSTRUCTIONS
+============================================= -->
+<div class="instr-overlay" id="overlay-mpesa" onclick="closePopup('mpesa')">
+    <div class="instr-popup" onclick="event.stopPropagation()">
+        <div class="instr-popup__header instr-header--orange">
+            <div class="instr-popup__logo">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/240px-M-PESA_LOGO-01.svg.png"
+                    alt="M-Pesa" style="height:30px;width:auto;filter:brightness(10);"
+                    onerror="this.outerHTML='<i class=\'bi bi-phone-fill\' style=\'color:white;font-size:1.5rem;\'></i>'">
+            </div>
+            <div>
+                <div class="instr-popup__title">Payer par M-Pesa</div>
+                <div class="instr-popup__sub">ETS MKARIBU · 8000443262</div>
+            </div>
+            <button class="instr-close" onclick="closePopup('mpesa')"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="instr-popup__body">
+
+            <!-- Merchant badge -->
+            <div class="instr-merchant">
+                <div class="instr-merchant__icon"><i class="bi bi-shop-window"></i></div>
+                <div>
+                    <div class="instr-merchant__label">Numéro Marchand</div>
+                    <div class="instr-merchant__num">8000443262</div>
+                </div>
+                <button class="copy-btn ms-auto" onclick="copyText('8000443262', this)"><i class="bi bi-copy"></i>
+                    Copier</button>
+            </div>
+
+            <!-- Steps -->
+            <div class="instr-steps-title"><i class="bi bi-list-ol me-2"></i>Étapes à suivre</div>
+            <div class="instr-steps">
+                <div class="instr-step">
+                    <div class="instr-step__num is-featured">1</div>
+                    <div><span class="instr-step__label">Composez</span> <code class="instr-code">*1122#</code></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">2</div>
+                    <div>Sélectionnez <strong>votre devise</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">3</div>
+                    <div>Sélectionnez <strong>5. Mes paiements</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">4</div>
+                    <div>Sélectionnez <strong>2. Achat Produits</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">5</div>
+                    <div>Insérez le numéro marchand : <strong>8000443262</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">6</div>
+                    <div>Insérez le montant : <strong>{{ order.total_amount|floatformat:0 }} FC</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">7</div>
+                    <div>Raison : <strong>CMD #{{ order.id }}</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">8</div>
+                    <div>Insérez votre <strong>PIN M-PESA</strong></div>
+                </div>
+                <div class="instr-step instr-step--success">
+                    <div class="instr-step__num is-success">✓</div>
+                    <div>Vous recevrez un <strong>message de confirmation</strong></div>
+                </div>
+            </div>
+
+            <!-- SMS Example -->
+            <div class="instr-sms-label"><i class="bi bi-chat-square-text me-1"></i>Exemple de SMS à nous envoyer</div>
+            <div class="instr-sms instr-sms--light">
+                <div class="instr-sms__line">Buy Goods performed successfully to</div>
+                <div class="instr-sms__line instr-sms__accent">8000443262 - ETS MKARIBU</div>
+                <div class="instr-sms__line">on 2026-01-20</div>
+                <div class="instr-sms__line">Amount: <strong>{{ order.total_amount|floatformat:0 }} CDF</strong></div>
+                <div class="instr-sms__line">Reason: CMD #{{ order.id }}</div>
+                <div class="instr-sms__line instr-sms__ref">Ref: <strong>DAK55I7BV49</strong></div>
+                <div class="instr-sms__tick">✓ Livré · 19:20</div>
+            </div>
+        </div>
+        <div class="instr-popup__footer">
+            <button class="instr-close-btn" onclick="closePopup('mpesa')">
+                <i class="bi bi-check2-circle me-2"></i>Compris, j'ai payé
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================
+     POPUP OVERLAY — AIRTEL INSTRUCTIONS
+============================================= -->
+<div class="instr-overlay" id="overlay-airtel" onclick="closePopup('airtel')">
+    <div class="instr-popup" onclick="event.stopPropagation()">
+        <div class="instr-popup__header instr-header--red">
+            <div class="instr-popup__logo">
+                <i class="bi bi-phone-fill" style="color:white;font-size:1.8rem;"></i>
+            </div>
+            <div>
+                <div class="instr-popup__title">Payer par Airtel Money</div>
+                <div class="instr-popup__sub">MUSEBA FRANCK · +243 97 67 97 748</div>
+            </div>
+            <button class="instr-close" onclick="closePopup('airtel')"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="instr-popup__body">
+
+            <!-- Merchant badge -->
+            <div class="instr-merchant instr-merchant--red">
+                <div class="instr-merchant__icon instr-merchant__icon--red"><i class="bi bi-person-fill"></i></div>
+                <div>
+                    <div class="instr-merchant__label">Numéro Airtel Money</div>
+                    <div class="instr-merchant__num">+243 97 67 97 748</div>
+                </div>
+                <button class="copy-btn ms-auto" onclick="copyText('243976797748', this)"><i class="bi bi-copy"></i>
+                    Copier</button>
+            </div>
+
+            <!-- Steps -->
+            <div class="instr-steps-title"><i class="bi bi-list-ol me-2"></i>Étapes à suivre</div>
+            <div class="instr-steps">
+                <div class="instr-step">
+                    <div class="instr-step__num">1</div>
+                    <div>Ouvrez votre application <strong>Airtel Money</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">2</div>
+                    <div>Sélectionnez <strong>«&nbsp;Envoyer de l'argent&nbsp;»</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">3</div>
+                    <div>Entrez le numéro : <strong>+243 97 67 97 748</strong> (MUSEBA FRANCK)</div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">4</div>
+                    <div>Entrez le montant : <strong>{{ order.total_amount|floatformat:0 }} FC</strong></div>
+                </div>
+                <div class="instr-step">
+                    <div class="instr-step__num">5</div>
+                    <div>Référence : <strong>CMD #{{ order.id }}</strong></div>
+                </div>
+                <div class="instr-step instr-step--success">
+                    <div class="instr-step__num is-success">✓</div>
+                    <div>Confirmez avec votre <strong>PIN</strong> et conservez le SMS</div>
+                </div>
+            </div>
+
+            <!-- SMS Example -->
+            <div class="instr-sms-label"><i class="bi bi-chat-square-text me-1"></i>Exemple de confirmation à nous
+                envoyer</div>
+            <div class="instr-sms instr-sms--dark">
+                <div class="instr-sms__title">Mobile Money</div>
+                <div class="instr-sms__line instr-sms__muted">12:27 · 10 février 2026</div>
+                <div class="instr-sms__line mt-2"><strong>{{ order.total_amount|floatformat:0 }} FC</strong> a été
+                    envoyé avec succès</div>
+                <div class="instr-sms__line">à <span class="instr-sms__accent-purple">MUSEBA FRANCK 243976797748</span>
+                </div>
+                <div class="instr-sms__line instr-sms__ref">AIRTELMONEY Ref. <strong>A890F4A010545</strong></div>
+                <div class="instr-sms__tick">✓ Envoyé · 11:26</div>
+            </div>
+        </div>
+        <div class="instr-popup__footer">
+            <button class="instr-close-btn instr-close-btn--red" onclick="closePopup('airtel')">
+                <i class="bi bi-check2-circle me-2"></i>Compris, j'ai payé
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="copy-toast" id="copyToast">
+    <i class="bi bi-clipboard-check me-2"></i>Copié !
+</div>
+
+<script>
+    (function () {
+        var openPanels = {};
+
+        window.toggleMethod = function (id) {
+            var body = document.getElementById('body-' + id);
+            var icon = document.getElementById('icon-' + id);
+            if (!body) return;
+            if (openPanels[id]) {
+                body.style.maxHeight = null;
+                body.style.opacity = '0';
+                if (icon) icon.style.transform = 'rotate(0deg)';
+                delete openPanels[id];
+            } else {
+                body.style.maxHeight = body.scrollHeight + 'px';
+                body.style.opacity = '1';
+                if (icon) icon.style.transform = 'rotate(180deg)';
+                openPanels[id] = true;
+            }
+        };
+
+        window.copyText = function (text, btn) {
+            navigator.clipboard.writeText(text).then(function () {
+                var toast = document.getElementById('copyToast');
+                if (toast) toast.classList.add('show');
+                var orig = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-clipboard-check"></i> Copié !';
+                btn.classList.add('copied');
+                setTimeout(function () {
+                    if (toast) toast.classList.remove('show');
+                    btn.innerHTML = orig;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        };
+
+        window.openPopup = function (method) {
+            var overlay = document.getElementById('overlay-' + method);
+            if (!overlay) { console.error('Overlay not found: overlay-' + method); return; }
+            overlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            var steps = overlay.querySelectorAll('.instr-step');
+            for (var i = 0; i < steps.length; i++) {
+                (function (step, delay) {
+                    step.style.opacity = '0';
+                    step.style.transform = 'translateX(-14px)';
+                    setTimeout(function () {
+                        step.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        step.style.opacity = '1';
+                        step.style.transform = 'translateX(0)';
+                    }, delay);
+                })(steps[i], 80 + i * 55);
+            }
+        };
+
+        window.closePopup = function (method) {
+            var overlay = document.getElementById('overlay-' + method);
+            if (!overlay) return;
+            overlay.classList.remove('is-open');
+            document.body.style.overflow = '';
+        };
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                var overlays = document.querySelectorAll('.instr-overlay.is-open');
+                for (var i = 0; i < overlays.length; i++) {
+                    overlays[i].classList.remove('is-open');
+                }
+                document.body.style.overflow = '';
+            }
+        });
+
+        window.addEventListener('load', function () {
+            window.toggleMethod('mpesa');
+        });
+    })();
+</script>
+
+<style>
+    /* ===========================
+   FONTS & ROOT
+   =========================== */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    .payment-page {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: #f4f4f8;
+        min-height: 100vh;
+    }
+
+    /* ===========================
+   HERO
+   =========================== */
+    .payment-hero {
+        position: relative;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+        padding: 90px 16px 100px;
+        overflow: hidden;
+        text-align: center;
+    }
+
+    .hero-blobs {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.18;
+    }
+
+    .blob-1 {
+        width: 500px;
+        height: 500px;
+        background: #7c3aed;
+        top: -150px;
+        left: -100px;
+        animation: blobFloat 10s ease-in-out infinite;
+    }
+
+    .blob-2 {
+        width: 400px;
+        height: 400px;
+        background: #2563eb;
+        bottom: -100px;
+        right: -80px;
+        animation: blobFloat 13s 2s ease-in-out infinite reverse;
+    }
+
+    .blob-3 {
+        width: 300px;
+        height: 300px;
+        background: #a21caf;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: blobFloat 8s 1s ease-in-out infinite;
+    }
+
+    @keyframes blobFloat {
+
+        0%,
+        100% {
+            transform: translate(0, 0) scale(1);
+        }
+
+        50% {
+            transform: translate(30px, 20px) scale(1.08);
+        }
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .success-ring {
+        display: inline-flex;
+        animation: ringAppear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .success-ring__inner {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 0 14px rgba(34, 197, 94, 0.15), 0 0 0 28px rgba(34, 197, 94, 0.07);
+    }
+
+    .success-ring__check {
+        width: 44px;
+        height: 44px;
+    }
+
+    .check-path {
+        stroke-dasharray: 40;
+        stroke-dashoffset: 40;
+        animation: drawCheck 0.6s 0.5s ease forwards;
+    }
+
+    @keyframes drawCheck {
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    @keyframes ringAppear {
+        from {
+            transform: scale(0);
+            opacity: 0;
+        }
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(8px);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        padding: 5px 16px;
+        border-radius: 100px;
+        text-transform: uppercase;
+    }
+
+    .hero-title {
+        font-size: clamp(2.2rem, 5vw, 3.5rem);
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        margin-bottom: 12px;
+    }
+
+    .hero-sub {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .hero-sub strong {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .hero-wave {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        line-height: 0;
+    }
+
+    .hero-wave svg {
+        width: 100%;
+        height: 80px;
+    }
+
+    /* ===========================
+   BODY
+   =========================== */
+    .payment-body {
+        padding: 40px 16px 80px;
+    }
+
+    /* ===========================
+   PROGRESS TRACKER
+   =========================== */
+    .progress-track {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        min-width: 72px;
+    }
+
+    .ps-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        background: #e5e7eb;
+        color: #9ca3af;
+        transition: all 0.4s ease;
+    }
+
+    .progress-step.done .ps-icon {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+    }
+
+    .progress-step.active .ps-icon {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+        animation: pulsePlus 2s infinite;
+    }
+
+    @keyframes pulsePlus {
+
+        0%,
+        100% {
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+        }
+
+        50% {
+            box-shadow: 0 4px 24px rgba(59, 130, 246, 0.55), 0 0 0 8px rgba(59, 130, 246, 0.1);
+        }
+    }
+
+    .ps-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .ps-sub {
+        font-size: 0.68rem;
+        color: #9ca3af;
+    }
+
+    .progress-step.active .ps-label {
+        color: #1d4ed8;
+    }
+
+    .progress-step.done .ps-label {
+        color: #16a34a;
+    }
+
+    .progress-connector {
+        flex: 1;
+        height: 2px;
+        background: #e5e7eb;
+        margin-top: 24px;
+        max-width: 80px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-connector.active::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 50%;
+        background: linear-gradient(90deg, #22c55e, #3b82f6);
+    }
+
+    /* ===========================
+   AMOUNT CARD
+   =========================== */
+    .amount-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+        border-radius: 20px;
+        padding: 28px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 20px 60px rgba(15, 52, 96, 0.25);
+    }
+
+    .amount-card::before {
+        content: '';
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .amount-card__label {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .amount-card__value {
+        font-size: clamp(2.2rem, 5vw, 3rem);
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+        line-height: 1;
+    }
+
+    .amount-card__value span {
+        font-size: 1.2rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.5);
+        margin-left: 6px;
+    }
+
+    .amount-card__ref {
+        display: block;
+        margin-top: 10px;
+        font-size: 0.82rem;
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .amount-card__ref strong {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .amount-pulse {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(8px);
+    }
+
+    /* ===========================
+   SECTION HEADING
+   =========================== */
+    .section-heading {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1f2937;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-heading::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #e5e7eb, transparent);
+    }
+
+    /* ===========================
+   PAYMENT METHOD CARDS
+   =========================== */
+    .methods-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+
+    .method-card {
+        background: #ffffff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+        transition: box-shadow 0.25s ease;
+    }
+
+    .method-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    }
+
+    .method-card__header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 20px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .method-card__icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .method-icon--orange {
+        background: #fff7ed;
+    }
+
+    .method-icon--red {
+        background: #fef2f2;
+    }
+
+    .method-icon--blue {
+        background: #eff6ff;
+    }
+
+    .method-icon--green {
+        background: #f0fdf4;
+    }
+
+    .method-card__info {
+        flex: 1;
+    }
+
+    .method-card__info strong {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .method-card__info span {
+        font-size: 0.78rem;
+        color: #6b7280;
+    }
+
+    .method-card__toggle i {
+        font-size: 1rem;
+        color: #9ca3af;
+        transition: transform 0.3s ease;
+    }
+
+    .method-card__body {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        padding: 0 20px;
+        transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
+    }
+
+    .method-card__body[style*="max-height"] {
+        padding: 0 20px 20px;
+    }
+
+    /* Steps */
+    .step-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 0.875rem;
+        color: #374151;
+    }
+
+    .step-num {
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    code {
+        background: #f3f4f6;
+        padding: 1px 6px;
+        border-radius: 5px;
+        font-size: 0.85em;
+        color: #374151;
+    }
+
+    /* Copy field */
+    .copy-field {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+        gap: 12px;
+    }
+
+    .copy-field.compact {
+        margin-bottom: 0;
+    }
+
+    .copy-field.highlight {
+        border-color: #6366f1;
+        background: #eef2ff;
+    }
+
+    .copy-field__value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1f2937;
+        letter-spacing: 0.02em;
+        font-family: 'Courier New', monospace;
+    }
+
+    .copy-field.compact .copy-field__value {
+        font-size: 0.9rem;
+    }
+
+    .copy-btn {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .copy-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .copy-btn.copied {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+    }
+
+    .account-name {
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-bottom: 12px;
+    }
+
+    /* Bank details */
+    .bank-details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .bank-detail-item label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #9ca3af;
+        margin-bottom: 6px;
+    }
+
+    @media (max-width: 600px) {
+        .bank-details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Important note */
+    .important-note {
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        border: 1px solid #fbbf24;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 0.82rem;
+        color: #92400e;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 4px;
+    }
+
+    .important-note i {
+        margin-top: 1px;
+        color: #d97706;
+        flex-shrink: 0;
+    }
+
+    /* ===========================
+   MERCHANT INFO BOX
+   =========================== */
+    .merchant-info-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+        border: 1.5px solid #bbf7d0;
+        border-radius: 14px;
+        padding: 14px 18px;
+    }
+
+    .merchant-info-box__left {
+        flex: 1;
+    }
+
+    .merchant-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #16a34a;
+        margin-bottom: 2px;
+    }
+
+    .merchant-number {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #111827;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 0.03em;
+        line-height: 1.2;
+    }
+
+    .merchant-name {
+        font-size: 0.78rem;
+        color: #6b7280;
+        margin-top: 3px;
+    }
+
+    /* ===========================
+   STEPS LABEL
+   =========================== */
+    .steps-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #9ca3af;
+        margin-bottom: 10px;
+    }
+
+    .step-num.step-highlight {
+        background: linear-gradient(135deg, #ff6b1a, #f97316);
+        color: white;
+        font-weight: 800;
+    }
+
+    .step-item--success .step-num,
+    .step-num--green {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+    }
+
+    /* ===========================
+   SMS EXAMPLE
+   =========================== */
+    .sms-example {
+        margin-top: 16px;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+
+    .sms-example__label {
+        background: #f9fafb;
+        padding: 8px 14px;
+        font-size: 0.73rem;
+        font-weight: 600;
+        color: #6b7280;
+        border-bottom: 1px solid #e5e7eb;
+        letter-spacing: 0.02em;
+    }
+
+    .sms-bubble {
+        background: #fff;
+        padding: 14px 16px;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        color: #1f2937;
+        font-family: 'Courier New', monospace;
+    }
+
+    .sms-bubble--dark {
+        background: #1a1a1a;
+        color: #f3f4f6;
+    }
+
+    .sms-bubble--dark .sms-highlight {
+        color: #c084fc;
+    }
+
+    .sms-line {
+        display: block;
+    }
+
+    .sms-highlight {
+        color: #7c3aed;
+        font-weight: 700;
+    }
+
+    .sms-ref {
+        color: #9ca3af;
+        font-size: 0.78rem;
+    }
+
+    .sms-muted {
+        color: #6b7280;
+        font-size: 0.75rem;
+    }
+
+    .sms-time {
+        text-align: right;
+        font-size: 0.7rem;
+        color: #22c55e;
+        margin-top: 8px;
+        font-family: inherit;
+        font-style: italic;
+    }
+
+    .sms-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #d1d5db;
+        margin-bottom: 6px;
+        font-family: inherit;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    /* ===========================
+   ADDRESS CARD
+   =========================== */
+    .address-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        background: #f0fdf4;
+        border: 1.5px solid #bbf7d0;
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-top: 16px;
+    }
+
+    .address-card__icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #16a34a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .address-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .address-line {
+        font-size: 0.8rem;
+        color: #4b5563;
+        line-height: 1.5;
+    }
+
+    .address-phone {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #16a34a;
+        text-decoration: none;
+    }
+
+    .address-phone:hover {
+        color: #15803d;
+    }
+
+    /* ===========================
+   CTA SECTION
+   =========================== */
+
+    .cta-section {
+        text-align: center;
+    }
+
+    .cta-card {
+        background: linear-gradient(135deg, #1a1a2e, #1e3a5f);
+        border-radius: 20px;
+        padding: 22px 28px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+        text-align: left;
+    }
+
+    .cta-card__left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: white;
+    }
+
+    .cta-card__icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .cta-card__left strong {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .cta-card__left span {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.55);
+    }
+
+    .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #7c3aed, #6366f1);
+        color: white !important;
+        text-decoration: none !important;
+        font-size: 0.9rem;
+        font-weight: 700;
+        padding: 13px 24px;
+        border-radius: 12px;
+        white-space: nowrap;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+    }
+
+    .cta-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.5);
+        color: white !important;
+    }
+
+    .timer-note {
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-bottom: 14px;
+    }
+
+    .back-link {
+        font-size: 0.82rem;
+        color: #9ca3af;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: #6366f1;
+    }
+
+    @media (max-width: 600px) {
+        .cta-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .progress-track {
+            gap: 0;
+        }
+
+        .progress-connector {
+            max-width: 48px;
+        }
+
+        .amount-card {
+            flex-direction: column;
+            gap: 20px;
+        }
+    }
+
+    /* ===========================
+   TOAST
+   =========================== */
+    .copy-toast {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #1a1a2e;
+        color: white;
+        padding: 10px 22px;
+        border-radius: 100px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        opacity: 0;
+        transition: all 0.3s ease;
+        pointer-events: none;
+        z-index: 9999;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .copy-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* ===========================
+   INFO BUTTON (beside payment method)
+   =========================== */
+    .info-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        background: linear-gradient(135deg, #ff6b1a, #f97316);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .info-btn::before {
+        content: 'Instructions';
+        font-size: 0.72rem;
+    }
+
+    .info-btn:hover {
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+    }
+
+    .info-btn__ring {
+        position: absolute;
+        inset: -4px;
+        border-radius: 50px;
+        border: 2px solid rgba(249, 115, 22, 0.4);
+        animation: ring-pulse 2s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes ring-pulse {
+
+        0%,
+        100% {
+            opacity: 0.8;
+            transform: scale(1);
+        }
+
+        50% {
+            opacity: 0;
+            transform: scale(1.15);
+        }
+    }
+
+    .info-btn--red {
+        background: linear-gradient(135deg, #e00000, #dc2626);
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+    }
+
+    .info-btn--red:hover {
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+    }
+
+    .info-btn--red .info-btn__ring {
+        border-color: rgba(220, 38, 38, 0.4);
+    }
+
+    /* method hint bar */
+    .method-hint {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-top: 12px;
+        font-size: 0.8rem;
+        color: #92400e;
+    }
+
+    .method-hint i {
+        color: #f59e0b;
+        flex-shrink: 0;
+    }
+
+    .hint-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: linear-gradient(135deg, #ff6b1a, #f97316);
+        color: white;
+        border-radius: 50px;
+        padding: 2px 8px;
+        font-size: 0.72rem;
+        font-weight: 700;
+    }
+
+    .hint-badge--red {
+        background: linear-gradient(135deg, #e00000, #dc2626);
+    }
+
+    /* merchant-info-box color variants */
+    .merchant-info-box--red {
+        background: linear-gradient(135deg, #fff1f2, #fef2f2);
+        border-color: #fecaca;
+    }
+
+    .merchant-label--red {
+        color: #dc2626;
+    }
+
+    /* ===========================
+   ADDRESS CARD
+   =========================== */
+    .address-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        background: #f0fdf4;
+        border: 1.5px solid #bbf7d0;
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-top: 16px;
+    }
+
+    .address-card__icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #16a34a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .address-title {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .address-line {
+        font-size: 0.8rem;
+        color: #4b5563;
+        line-height: 1.5;
+    }
+
+    .address-phone {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #16a34a;
+        text-decoration: none;
+    }
+
+    .address-phone:hover {
+        color: #15803d;
+    }
+
+    /* ===========================
+   INFO ICON BUTTON (inside card body)
+   =========================== */
+    .method-hint {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff8f0;
+        border: 1px solid #fed7aa;
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin-top: 12px;
+        font-size: 0.82rem;
+        color: #92400e;
+        cursor: default;
+    }
+
+    .method-hint span {
+        flex: 1;
+    }
+
+    .info-icon-btn {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ff6b1a, #f97316);
+        border: none;
+        color: white;
+        font-size: 1.15rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 14px rgba(249, 115, 22, 0.45);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .info-icon-btn:hover {
+        transform: scale(1.12);
+        box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6);
+    }
+
+    .info-icon-btn:active {
+        transform: scale(0.96);
+    }
+
+    .info-icon-ring {
+        position: absolute;
+        inset: -5px;
+        border-radius: 50%;
+        border: 2px solid rgba(249, 115, 22, 0.5);
+        animation: icon-ring-pulse 1.8s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes icon-ring-pulse {
+
+        0%,
+        100% {
+            opacity: 0.9;
+            transform: scale(1);
+        }
+
+        60% {
+            opacity: 0;
+            transform: scale(1.3);
+        }
+    }
+
+    .info-icon-btn--red {
+        background: linear-gradient(135deg, #e00000, #dc2626);
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45);
+    }
+
+    .info-icon-btn--red:hover {
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+    }
+
+    .info-icon-btn--red .info-icon-ring {
+        border-color: rgba(220, 38, 38, 0.5);
+    }
+
+    /* ===========================
+   POPUP OVERLAY
+   =========================== */
+
+    .instr-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.72);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        z-index: 9000;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        padding: 0;
+    }
+
+    .instr-overlay.is-open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: all;
+    }
+
+    .instr-popup {
+        width: 100%;
+        max-width: 540px;
+        max-height: 90vh;
+        background: #ffffff;
+        border-radius: 28px 28px 0 0;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.38s cubic-bezier(0.34, 1.2, 0.64, 1);
+        overflow: hidden;
+        box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    .instr-overlay.is-open .instr-popup {
+        transform: translateY(0);
+    }
+
+    /* On desktop, center as modal */
+    @media (min-width: 600px) {
+        .instr-overlay {
+            align-items: center;
+        }
+
+        .instr-popup {
+            border-radius: 28px;
+            max-height: 85vh;
+        }
+
+        .instr-overlay.is-open .instr-popup {
+            transform: scale(1);
+            animation: popup-in 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+
+        @keyframes popup-in {
+            0% {
+                transform: scale(0.88);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    }
+
+    /* Header */
+    .instr-popup__header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 24px 18px;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .instr-header--orange {
+        background: linear-gradient(135deg, #ff6b1a, #ea580c);
+    }
+
+    .instr-header--red {
+        background: linear-gradient(135deg, #e00000, #b91c1c);
+    }
+
+    .instr-popup__logo {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .instr-popup__title {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: white;
+        letter-spacing: -0.01em;
+    }
+
+    .instr-popup__sub {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 2px;
+    }
+
+    .instr-close {
+        margin-left: auto;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        font-size: 0.85rem;
+        transition: background 0.2s;
+    }
+
+    .instr-close:hover {
+        background: rgba(255, 255, 255, 0.35);
+    }
+
+    /* Body */
+    .instr-popup__body {
+        padding: 20px 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    /* Merchant badge inside popup */
+    .instr-merchant {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #f0fdf4;
+        border: 1.5px solid #bbf7d0;
+        border-radius: 14px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+    }
+
+    .instr-merchant--red {
+        background: #fff1f2;
+        border-color: #fecaca;
+    }
+
+    .instr-merchant__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: #16a34a;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .instr-merchant__icon--red {
+        background: #dc2626;
+    }
+
+    .instr-merchant__label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #16a34a;
+    }
+
+    .instr-merchant--red .instr-merchant__label {
+        color: #dc2626;
+    }
+
+    .instr-merchant__num {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #111827;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 0.03em;
+    }
+
+    /* Steps inside popup */
+    .instr-steps-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #9ca3af;
+        margin-bottom: 12px;
+    }
+
+    .instr-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .instr-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 0.88rem;
+        color: #374151;
+        line-height: 1.4;
+    }
+
+    .instr-step__num {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.78rem;
+        font-weight: 800;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .instr-step__num.is-featured {
+        background: linear-gradient(135deg, #ff6b1a, #f97316);
+        color: white;
+        box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4);
+    }
+
+    .instr-step__num.is-success {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+    }
+
+    .instr-step--success {
+        background: #f0fdf4;
+        border-radius: 10px;
+        padding: 8px 10px;
+    }
+
+    .instr-step__label {
+        color: #6b7280;
+        font-size: 0.8rem;
+    }
+
+    .instr-code {
+        display: inline-block;
+        background: #1a1a2e;
+        color: #f97316;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+    }
+
+    /* SMS inside popup */
+    .instr-sms-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #9ca3af;
+        margin-bottom: 10px;
+    }
+
+    .instr-sms {
+        border-radius: 14px;
+        padding: 14px 16px;
+        font-size: 0.82rem;
+        line-height: 1.65;
+        font-family: 'Courier New', monospace;
+        margin-bottom: 8px;
+    }
+
+    .instr-sms--light {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #1e293b;
+    }
+
+    .instr-sms--dark {
+        background: #1a1a1a;
+        color: #f1f5f9;
+    }
+
+    .instr-sms__line {
+        display: block;
+    }
+
+    .instr-sms__accent {
+        color: #f97316;
+        font-weight: 700;
+    }
+
+    .instr-sms__accent-purple {
+        color: #c084fc;
+        font-weight: 700;
+    }
+
+    .instr-sms__ref {
+        color: #94a3b8;
+        font-size: 0.75rem;
+    }
+
+    .instr-sms__muted {
+        color: #64748b;
+        font-size: 0.75rem;
+    }
+
+    .instr-sms__tick {
+        text-align: right;
+        font-size: 0.68rem;
+        color: #22c55e;
+        margin-top: 8px;
+        font-style: italic;
+        font-family: inherit;
+    }
+
+    .instr-sms__title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 4px;
+        font-family: inherit;
+    }
+
+    /* Footer */
+    .instr-popup__footer {
+        padding: 16px 24px 24px;
+        flex-shrink: 0;
+        background: #ffffff;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .instr-close-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #ff6b1a, #ea580c);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        padding: 14px 20px;
+        font-size: 0.92rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35);
+    }
+
+    .instr-close-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5);
+    }
+
+    .instr-close-btn--red {
+        background: linear-gradient(135deg, #e00000, #dc2626);
+        box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35);
+    }
+
+    .instr-close-btn--red:hover {
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+    }
+</style>
+{% endblock %}

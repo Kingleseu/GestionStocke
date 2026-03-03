@@ -5,19 +5,17 @@
 
 /* Variables */
 :root {
-    --primary: #E11D48;
-    /* Rose-600 */
-    --primary-hover: #BE123C;
-    /* Rose-700 */
-    --secondary: #0F172A;
-    /* Slate-900 */
+    --primary: #E21717;
+    /* Rouge Principal */
+    --primary-hover: #C01414;
+    /* Rouge Foncé */
+    --secondary: #0A3D62;
+    /* Bleu Secondaire */
     --bg-body: #F1F5F9;
-    /* Slate-100 */
     --bg-card: #FFFFFF;
-    --text-main: #1E293B;
-    /* Slate-800 */
+    --text-main: #1a1a1a;
+    /* Noir */
     --text-muted: #64748B;
-    /* Slate-500 */
     --border-color: #E2E8F0;
     /* Slate-200 */
 
@@ -65,8 +63,8 @@ a:hover {
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
     background: var(--secondary);
-    /* Dark Blue Base Color */
-    color: #F8FAFC;
+    /* Fond Bleu foncé / Navy */
+    color: #FFFFFF;
     /* Slate-50 */
     display: flex;
     flex-direction: column;
@@ -185,7 +183,7 @@ a:hover {
     background-color: var(--primary);
     border-color: var(--primary);
     color: white;
-    box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.4);
+    box-shadow: 0 4px 6px -1px rgba(226, 23, 23, 0.4);
 }
 
 .btn-primary:hover {

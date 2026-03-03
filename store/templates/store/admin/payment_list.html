@@ -1,0 +1,408 @@
+{% extends 'store/admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Vérification des Paiements – Administration{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{% url 'store:admin_weborders' %}">Commandes</a></li>
+<li class="breadcrumb-item active">Paiements à vérifier</li>
+{% endblock %}
+
+{% block admin_content %}
+<style>
+    /* ===== PAYMENTS LIST — PREMIUM DESIGN ===== */
+    .payment-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border-radius: 16px;
+        padding: 24px 30px;
+        margin-bottom: 24px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .payment-hero__title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+
+    .payment-hero__subtitle {
+        opacity: 0.7;
+        font-size: 0.85rem;
+    }
+
+    .status-nav {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 24px;
+    }
+
+    .status-link {
+        padding: 8px 18px;
+        border-radius: 99px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1.5px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+    }
+
+    .status-link:hover {
+        border-color: #4338ca;
+        color: #4338ca;
+    }
+
+    .status-link.is-active {
+        background: #4338ca;
+        border-color: #4338ca;
+        color: white;
+    }
+
+    .payment-card {
+        background: white;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        margin-bottom: 16px;
+        transition: transform 0.2s;
+    }
+
+    .payment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    .payment-card__body {
+        padding: 20px;
+    }
+
+    .payment-card__foot {
+        background: #f8fafc;
+        padding: 12px 20px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .payment-info {
+        display: grid;
+        grid-template-columns: 80px 1fr 150px 150px 100px;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .payment-info__label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .payment-info__value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    .payment-method-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #dbeafe;
+    }
+
+    .btn-action {
+        height: 38px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 16px;
+        border: none;
+        transition: all 0.2s;
+    }
+
+    .btn-action--approve {
+        background: #16a34a;
+        color: white;
+    }
+
+    .btn-action--approve:hover {
+        background: #15803d;
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    .btn-action--reject {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fca5a5;
+    }
+
+    .btn-action--reject:hover {
+        background: #fee2e2;
+        border-color: #dc2626;
+    }
+
+    .proof-mini-preview {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4338ca;
+        text-decoration: none;
+        border: 1.5px solid #e2e8f0;
+    }
+
+    .proof-mini-preview:hover {
+        border-color: #4338ca;
+        background: #eef2ff;
+    }
+
+    /* Modal rejection */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .modal-overlay.is-active {
+        display: flex;
+    }
+
+    .modal-box {
+        background: white;
+        border-radius: 16px;
+        padding: 28px;
+        width: min(450px, 90vw);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    }
+</style>
+
+<div class="payment-hero">
+    <div>
+        <div class="payment-hero__title">🔍 Vérification des Paiements</div>
+        <div class="payment-hero__subtitle">Vérifiez les preuves soumises par les clients pour valider les commandes.
+        </div>
+    </div>
+    <div style="text-align:right;">
+        <div style="font-size:1.5rem; font-weight:800;">{{ payments.count }}</div>
+        <div style="font-size:0.75rem; opacity:0.7;">TOTAL PAIEMENTS</div>
+    </div>
+</div>
+
+<div class="status-nav">
+    <a href="?status=" class="status-link {% if not current_status %}is-active{% endif %}">Tous</a>
+    <a href="?status=submitted" class="status-link {% if current_status == 'submitted' %}is-active{% endif %}">En attente ({{ pending_count }})</a>
+    <a href="?status=approved"
+        class="status-link {% if current_status == 'approved' %}is-active{% endif %}">Approuvés</a>
+    <a href="?status=rejected" class="status-link {% if current_status == 'rejected' %}is-active{% endif %}">Rejetés</a>
+</div>
+
+{% for payment in payments %}
+<div class="payment-card">
+    <div class="payment-card__body">
+        <div class="payment-info">
+            <div>
+                <div class="payment-info__label">Commande</div>
+                <div class="payment-info__value">#{{ payment.order.id }}</div>
+            </div>
+            <div>
+                <div class="payment-info__label">Client</div>
+                <div class="payment-info__value">{{ payment.order.full_name }}</div>
+            </div>
+            <div>
+                <div class="payment-info__label">Montant</div>
+                <div class="payment-info__value" style="color:#4338ca;">{{ payment.order.total_amount|floatformat:0 }} FC</div>
+            </div>
+            <div>
+                <div class="payment-info__label">Méthode</div>
+                <div><span class="payment-method-badge">{{ payment.get_payment_method_display }}</span></div>
+            </div>
+            <div>
+                <div class="payment-info__label">Référence</div>
+                <div class="payment-info__value"><code
+                        style="color:#1e293b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">{{ payment.transaction_ref }}</code>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="payment-card__foot">
+        <div style="display:flex; align-items:center; gap:12px; font-size:0.8rem; color:#64748b;">
+            <i class="bi bi-calendar3"></i> Soumis le {{ payment.created_at|date:"d/m/Y H:i" }}
+            {% if payment.status != 'submitted' %}
+            <span style="margin-left:10px;">
+                {% if payment.status == 'approved' %}
+                <span class="text-success fw-bold"><i class="bi bi-check-circle"></i> Approuvé le {{ payment.verified_at|date:"d/m/Y" }}</span>
+                {% else %}
+                <span class="text-danger fw-bold"><i class="bi bi-x-circle"></i> Rejeté : {{ payment.rejection_reason|truncatechars:30 }}</span>
+                {% endif %}
+            </span>
+            {% endif %}
+        </div>
+        <div style="display:flex; gap:8px;">
+            {% if payment.proof_file %}
+            <button onclick="openProofLightbox('{{ payment.proof_file.url }}')" class="proof-mini-preview"
+                title="Voir la preuve" style="cursor:pointer;">
+                <i class="bi bi-file-earmark-text"></i>
+            </button>
+            {% endif %}
+            <a href="{% url 'store:admin_weborder_detail' payment.order.id %}" class="btn-action" style="background:#f1f5f9; color:#1e293b;">
+                <i class="bi bi-eye"></i> Détails
+            </a>
+            {% if payment.status == 'submitted' %}
+            <form method="post" action="{% url 'store:admin_payment_approve' payment.id %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-action--approve">
+                    <i class="bi bi-check-lg"></i> Approuver
+                </button>
+            </form>
+            <button class="btn-action btn-action--reject" onclick="openRejectModal({{ payment.id }}, {{ payment.order.id }})">
+                <i class="bi bi-x-lg"></i> Rejeter
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% empty %}
+<div style="text-align:center; padding:80px 20px; background:white; border-radius:16px; border:1.5px dashed #e2e8f0; color:#94a3b8;">
+    <i class="bi bi-clipboard-x" style="font-size:3rem; display:block; margin-bottom:16px;"></i>
+    <div style="font-size:1.1rem; font-weight:600;">Aucun paiement trouvé</div>
+    <p style="font-size:0.875rem;">Changez les filtres pour voir d'autres résultats.</p>
+</div>
+{% endfor %}
+
+{% if is_paginated %}
+<div style="margin-top:30px; display:flex; justify-content:center;">
+    <nav>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}"><i class="bi bi-chevron-left"></i></a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}"><i class="bi bi-chevron-right"></i></a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+<!-- MODAL REJECT -->
+<div class="modal-overlay" id="rejectModal">
+    <div class="modal-box">
+        <h4 style="font-weight:800; margin-bottom:8px;">❌ Rejeter le paiement</h4>
+        <p style="color:#64748b; font-size:0.875rem; margin-bottom:20px;">
+            Vous allez rejeter le paiement de la commande #<span id="modalOrderId"></span>.
+            Veuillez indiquer le motif du rejet pour informer le client.
+        </p>
+        <form method="post" id="rejectForm">
+            {% csrf_token %}
+            <textarea name="rejection_reason" class="form-control"
+                style="border-radius:10px; margin-bottom:20px; min-height:100px; padding:12px;"
+                placeholder="Ex: Preuve illisible, référence manquante..." required></textarea>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="btn-action w-100" style="background:#f1f5f9; color:#1e293b;" onclick="closeRejectModal()">Annuler</button>
+                <button type="submit" class="btn-action btn-action--reject w-100">Confirmer le rejet</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- LIGHTBOX PREUVE -->
+<div id="proofLightbox" style="
+    position:fixed;inset:0;z-index:99999;
+    background:rgba(0,0,0,0.88);
+    display:none;align-items:center;justify-content:center;
+    padding:20px;
+    backdrop-filter:blur(6px);
+" onclick="closeProofLightbox()">
+    <div style="position:relative;max-width:90vw;max-height:90vh;" onclick="event.stopPropagation()">
+        <button onclick="closeProofLightbox()" style="
+            position:absolute;top:-16px;right:-16px;
+            width:38px;height:38px;border-radius:50%;
+            background:white;border:none;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            font-size:1rem;color:#374151;z-index:1;
+            box-shadow:0 4px 12px rgba(0,0,0,0.3);
+        "><i class="bi bi-x-lg"></i></button>
+        <img id="lightboxImg" src="" alt="Preuve" style="
+            max-width:85vw;max-height:85vh;
+            border-radius:12px;object-fit:contain;
+            box-shadow:0 25px 60px rgba(0,0,0,0.5);display:block;
+        ">
+        <iframe id="lightboxPdf" src="" style="
+            width:85vw;height:85vh;border-radius:12px;display:none;border:none;
+        "></iframe>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;">
+            <a id="lightboxDownload" href="" download style="
+                background:white;color:#374151;
+                padding:8px 18px;border-radius:8px;
+                font-size:0.8rem;font-weight:700;text-decoration:none;
+                display:flex;align-items:center;gap:6px;
+            "><i class="bi bi-download"></i> Télécharger</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openProofLightbox(url) {
+        const lb = document.getElementById('proofLightbox');
+        const img = document.getElementById('lightboxImg');
+        const pdf = document.getElementById('lightboxPdf');
+        const dl = document.getElementById('lightboxDownload');
+        dl.href = url;
+
+        // Détection du type avec endsWith
+        if (url.toLowerCase().split('?')[0].endsWith('.pdf')) {
+            img.style.display = 'none';
+            pdf.style.display = 'block';
+            pdf.src = url;
+        } else {
+            pdf.style.display = 'none';
+            img.style.display = 'block';
+            img.src = url;
+        }
+        lb.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeProofLightbox() {
+        document.getElementById('proofLightbox').style.display = 'none';
+        document.getElementById('lightboxPdf').src = '';
+        document.body.style.overflow = '';
+    }
+    function openRejectModal(paymentId, orderId) {
+        document.getElementById('modalOrderId').innerText = orderId;
+        document.getElementById('rejectForm').action = `/store/admin/payments/${paymentId}/reject/`;
+        document.getElementById('rejectModal').classList.add('is-active');
+    }
+    function closeRejectModal() {
+        document.getElementById('rejectModal').classList.remove('is-active');
+    }
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { closeRejectModal(); closeProofLightbox(); }
+    });
+    window.addEventListener('click', function (event) {
+        if (event.target == document.getElementById('rejectModal')) closeRejectModal();
+    });
+</script>
+{% endblock %}

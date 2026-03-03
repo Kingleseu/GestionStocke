@@ -46,6 +46,13 @@ urlpatterns = [
     # Générer un code-barres (AJAX)
     path('barcode/generate/new/', views.generate_barcode_ajax, name='generate_barcode_ajax'),
 
+    # AJAX: créer un composant (forme) depuis le modal
+    path('components/create-ajax/', views.create_component_ajax, name='create_component_ajax'),
+    path('components/delete-ajax/', views.delete_component_ajax, name='delete_component_ajax'),
+    path('components/bulk-delete-ajax/', views.bulk_delete_components_ajax, name='bulk_delete_components_ajax'),
+    
+    # AJAX: get authorized components and fonts for a product
+    path('product/<int:product_id>/customization-data/', views.get_product_customization_data, name='get_product_customization_data'),
     # Actions groupées
     path('bulk-action/', views.product_bulk_action, name='product_bulk_action'),
 ]

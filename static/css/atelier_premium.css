@@ -1,0 +1,503 @@
+/* ============================================
+   ATELIER PREMIUM - Design inspiré de Zag Bijoux
+   ============================================ */
+
+:root {
+    /* Palette Zag Bijoux modifiée vers Rouge/Bleu/Noir */
+    --zag-beige: #F5F5F5;
+    --zag-white: #FFFFFF;
+    --zag-dark: #1A1A1A;
+    --zag-gray: #888888;
+    --zag-accent: #E21717;
+    /* Rouge Mkaribu */
+    --zag-accent-light: #FF4D4D;
+
+    /* Typographie */
+    --font-serif: 'Playfair Display', serif;
+    --font-sans: 'Inter', sans-serif;
+
+    /* Espacements */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ============================================
+   LAYOUT GÉNÉRAL
+   ============================================ */
+
+.atelier-container {
+    background: linear-gradient(135deg, var(--zag-beige) 0%, var(--zag-white) 100%);
+    min-height: 100vh;
+    font-family: var(--font-sans);
+}
+
+.atelier-header {
+    background: var(--zag-white);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+    padding: var(--spacing-md) 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.atelier-title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--zag-dark);
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.atelier-subtitle {
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    color: var(--zag-gray);
+    margin-top: var(--spacing-xs);
+}
+
+/* ============================================
+   CANVAS PREVIEW
+   ============================================ */
+
+.preview-container {
+    background: var(--zag-white);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-lg) 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--zag-accent) 0%, var(--zag-accent-light) 100%);
+}
+
+#preview-canvas {
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+    transition: var(--transition-smooth);
+}
+
+#preview-canvas:hover {
+    transform: scale(1.02);
+}
+
+/* ============================================
+   PANNEAU DE CONTRÔLE
+   ============================================ */
+
+.control-panel {
+    background: var(--zag-white);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    padding: var(--spacing-lg);
+}
+
+.control-section {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--zag-beige);
+}
+
+.control-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.control-label {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--zag-dark);
+    margin-bottom: var(--spacing-sm);
+    display: block;
+}
+
+.control-description {
+    font-size: 0.875rem;
+    color: var(--zag-gray);
+    margin-bottom: var(--spacing-sm);
+}
+
+/* ============================================
+   SÉLECTEUR DE POLICE (AMÉLIORÉ)
+   ============================================ */
+
+.font-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.font-option {
+    background: var(--zag-beige);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    text-align: center;
+}
+
+.font-option:hover {
+    background: var(--zag-white);
+    border-color: var(--zag-accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.font-option.active {
+    background: var(--zag-white);
+    border-color: var(--zag-accent);
+    box-shadow: 0 4px 16px rgba(226, 23, 23, 0.3);
+}
+
+.font-preview {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-xs);
+    color: var(--zag-dark);
+}
+
+.font-name {
+    font-size: 0.75rem;
+    color: var(--zag-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Styles de polices */
+.font-preview.anglaise {
+    font-family: 'Parisienne', cursive;
+}
+
+.font-preview.baton {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+}
+
+.font-preview.script {
+    font-family: 'Dancing Script', cursive;
+}
+
+.font-preview.serif {
+    font-family: 'Playfair Display', serif;
+}
+
+/* ============================================
+   CHAMP DE TEXTE AVEC COMPTEUR
+   ============================================ */
+
+.text-input-wrapper {
+    position: relative;
+    margin-top: var(--spacing-sm);
+}
+
+.text-input {
+    width: 100%;
+    padding: var(--spacing-md);
+    padding-right: 60px;
+    border: 2px solid var(--zag-beige);
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--zag-dark);
+    transition: var(--transition-smooth);
+    background: var(--zag-white);
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--zag-accent);
+    box-shadow: 0 0 0 4px rgba(226, 23, 23, 0.1);
+}
+
+.char-counter {
+    position: absolute;
+    right: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.875rem;
+    color: var(--zag-gray);
+    font-weight: 600;
+}
+
+.char-counter.warning {
+    color: #F59E0B;
+}
+
+.char-counter.error {
+    color: #EF4444;
+}
+
+/* ============================================
+   SÉLECTEUR DE COMPOSANTS
+   ============================================ */
+
+.component-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+}
+
+.component-option {
+    background: var(--zag-white);
+    border: 2px solid var(--zag-beige);
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    text-align: center;
+}
+
+.component-option:hover {
+    border-color: var(--zag-accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.component-option.active {
+    border-color: var(--zag-accent);
+    background: linear-gradient(135deg, var(--zag-white) 0%, var(--zag-beige) 100%);
+    box-shadow: 0 4px 16px rgba(226, 23, 23, 0.3);
+}
+
+.component-image {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    margin-bottom: var(--spacing-xs);
+}
+
+.component-label {
+    font-size: 0.875rem;
+    color: var(--zag-dark);
+    font-weight: 500;
+}
+
+/* ============================================
+   AFFICHAGE DES PRIX
+   ============================================ */
+
+.price-display {
+    background: linear-gradient(135deg, var(--zag-accent) 0%, var(--zag-accent-light) 100%);
+    border-radius: 16px;
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
+    color: var(--zag-white);
+}
+
+.price-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.price-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.price-line.total {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: var(--font-serif);
+}
+
+.price-label {
+    opacity: 0.9;
+}
+
+.price-value {
+    font-weight: 600;
+}
+
+/* ============================================
+   BOUTONS
+   ============================================ */
+
+.btn-atelier {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: none;
+    border-radius: 12px;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--zag-accent) 0%, var(--zag-accent-light) 100%);
+    color: var(--zag-white);
+    box-shadow: 0 4px 16px rgba(226, 23, 23, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(226, 23, 23, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background: var(--zag-white);
+    color: var(--zag-dark);
+    border: 2px solid var(--zag-beige);
+}
+
+.btn-secondary:hover {
+    border-color: var(--zag-accent);
+    background: var(--zag-beige);
+}
+
+/* ============================================
+   INDICATEUR DE PROGRESSION
+   ============================================ */
+
+.progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin: var(--spacing-lg) 0;
+    position: relative;
+}
+
+.progress-indicator::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--zag-beige);
+    z-index: 0;
+}
+
+.progress-step {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    flex: 1;
+}
+
+.progress-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--zag-white);
+    border: 2px solid var(--zag-beige);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-xs);
+    transition: var(--transition-smooth);
+    font-weight: 600;
+    color: var(--zag-gray);
+}
+
+.progress-step.active .progress-circle {
+    background: var(--zag-accent);
+    border-color: var(--zag-accent);
+    color: var(--zag-white);
+    box-shadow: 0 4px 12px rgba(226, 23, 23, 0.4);
+}
+
+.progress-step.completed .progress-circle {
+    background: var(--zag-accent-light);
+    border-color: var(--zag-accent-light);
+    color: var(--zag-dark);
+}
+
+.progress-label {
+    font-size: 0.75rem;
+    color: var(--zag-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.animate-scale-in {
+    animation: scaleIn 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .atelier-title {
+        font-size: 1.5rem;
+    }
+
+    .font-selector {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .component-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .price-display {
+        padding: var(--spacing-md);
+    }
+}

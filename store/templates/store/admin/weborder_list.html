@@ -1,0 +1,931 @@
+﻿{% extends 'store/admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Commandes reÃ§ues â€“ Gestion{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item active">Commandes reÃ§ues</li>
+{% endblock %}
+
+{% block admin_content %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .orders-page {
+        font-family: 'Inter', sans-serif;
+        background: #f4f6f8;
+        min-height: 100vh;
+        margin: -24px -12px;
+        padding: 0;
+    }
+
+    /* â”€â”€â”€ TOPBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .orders-topbar {
+        background: #fff;
+        border-bottom: 1px solid #e8ecf0;
+        padding: 20px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .orders-topbar__title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #111827;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .title-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        animation: pulse-dot 2s infinite;
+    }
+
+    @keyframes pulse-dot {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        50% {
+            box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.08);
+        }
+    }
+
+    .topbar-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .btn-primary-sm {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: white;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-primary-sm:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        color: white;
+    }
+
+    .btn-outline-sm {
+        background: white;
+        color: #374151;
+        border: 1.5px solid #e5e7eb;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: border-color 0.2s;
+    }
+
+    .btn-outline-sm:hover {
+        border-color: #4f46e5;
+        color: #4f46e5;
+    }
+
+    /* â”€â”€â”€ KPI STRIP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .kpi-strip {
+        padding: 24px 32px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+    }
+
+    .kpi-card {
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        border: 1px solid #e8ecf0;
+        position: relative;
+        overflow: hidden;
+        transition: box-shadow 0.2s;
+    }
+
+    .kpi-card:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        border-radius: 14px 14px 0 0;
+    }
+
+    .kpi-card--total::before {
+        background: #6366f1;
+    }
+
+    .kpi-card--new::before {
+        background: #f59e0b;
+    }
+
+    .kpi-card--verify::before {
+        background: #3b82f6;
+    }
+
+    .kpi-card--paid::before {
+        background: #10b981;
+    }
+
+    .kpi-card--custom::before {
+        background: #8b5cf6;
+    }
+
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        margin-bottom: 14px;
+    }
+
+    .kpi-card--total .kpi-icon {
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+
+    .kpi-card--new .kpi-icon {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .kpi-card--verify .kpi-icon {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .kpi-card--paid .kpi-icon {
+        background: #d1fae5;
+        color: #059669;
+    }
+
+    .kpi-card--custom .kpi-icon {
+        background: #f3e8ff;
+        color: #7c3aed;
+    }
+
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1;
+    }
+
+    .kpi-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-weight: 600;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    /* â”€â”€â”€ MAIN CONTENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .orders-main {
+        padding: 0 32px 32px;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: white;
+        border: 1px solid #e8ecf0;
+        border-radius: 14px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .search-wrap {
+        flex: 1;
+        min-width: 240px;
+        position: relative;
+    }
+
+    .search-wrap i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 10px 14px 10px 38px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-family: 'Inter', sans-serif;
+        transition: border-color 0.2s;
+        outline: none;
+    }
+
+    .search-input:focus {
+        border-color: #6366f1;
+    }
+
+    .filter-select {
+        padding: 10px 14px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        font-size: 0.875rem;
+        font-family: 'Inter', sans-serif;
+        color: #374151;
+        outline: none;
+        min-width: 160px;
+        transition: border-color 0.2s;
+    }
+
+    .filter-select:focus {
+        border-color: #6366f1;
+    }
+
+    .btn-filter {
+        background: #4f46e5;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .btn-reset {
+        background: white;
+        color: #6b7280;
+        border: 1.5px solid #e5e7eb;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-reset:hover {
+        color: #374151;
+        border-color: #9ca3af;
+    }
+
+    /* Status tabs */
+    .status-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 16px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+    }
+
+    .status-tab {
+        padding: 8px 16px;
+        border-radius: 99px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        text-decoration: none;
+        color: #6b7280;
+        background: white;
+        border-color: #e5e7eb;
+        transition: all 0.15s;
+    }
+
+    .status-tab:hover {
+        color: #4f46e5;
+        border-color: #c7d2fe;
+    }
+
+    .status-tab.active {
+        background: #4f46e5;
+        color: white;
+        border-color: #4f46e5;
+    }
+
+    .status-tab .count {
+        background: rgba(255, 255, 255, 0.25);
+        padding: 1px 7px;
+        border-radius: 99px;
+        font-size: 0.7rem;
+        margin-left: 5px;
+    }
+
+    .status-tab:not(.active) .count {
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    /* â”€â”€â”€ ORDER CARDS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .orders-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .order-row {
+        background: white;
+        border: 1px solid #e8ecf0;
+        border-radius: 14px;
+        overflow: hidden;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+    .order-row:hover {
+        border-color: #a5b4fc;
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
+    }
+
+    .order-row--urgent {
+        border-left: 4px solid #f59e0b !important;
+    }
+
+    .order-row--verify {
+        border-left: 4px solid #3b82f6 !important;
+    }
+
+    .order-row--paid {
+        border-left: 4px solid #10b981 !important;
+    }
+
+    .order-row--cancel {
+        border-left: 4px solid #ef4444 !important;
+    }
+
+    .order-row__main {
+        padding: 18px 24px;
+        display: grid;
+        grid-template-columns: 80px 1fr 200px 160px 140px 130px 100px;
+        align-items: center;
+        gap: 16px;
+    }
+
+    /* Order Number */
+    .order-num {
+        font-weight: 800;
+        color: #111827;
+        font-size: 0.95rem;
+    }
+
+    .order-date {
+        font-size: 0.72rem;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+
+    /* Client Info */
+    .client-name {
+        font-weight: 700;
+        color: #1f2937;
+        font-size: 0.875rem;
+    }
+
+    .client-contact {
+        font-size: 0.72rem;
+        color: #6b7280;
+        margin-top: 2px;
+    }
+
+    .client-city {
+        font-size: 0.72rem;
+        color: #9ca3af;
+    }
+
+    /* Items preview */
+    .items-preview {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .item-thumb {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 1.5px solid #e5e7eb;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #f9fafb;
+    }
+
+    .item-thumb-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 1.5px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f3f4f6;
+        color: #9ca3af;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .items-more {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 1.5px dashed #d1d5db;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #6b7280;
+    }
+
+    .items-count-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+
+    /* Payment proof indicator */
+    .proof-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .proof-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .proof-dot--yes {
+        background: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    .proof-dot--no {
+        background: #d1d5db;
+    }
+
+    .proof-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Status badge */
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 99px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+    .status-badge--pending_payment {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge--awaiting_verification {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-badge--paid {
+        background: #d1fae5;
+        color: #064e3b;
+    }
+
+    .status-badge--shipped {
+        background: #f3e8ff;
+        color: #5b21b6;
+    }
+
+    .status-badge--delivered {
+        background: #d1fae5;
+        color: #064e3b;
+    }
+
+    .status-badge--cancelled {
+        background: #fee2e2;
+        color: #7f1d1d;
+    }
+
+    /* Amount */
+    .order-amount {
+        font-weight: 800;
+        font-size: 1rem;
+        color: #4f46e5;
+        white-space: nowrap;
+    }
+
+    /* Action button */
+    .btn-open {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1.5px solid #e5e7eb;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #374151;
+        background: white;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+
+    .btn-open:hover {
+        background: #4f46e5;
+        color: white;
+        border-color: #4f46e5;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 16px;
+        border: 1.5px dashed #e5e7eb;
+    }
+
+    .empty-state__icon {
+        font-size: 3.5rem;
+        color: #d1d5db;
+        margin-bottom: 20px;
+    }
+
+    .empty-state__title {
+        font-weight: 800;
+        color: #374151;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .empty-state__text {
+        color: #9ca3af;
+        font-size: 0.875rem;
+    }
+
+    /* Pagination */
+    .pagination-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 24px;
+    }
+
+    .pagination-info {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+
+    .pagination-btns {
+        display: flex;
+        gap: 6px;
+    }
+
+    .page-btn {
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1.5px solid #e5e7eb;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #374151;
+        background: white;
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+
+    .page-btn:hover {
+        border-color: #4f46e5;
+        color: #4f46e5;
+    }
+
+    .page-btn.current {
+        background: #4f46e5;
+        color: white;
+        border-color: #4f46e5;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .kpi-strip {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .order-row__main {
+            grid-template-columns: 70px 1fr 160px 120px 110px 80px;
+        }
+
+        .order-row__main .proof-indicator {
+            display: none;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .kpi-strip {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .orders-topbar,
+        .kpi-strip,
+        .orders-main {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+
+        .order-row__main {
+            grid-template-columns: 70px 1fr 120px 100px;
+            gap: 10px;
+        }
+
+        .order-row__main .items-preview,
+        .order-row__main .proof-indicator {
+            display: none;
+        }
+    }
+</style>
+
+<div class="orders-page">
+
+    <!-- TOP BAR -->
+    <div class="orders-topbar">
+        <div class="orders-topbar__title">
+            <div class="title-dot"></div>
+            Réception des Commandes
+        </div>
+        <div class="topbar-actions">
+            <a href="{% url 'store:admin_payments' %}" class="btn-outline-sm">
+                <i class="bi bi-shield-check"></i>
+                Preuves de paiement
+                {% if pending_payment_count %}
+                <span
+                    style="background:#ef4444;color:white;border-radius:99px;padding:1px 7px;font-size:0.65rem;font-weight:800;">{{
+                    pending_payment_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{% url 'store:admin_dashboard' %}" class="btn-outline-sm">
+                <i class="bi bi-grid-3x3-gap"></i> Tableau de bord
+            </a>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-strip">
+        <div class="kpi-card kpi-card--total">
+            <div class="kpi-icon"><i class="bi bi-bag-check"></i></div>
+            <div class="kpi-value">{{ total_orders }}</div>
+            <div class="kpi-label">Total commandes</div>
+        </div>
+        <div class="kpi-card kpi-card--new">
+            <div class="kpi-icon"><i class="bi bi-clock"></i></div>
+            <div class="kpi-value">{{ pending_orders }}</div>
+            <div class="kpi-label">Attente paiement</div>
+        </div>
+        <div class="kpi-card kpi-card--verify">
+            <div class="kpi-icon"><i class="bi bi-shield-exclamation"></i></div>
+            <div class="kpi-value">{{ awaiting_verification_count }}</div>
+            <div class="kpi-label">À vérifier</div>
+        </div>
+        <div class="kpi-card kpi-card--paid">
+            <div class="kpi-icon"><i class="bi bi-check-circle"></i></div>
+            <div class="kpi-value">{{ paid_orders_count|default:"0" }}</div>
+            <div class="kpi-label">Payées</div>
+        </div>
+        <div class="kpi-card kpi-card--custom">
+            <div class="kpi-icon"><i class="bi bi-stars"></i></div>
+            <div class="kpi-value">{{ customized_orders }}</div>
+            <div class="kpi-label">Personnalisées</div>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="orders-main">
+
+        <!-- Status Tabs -->
+        <div class="status-tabs">
+            <a href="?status=&search={{ current_search }}"
+                class="status-tab {% if not current_status %}active{% endif %}">
+                Toutes <span class="count">{{ total_orders }}</span>
+            </a>
+            <a href="?status=pending_payment&search={{ current_search }}"
+                class="status-tab {% if current_status == 'pending_payment' %}active{% endif %}">
+                Attente paiement <span class="count">{{ pending_orders }}</span>
+            </a>
+            <a href="?status=awaiting_verification&search={{ current_search }}"
+                class="status-tab {% if current_status == 'awaiting_verification' %}active{% endif %}">
+                À vérifier <span class="count">{{ awaiting_verification_count }}</span>
+            </a>
+            <a href="?status=paid&search={{ current_search }}"
+                class="status-tab {% if current_status == 'paid' %}active{% endif %}">
+                Payées
+            </a>
+            <a href="?status=shipped&search={{ current_search }}"
+                class="status-tab {% if current_status == 'shipped' %}active{% endif %}">
+                Expédiées
+            </a>
+            <a href="?status=delivered&search={{ current_search }}"
+                class="status-tab {% if current_status == 'delivered' %}active{% endif %}">
+                Livrées
+            </a>
+            <a href="?status=cancelled&search={{ current_search }}"
+                class="status-tab {% if current_status == 'cancelled' %}active{% endif %}">
+                Annulées
+            </a>
+        </div>
+
+        <!-- Filter Bar -->
+        <form method="get" class="filter-bar">
+            <div class="search-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" name="search" class="search-input"
+                    placeholder="Rechercher par nom, téléléphone, email, #ID..." value="{{ current_search }}">
+                <input type="hidden" name="status" value="{{ current_status }}">
+            </div>
+            <select name="has_custom" class="filter-select">
+                <option value="">Tous les types</option>
+                <option value="yes" {% if current_has_custom == 'yes' %}selected{% endif %}>Avec personnalisation</option>
+            </select>
+            <button type="submit" class="btn-filter">
+                <i class="bi bi-funnel"></i> Filtrer
+            </button>
+            {% if current_search or current_status or current_has_custom %}
+            <a href="{% url 'store:admin_weborders' %}" class="btn-reset">
+                <i class="bi bi-x"></i> Réinitialiser
+            </a>
+            {% endif %}
+        </form>
+
+        <!-- Orders List -->
+        <div class="orders-grid">
+            {% for order in orders %}
+            <div class="order-row order-row--{% if order.status == 'pending_payment' %}urgent{% elif order.status == 'awaiting_verification' %}verify{% elif order.status == 'paid' or order.status == 'delivered' %}paid{% elif order.status == 'cancelled' %}cancel{% endif %}"
+                onclick="window.location='{% url 'store:admin_weborder_detail' order.id %}'">
+                <div class="order-row__main">
+
+                    <!-- NumÃ©ro et date -->
+                    <div>
+                        <div class="order-num">#{{ order.id }}</div>
+                        <div class="order-date">{{ order.created_at|date:"d/m/Y" }}</div>
+                        <div class="order-date">{{ order.created_at|date:"H:i" }}</div>
+                    </div>
+
+                    <!-- Client -->
+                    <div>
+                        <div class="client-name">{{ order.full_name }}</div>
+                        <div class="client-contact">{{ order.phone }}</div>
+                        <div class="client-city">{{ order.city }}</div>
+                    </div>
+
+                    <!-- Articles / Thumbnails -->
+                    <div class="items-preview">
+                        {% for item in order.items.all|slice:":3" %}
+                        {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}" class="item-thumb">
+                        {% else %}
+                        <div class="item-thumb-placeholder"><i class="bi bi-image"></i></div>
+                        {% endif %}
+                        {% endfor %}
+                        {% if order.items.count > 3 %}
+                        <div class="items-more">+{{ order.items.count|add:"-3" }}</div>
+                        {% endif %}
+                        <span class="items-count-label" style="margin-left:4px;">{{ order.items.count }} art.</span>
+                    </div>
+
+                    <!-- Preuve de paiement -->
+                    <div class="proof-indicator">
+                        {% if order.manual_payment %}
+                        {% if order.manual_payment.status == 'approved' %}
+                        <div class="proof-dot proof-dot--yes"></div>
+                        <span class="proof-label" style="color:#059669;">Approuvée</span>
+                        {% elif order.manual_payment.status == 'submitted' %}
+                        <div class="proof-dot" style="background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,0.2);">
+                        </div>
+                        <span class="proof-label" style="color:#d97706;">Reçu</span>
+                        {% else %}
+                        <div class="proof-dot" style="background:#ef4444;"></div>
+                        <span class="proof-label" style="color:#dc2626;">Rejetée</span>
+                        {% endif %}
+                        {% else %}
+                        <div class="proof-dot proof-dot--no"></div>
+                        <span class="proof-label" style="color:#9ca3af;">Aucune</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Statut -->
+                    <div>
+                        <span class="status-badge status-badge--{{ order.status }}">
+                            {% if order.status == 'pending_payment' %}<i class="bi bi-clock"></i> En attente
+                            {% elif order.status == 'awaiting_verification' %}<i class="bi bi-shield-check"></i>
+                            Àvérifier
+                            {% elif order.status == 'paid' %}<i class="bi bi-check-circle"></i> Payée
+                            {% elif order.status == 'shipped' %}<i class="bi bi-truck"></i> Expédiée
+                            {% elif order.status == 'delivered' %}<i class="bi bi-house-check"></i> Livrée
+                            {% elif order.status == 'cancelled' %}<i class="bi bi-x-circle"></i> Annulée
+                            {% else %}{{ order.get_status_display }}
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <!-- Montant -->
+                    <div class="order-amount">{{ order.total_amount|floatformat:0 }} FC</div>
+
+                    <!-- Action -->
+                    <div>
+                        <a href="{% url 'store:admin_weborder_detail' order.id %}" class="btn-open"
+                            onclick="event.stopPropagation()">
+                            <i class="bi bi-arrow-right"></i> Ouvrir
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <div class="empty-state__icon"><i class="bi bi-inbox"></i></div>
+                <div class="empty-state__title">Aucune commande trouvÃ©e</div>
+                <p class="empty-state__text">Modifiez vos filtres ou attendez de nouvelles commandes.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="pagination-wrap">
+            <div class="pagination-info">
+                Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }} — {{ page_obj.paginator.count }}
+                commande{{ page_obj.paginator.count|pluralize }}
+            </div>
+            <div class="pagination-btns">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}"
+                    class="page-btn">
+                    <i class="bi bi-chevron-left"></i> Précédent
+                </a>
+                {% endif %}
+                <span class="page-btn current">{{ page_obj.number }}</span>
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}"
+                    class="page-btn">
+                    Suivant <i class="bi bi-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /orders-main -->
+</div><!-- /orders-page -->
+
+{% endblock %}

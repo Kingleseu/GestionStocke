@@ -298,7 +298,7 @@
 </div>
 
 <!-- Home View - SPA Navigation -->
-<div id="homeView" class="view {% if not is_django_view and not request.GET.view %}active{% endif %}">
+<div id="homeView" class="view {% if active_view == 'home' or not active_view and not is_django_view and not request.GET.view %}active{% endif %}">
 
 
     <!-- CONTENT SECTIONS -->
@@ -878,114 +878,201 @@
 
 
 <!-- Checkout View -->
-<div id="checkoutView" class="view">
-    <div class="catalogue-container">
+<div id="checkoutView" class="view checkout-view {% if active_view == 'checkout' %}active{% endif %}">
+    <div class="checkout-shell">
         <div class="checkout-header">
-            <h1>Finaliser la commande</h1>
-            <p>Complétez vos informations pour l'expédition</p>
+            <div>
+                <span class="checkout-eyebrow">Finaliser la commande</span>
+                <h1>Votre commande</h1>
+                <p>Complétez vos informations, choisissez la livraison et validez le paiement.</p>
+            </div>
+        </div>
+
+        <div class="checkout-stepper" id="checkoutStepper">
+            <div class="step active" data-step="1">
+                <span class="step-dot">1</span>
+                <span class="step-label">Informations</span>
+            </div>
+            <div class="step" data-step="2">
+                <span class="step-dot">2</span>
+                <span class="step-label">Livraison</span>
+            </div>
+            <div class="step" data-step="3">
+                <span class="step-dot">3</span>
+                <span class="step-label">Paiement</span>
+            </div>
         </div>
 
         <div class="checkout-layout">
             <div class="checkout-main">
-                <div class="checkout-section">
-                    <div class="checkout-section-header">
-                        <div class="checkout-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <rect x="1" y="3" width="15" height="13"></rect>
-                                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                                <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                                <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                            </svg>
-                        </div>
-                        <h2>Livraison</h2>
-                    </div>
-                    <form method="post" action="{% url 'store:checkout' %}" id="checkoutForm">
-                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                        <div class="form-row">
-                            <div class="form-field">
-                                <label for="firstName">Prénom</label>
-                                <input type="text" id="firstName" name="first_name" required>
-                            </div>
-                            <div class="form-field">
-                                <label for="lastName">Nom</label>
-                                <input type="text" id="lastName" name="last_name" required>
-                            </div>
-                        </div>
-                        <div class="form-field">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
-                        <div class="form-field">
-                            <label for="phone">Téléphone</label>
-                            <input type="tel" id="phone" name="phone" required>
-                        </div>
-                        <div class="form-field">
-                            <label for="address">Adresse</label>
-                            <input type="text" id="address" name="address" required>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-field">
-                                <label for="city">Ville</label>
-                                <input type="text" id="city" name="city" required>
-                            </div>
-                            <div class="form-field">
-                                <label for="postalCode">Code postal</label>
-                                <input type="text" id="postalCode" name="postal_code" required>
-                            </div>
-                        </div>
-                        <div class="form-field">
-                            <label for="notes">Notes (optionnel)</label>
-                            <textarea id="notes" name="notes" rows="3"
-                                placeholder="Instructions de livraison..."></textarea>
-                        </div>
-                    </form>
-                </div>
+                <form method="post" action="{% url 'store:checkout' %}" id="checkoutForm">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-                <div class="checkout-section">
-                    <div class="checkout-section-header">
-                        <div class="checkout-icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                <line x1="1" y1="10" x2="23" y2="10"></line>
-                            </svg>
-                        </div>
-                        <h2>Paiement</h2>
-                    </div>
-                    <div class="payment-options">
-                        <label class="payment-option selected">
-                            <input type="radio" name="paymentMethod" value="cash" checked form="checkoutForm">
-                            <span class="radio-custom"></span>
-                            <div class="payment-details">
-                                <span class="payment-title">Paiement à la livraison</span>
-                                <span class="payment-desc">Payer en espèces à la réception de votre
-                                    commande</span>
+                    <section class="checkout-step active" data-step="1">
+                        <div class="checkout-card">
+                            <div class="checkout-card-header">
+                                <div class="checkout-icon">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                <div>
+                                    <h2>Informations client</h2>
+                                    <p>Nous utiliserons ces informations pour vous contacter.</p>
+                                </div>
                             </div>
-                        </label>
-                    </div>
-                </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label for="firstName">Prénom</label>
+                                    <input type="text" id="firstName" name="first_name" required>
+                                </div>
+                                <div class="form-field">
+                                    <label for="lastName">Nom</label>
+                                    <input type="text" id="lastName" name="last_name" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                                <div class="form-field">
+                                    <label for="phone">Téléphone</label>
+                                    <input type="tel" id="phone" name="phone" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checkout-card">
+                            <div class="checkout-card-header">
+                                <div class="checkout-icon">
+                                    <i class="bi bi-geo-alt"></i>
+                                </div>
+                                <div>
+                                    <h2>Adresse de livraison</h2>
+                                    <p>Vérifiez que l’adresse est complète.</p>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="address">Adresse</label>
+                                <input type="text" id="address" name="address" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label for="city">Ville</label>
+                                    <input type="text" id="city" name="city" required>
+                                </div>
+                                <div class="form-field">
+                                    <label for="postalCode">Code postal</label>
+                                    <input type="text" id="postalCode" name="postal_code" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="step-actions">
+                            <button type="button" class="btn-outline" data-step-next="2">Continuer</button>
+                        </div>
+                    </section>
+
+                    <section class="checkout-step" data-step="2">
+                        <div class="checkout-card">
+                            <div class="checkout-card-header">
+                                <div class="checkout-icon">
+                                    <i class="bi bi-truck"></i>
+                                </div>
+                                <div>
+                                    <h2>Mode de livraison</h2>
+                                    <p>Choisissez l’option qui vous convient.</p>
+                                </div>
+                            </div>
+                            <div class="shipping-options">
+                                <label class="shipping-option">
+                                    <input type="radio" name="shipping_method" value="standard" checked>
+                                    <span class="radio-custom"></span>
+                                    <div>
+                                        <span class="option-title">Standard</span>
+                                        <span class="option-desc">2 à 4 jours ouvrés</span>
+                                    </div>
+                                    <span class="option-price">Gratuit</span>
+                                </label>
+                                <label class="shipping-option">
+                                    <input type="radio" name="shipping_method" value="express">
+                                    <span class="radio-custom"></span>
+                                    <div>
+                                        <span class="option-title">Express</span>
+                                        <span class="option-desc">Livraison prioritaire</span>
+                                    </div>
+                                    <span class="option-price">+{{ delivery_fee|default:0 }} FC</span>
+                                </label>
+                            </div>
+                            <div class="form-field">
+                                <label for="notes">Notes (optionnel)</label>
+                                <textarea id="notes" name="notes" rows="3"
+                                    placeholder="Instructions de livraison..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="step-actions">
+                            <button type="button" class="btn-ghost" data-step-prev="1">Retour</button>
+                            <button type="button" class="btn-outline" data-step-next="3">Continuer</button>
+                        </div>
+                    </section>
+
+                    <section class="checkout-step" data-step="3">
+                        <div class="checkout-card">
+                            <div class="checkout-card-header">
+                                <div class="checkout-icon">
+                                    <i class="bi bi-credit-card"></i>
+                                </div>
+                                <div>
+                                    <h2>Paiement</h2>
+                                    <p>Choisissez votre méthode de paiement.</p>
+                                </div>
+                            </div>
+                            <div class="payment-options">
+                                <label class="payment-option selected">
+                                    <input type="radio" name="paymentMethod" value="cash" checked form="checkoutForm">
+                                    <span class="radio-custom"></span>
+                                    <div class="payment-details">
+                                        <span class="payment-title">Paiement à la livraison</span>
+                                        <span class="payment-desc">Payer en espèces à la réception</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="checkout-card checkout-confirm">
+                            <h3>Confirmation</h3>
+                            <p>En validant, vous acceptez nos conditions de vente.</p>
+                            <button type="submit" form="checkoutForm" class="btn-primary w-100">
+                                Confirmer la commande
+                            </button>
+                        </div>
+
+                        <div class="step-actions">
+                            <button type="button" class="btn-ghost" data-step-prev="2">Retour</button>
+                        </div>
+                    </section>
+                </form>
             </div>
 
-            <div class="checkout-sidebar">
+            <aside class="checkout-sidebar">
                 <div class="order-summary-card">
                     <h3>Résumé de la commande</h3>
                     <div class="order-items" id="checkoutOrderItems">
                         <!-- JS will populate -->
                     </div>
                     <div class="order-totals">
-                        <div class="total-row"><span>Sous-total</span><span id="checkoutSubtotal">0.00 FC</span>
-                        </div>
-                        <div class="total-row"><span>Livraison</span><span id="checkoutDelivery">0.00 FC</span>
-                        </div>
+                        <div class="total-row"><span>Sous-total</span><span id="checkoutSubtotal">0.00 FC</span></div>
+                        <div class="total-row"><span>Livraison</span><span id="checkoutDelivery">0.00 FC</span></div>
                         <div class="total-row"><span>TVA (16%)</span><span id="checkoutTax">0.00 FC</span></div>
-                        <div class="total-row final-total"><span>Total</span><span id="checkoutTotal">0.00 FC</span>
-                        </div>
+                        <div class="total-row final-total"><span>Total</span><span id="checkoutTotal">0.00 FC</span></div>
                     </div>
-                    <button type="submit" form="checkoutForm" class="btn-primary w-100">Confirmer la
-                        commande</button>
+                    <div class="summary-footer">
+                        <button type="button" class="btn-ghost w-100" onclick="showView('catalogue')">
+                            Continuer mes achats
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </aside>
         </div>
     </div>
 </div>

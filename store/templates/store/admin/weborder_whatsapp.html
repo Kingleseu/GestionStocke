@@ -1,0 +1,825 @@
+{% extends 'store/admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Suivi de Commandes Interactif{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --wa-bg: #e5ddd5;
+        --wa-header: #075e54;
+        --wa-teal: #128c7e;
+        --wa-light-green: #25d366;
+        --wa-bubble-in: #ffffff;
+        --wa-bubble-out: #dcf8c6;
+        --wa-gray: #f0f2f5;
+        --wa-border: #e9edef;
+    }
+
+    .wa-container {
+        display: flex;
+        height: calc(100vh - 100px);
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--wa-border);
+    }
+
+    /* Left Panel: Conversations List */
+    .wa-list-panel {
+        width: 320px;
+        border-right: 1px solid var(--wa-border);
+        display: flex;
+        flex-direction: column;
+        background: white;
+    }
+
+    .wa-list-header {
+        padding: 16px;
+        background: var(--wa-gray);
+        border-bottom: 1px solid var(--wa-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .wa-search-box {
+        padding: 10px 16px;
+        background: white;
+        border-bottom: 1px solid var(--wa-border);
+    }
+
+    .wa-search-box input {
+        background: var(--wa-gray);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+
+    .wa-conversations {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .wa-chat-item {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: background 0.2s;
+        border-bottom: 1px solid #f8f8f8;
+    }
+
+    .wa-chat-item:hover {
+        background: #f5f6f6;
+    }
+
+    .wa-chat-item.active {
+        background: #ebebeb;
+    }
+
+    .wa-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #ced4da;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+
+    .wa-chat-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .wa-chat-name {
+        font-weight: 600;
+        margin-bottom: 2px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.95rem;
+    }
+
+    .wa-chat-time {
+        font-size: 0.75rem;
+        color: #667781;
+        font-weight: 400;
+    }
+
+    .wa-chat-last-msg {
+        font-size: 0.85rem;
+        color: #667781;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Right Panel: Chat Content */
+    .wa-main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--wa-bg);
+        position: relative;
+    }
+
+    .wa-chat-header {
+        height: 60px;
+        padding: 0 16px;
+        background: var(--wa-gray);
+        border-bottom: 1px solid var(--wa-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 10;
+    }
+
+    .wa-messages {
+        flex: 1;
+        padding: 24px 24px 80px 24px;
+        /* Added extra bottom padding for scrolling */
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        scroll-behavior: smooth;
+    }
+
+    /* Order Detail Card Style */
+    .order-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+        border: 1px solid #eee;
+        /* Removed overflow: hidden to prevent clipping */
+    }
+
+    .order-card-header {
+        padding: 15px 20px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .order-card-body {
+        padding: 20px;
+    }
+
+    .item-row {
+        display: flex;
+        gap: 20px;
+        padding: 20px 0;
+        border-bottom: 1px solid #f0f0f0;
+        align-items: flex-start;
+        /* Ensure items align at top and expand downward */
+    }
+
+    .item-row:last-child {
+        border-bottom: none;
+    }
+
+    .item-media {
+        width: 180px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .item-preview-thumb {
+        width: 180px;
+        height: 180px;
+        object-fit: contain;
+        border-radius: 6px;
+        /* Reduced roundness for better shape visibility */
+        border: 2px solid var(--wa-teal);
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .item-preview-thumb:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .item-info {
+        flex: 1;
+    }
+
+    .item-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+        color: #1a1a1a;
+    }
+
+    .custom-details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+        background: #1e2124;
+        /* Dark high contrast */
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 5px solid #ffc107;
+        /* Warning yellow for attention */
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .atelier-instruction-header {
+        grid-column: 1 / -1;
+        font-weight: 800;
+        color: #ffc107;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-size: 0.9rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 8px;
+        margin-bottom: 5px;
+    }
+
+    .detail-item {
+        font-size: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 10px;
+        border-radius: 6px;
+    }
+
+    .detail-label {
+        color: #aaa;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .detail-value {
+        color: #fff;
+        line-height: 1.4;
+        font-weight: 500;
+    }
+
+    .detail-value strong {
+        color: #ffc107;
+        font-size: 1.2rem;
+    }
+
+    /* Lightbox Modal for Image Zoom */
+    .lightbox-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+        cursor: zoom-out;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .lightbox-overlay.active {
+        display: flex;
+    }
+
+    .lightbox-image {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: zoomIn 0.3s ease;
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .lightbox-close:hover {
+        transform: scale(1.2);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes zoomIn {
+        from {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .download-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .btn-download {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: white;
+        border: 1px solid #ddd;
+        color: #444;
+        transition: 0.2s;
+    }
+
+    .btn-download:hover {
+        background: #f0f0f0;
+        border-color: #bbb;
+        color: #000;
+    }
+
+    .btn-download i {
+        font-size: 0.9rem;
+    }
+
+    /* Override message area to act as card container */
+    .wa-messages {
+        background: #f0f2f5;
+        padding: 24px;
+    }
+
+    /* Actions Footer */
+    .wa-footer {
+        padding: 10px 16px;
+        background: var(--wa-gray);
+        border-top: 1px solid var(--wa-border);
+    }
+
+    .btn-wa {
+        background: var(--wa-teal);
+        color: #ffffff !important;
+        border: none;
+        border-radius: 20px;
+        padding: 6px 16px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-wa:hover {
+        background: var(--wa-header);
+        color: #ffffff !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Welcome state */
+    .wa-welcome {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #667781;
+        text-align: center;
+        padding: 40px;
+    }
+
+    .wa-welcome i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 991px) {
+        .wa-list-panel {
+            width: 80px;
+        }
+
+        .wa-chat-info,
+        .wa-list-header h5,
+        .wa-search-box {
+            display: none;
+        }
+
+        .wa-avatar {
+            margin-right: 0;
+            margin: 0 auto;
+        }
+    }
+
+    /* Print Optimizations */
+    @media print {
+
+        .wa-list-panel,
+        .wa-chat-header,
+        .wa-footer,
+        .wa-search-box,
+        .wa-list-header {
+            display: none !important;
+        }
+
+        .wa-container {
+            border: none;
+            box-shadow: none;
+        }
+
+        .wa-main-panel {
+            background: white !important;
+        }
+
+        .wa-messages {
+            padding: 0;
+            background: white !important;
+        }
+
+        .order-card {
+            box-shadow: none;
+            border: 1px solid #000;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="wa-container">
+    <!-- Panel Gauche -->
+    <div class="wa-list-panel">
+        <div class="wa-list-header">
+            <h5 class="mb-0 fw-bold">Console de Commandes</h5>
+            <div class="dropdown">
+                <i class="bi bi-three-dots-vertical cursor-pointer" data-bs-toggle="dropdown"></i>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{% url 'store:admin_weborders' %}">Vue Classique</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="wa-search-box">
+            <input type="text" id="orderSearch" placeholder="Rechercher une commande...">
+        </div>
+        <div class="wa-conversations" id="orderList">
+            {% for item in prepared_orders %}
+            <div class="wa-chat-item" data-order-id="{{ item.order.id }}"
+                onclick="loadOrderDetails('{{ item.order.id }}')">
+                <div class="wa-avatar" style="background: hsl({{ item.order.id|add:120 }}, 60%, 45%);">
+                    {{ item.order.full_name|slice:":1"|upper }}
+                </div>
+                <div class="wa-chat-info">
+                    <div class="wa-chat-name">
+                        <span>{{ item.order.full_name }}</span>
+                        <span class="wa-chat-time">{{ item.order.created_at|date:"H:i" }}</span>
+                    </div>
+                    <div class="wa-chat-last-msg">
+                        {% if item.has_custom %}<i class="bi bi-stars text-info"></i> {% endif %}
+                        {{ item.summary }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Panel Droit -->
+    <div class="wa-main-panel" id="mainPanel">
+        <div class="wa-welcome" id="welcomeState">
+            <i class="bi bi-clipboard-check"></i>
+            <h3>Gestionnaire de Commandes</h3>
+            <p>Sélectionnez une commande dans la liste de gauche pour voir les détails et les options de gravure.</p>
+            <div class="mt-4">
+                <span class="badge bg-light text-muted border">Connecté en tant que Manager</span>
+            </div>
+        </div>
+
+        <!-- Lightbox Modal for Image Zoom -->
+        <div id="lightboxOverlay" class="lightbox-overlay" onclick="closeLightbox()">
+            <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+            <img id="lightboxImage" class="lightbox-image" src="" alt="Zoom" onclick="event.stopPropagation()">
+        </div>
+
+        <div id="orderContentArea" style="display: none; flex-direction: column; height: 100%;">
+            <!-- Header Dynamique -->
+            <div class="wa-chat-header shadow-sm">
+                <div class="d-flex align-items-center">
+                    <div class="wa-avatar wa-avatar-sm me-2" id="headerAvatar" style="width: 38px; height: 38px;">C
+                    </div>
+                    <div>
+                        <div class="fw-bold" id="headerName">Nom Client</div>
+                        <small class="text-muted" id="headerStatus">Statut</small>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <a href="#" id="waLink" target="_blank" class="text-success fs-4" title="Contacter Client">
+                        <i class="bi bi-chat-right-text-fill"></i>
+                    </a>
+                    <div class="dropdown">
+                        <i class="bi bi-three-dots-vertical cursor-pointer" data-bs-toggle="dropdown"></i>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                            <li><a class="dropdown-item" href="#" id="viewFullLink">Voir Détails complets</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header">Changer le statut</h6>
+                            </li>
+                            {% for val, lab in status_choices %}
+                            <li><a class="dropdown-item status-change-btn" href="#" data-status="{{ val }}">{{ lab
+                                    }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone de "Messages" -->
+            <div class="wa-messages" id="messageArea">
+                <!-- Les bulles seront injectées ici -->
+            </div>
+
+            <!-- Footer d'Actions -->
+            <div class="wa-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div id="orderTotal" class="fw-bold">Total: 0 FC</div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                            <i class="bi bi-printer"></i> Imprimer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ orders_json|json_script:"orders-data" }}
+
+<script>
+    const orderData = JSON.parse(document.getElementById('orders-data').textContent).reduce((acc, order) => {
+        acc[order.id] = order;
+        return acc;
+    }, {});
+
+    function loadOrderDetails(id) {
+        console.log("Loading order details for ID:", id);
+        const order = orderData[id];
+        if (!order) return;
+
+        // UI Highlights
+        document.querySelectorAll('.wa-chat-item').forEach(el => el.classList.remove('active'));
+        const activeItem = document.querySelector(`.wa-chat-item[data-order-id="${id}"]`);
+        if (activeItem) activeItem.classList.add('active');
+
+        document.getElementById('welcomeState').style.display = 'none';
+        document.getElementById('orderContentArea').style.display = 'flex';
+
+        // Header
+        document.getElementById('headerName').textContent = order.name;
+        document.getElementById('headerStatus').textContent = order.status;
+        document.getElementById('headerAvatar').textContent = order.name.charAt(0).toUpperCase();
+        if (activeItem) {
+            document.getElementById('headerAvatar').style.background = activeItem.querySelector('.wa-avatar').style.background;
+        }
+        document.getElementById('orderTotal').textContent = "Total: " + order.total;
+        document.getElementById('viewFullLink').href = order.details_url;
+
+        // Contact Link
+        const cleanPhone = order.phone.replace(/[^0-9]/g, '');
+        document.getElementById('waLink').href = `https://wa.me/${cleanPhone}`;
+
+        // Build Consolidated View
+        const msgArea = document.getElementById('messageArea');
+        msgArea.innerHTML = `
+            <div class="order-card">
+                <div class="order-card-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-dark">#${order.id}</span>
+                        <span class="text-muted"><i class="bi bi-calendar-event me-1"></i> ${order.date}</span>
+                    </div>
+                    <span class="badge rounded-pill bg-success px-3">${order.status}</span>
+                </div>
+                <div class="order-card-body">
+                    <div class="mb-4">
+                        <h6 class="text-uppercase fw-bold text-muted small mb-2">Informations Client</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6 border-end">
+                                <div class="mb-1"><i class="bi bi-person me-2 text-muted"></i><strong>${order.name}</strong></div>
+                                <div class="mb-1"><i class="bi bi-telephone me-2 text-muted"></i>${order.phone}</div>
+                                <div class="mb-1"><i class="bi bi-envelope me-2 text-muted"></i>${order.email || 'Non fourni'}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-1 text-muted small text-uppercase fw-bold">Adresse de livraison</div>
+                                <div><i class="bi bi-geo-alt me-2 text-muted"></i>${order.address || 'Non fournie'}</div>
+                                <div><i class="bi bi-building me-2 text-muted"></i>${order.city || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-uppercase fw-bold text-muted small mb-3">Articles de la commande</h6>
+                    <div class="items-list">
+                        ${order.items.map(item => {
+            const choices = item.custom ? (item.custom.choices || {}) : {};
+            const hasCustom = Object.keys(choices).length > 0;
+            const personalizedImage = item.preview || null;
+            const productImage = item.image || '/static/images/placeholder.png';
+            const clientImageUrl = item.client_photo || null;
+
+            return `
+                    <div class="item-row">
+                        <!-- VUE ATELIER (MOCKUP) -->
+                        <div class="item-media">
+                            <div class="text-center mb-1 small fw-bold text-uppercase text-muted" style="font-size: 10px;">VUE ATELIER (MOCKUP)</div>
+                            <img src="${personalizedImage || productImage}" 
+                                 class="item-preview-thumb" 
+                                 title="Cliquez pour agrandir le mockup de fabrication"
+                                 onclick="openLightbox(this.src)" 
+                                 style="cursor: zoom-in;" />
+                            <div class="download-actions">
+                                ${personalizedImage ? `
+                                    <a href="${personalizedImage}" download="mockup_${order.id}.png" class="btn-download w-100" style="background:#ffc107; color:#000; border:none; font-weight:bold; justify-content:center;">
+                                        <i class="bi bi-download"></i> APERÇU PNG
+                                    </a>
+                                ` : ''}
+                                ${clientImageUrl ? `
+                                    <a href="${clientImageUrl}" download="photo_client_${order.id}.png" class="btn-download w-100" style="justify-content:center;">
+                                        <i class="bi bi-image"></i> PHOTO SOURCE
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Col 2: Info & Instructions -->
+                        <div class="item-info">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <div class="item-title">${item.name}</div>
+                                    <div class="text-muted small">Quantité: <strong>${item.qty}</strong></div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold fs-5">${item.price}</div>
+                                    <img src="${productImage}" 
+                                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; margin-top: 5px; cursor: zoom-in;" 
+                                         title="Cliquez pour agrandir le produit" 
+                                         onclick="openLightbox(this.src)" />
+                                </div>
+                            </div>
+
+                            <!-- Atelier Detail Box -->
+                            ${item.production && item.production.instructions && item.production.instructions.length > 0 ? `
+                                <div class="custom-details-grid">
+                                    <div class="atelier-instruction-header">
+                                        <i class="bi bi-tools me-2"></i> Instructions d'Atelier (Urgent)
+                                    </div>
+                                    ${item.production.instructions.map(ins => `
+                                        <div class="detail-item">
+                                            <span class="detail-label">${ins.zone}</span>
+                                            <span class="detail-value"><strong>${ins.action}</strong></span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : (hasCustom ? `
+                                <div class="custom-details-grid" style="border-left-color: #666;">
+                                    <div class="atelier-instruction-header" style="color: #fff;">
+                                        <i class="bi bi-pencil-square me-2"></i> Détails de Personnalisation
+                                    </div>
+                                    ${choices.recto && choices.recto.active ? `
+                                        <div class="detail-item">
+                                            <span class="detail-label">Recto</span>
+                                            <span class="detail-value"><strong>${choices.recto.text || 'Photo Client'}</strong> <br><small>Police: ${choices.recto.font || 'Default'}</small></span>
+                                        </div>
+                                    ` : ''}
+                                    ${choices.verso && choices.verso.active ? `
+                                        <div class="detail-item">
+                                            <span class="detail-label">Verso</span>
+                                            <span class="detail-value"><strong>${choices.verso.text || 'Photo Client'}</strong> <br><small>Police: ${choices.verso.font || 'Default'}</small></span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : '<div class="alert alert-light py-2 border text-muted small"><i class="bi bi-info-circle me-1"></i> Produit standard.</div>')}
+                        </div>
+                    </div>
+                `;
+        }).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Re-enable Status Change Logic
+        setupStatusButtons(order);
+        msgArea.scrollTop = 0;
+    }
+
+    function setupStatusButtons(order) {
+        document.querySelectorAll('.status-change-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                const newStatus = btn.dataset.status;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = order.update_url;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = '{{ csrf_token }}';
+                const statusInput = document.createElement('input');
+                statusInput.type = 'hidden';
+                statusInput.name = 'status';
+                statusInput.value = newStatus;
+                form.appendChild(csrfInput);
+                form.appendChild(statusInput);
+                document.body.appendChild(form);
+                form.submit();
+            };
+        });
+    }
+
+    // Search
+    document.getElementById('orderSearch').oninput = function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.wa-chat-item').forEach(item => {
+            const name = item.querySelector('.wa-chat-name span').textContent.toLowerCase();
+            const summary = item.querySelector('.wa-chat-last-msg').textContent.toLowerCase();
+            if (name.includes(q) || summary.includes(q) || item.dataset.orderId.toLowerCase().includes(q)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    };
+
+    // Lightbox Functions
+    function openLightbox(imageSrc) {
+        const overlay = document.getElementById('lightboxOverlay');
+        const image = document.getElementById('lightboxImage');
+        image.src = imageSrc;
+        overlay.classList.add('active');
+        // Prevent body scroll when lightbox is open
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+        const overlay = document.getElementById('lightboxOverlay');
+        overlay.classList.remove('active');
+        // Restore body scroll
+        document.body.style.overflow = '';
+    }
+
+    // Close lightbox on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeLightbox();
+        }
+    });
+
+    // Initial Load
+    window.addEventListener('DOMContentLoaded', () => {
+        const items = document.querySelectorAll('.wa-chat-item');
+        if (items.length > 0) {
+            loadOrderDetails(items[0].dataset.orderId);
+        }
+    });
+</script>
+{% endblock %}

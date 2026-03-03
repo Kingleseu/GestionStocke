@@ -131,12 +131,11 @@
     <!-- Product Grid -->
     <div class="row g-4">
         {% for product in products %}
-        <div class="col-xl-3 col-lg-4 col-md-6">
+        <div class="col-xl-3 col-lg-4 col-md-6" data-product-id="{{ product.id }}">
             <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden product-card-hover">
                 <!-- Checkbox (Absolute) -->
                 <div class="position-absolute top-0 start-0 p-3 z-10">
-                    <input type="checkbox" name="selected_products" value="{{ product.id }}"
-                        class="form-check-input product-checkbox shadow-sm" style="width: 1.25em; height: 1.25em;">
+                    <input type="checkbox" name="selected_products" value="{{ product.id }}" class="form-check-input product-checkbox shadow-sm" style="width: 1.25em; height: 1.25em;">
                 </div>
 
                 <!-- Status Badge (Absolute) -->
@@ -153,11 +152,9 @@
                 <!-- Image -->
                 <div class="bg-light ratio ratio-4x3 product-image">
                     {% if product.image %}
-                    <img src="{{ product.image.url }}" class="card-img-top object-fit-cover primary-img"
-                        alt="{{ product.name }}">
+                    <img src="{{ product.image.url }}" class="card-img-top object-fit-cover primary-img" alt="{{ product.name }}">
                     {% if product.secondary_image %}
-                    <img src="{{ product.secondary_image.url }}" class="card-img-top object-fit-cover secondary-img"
-                        alt="{{ product.name }}">
+                    <img src="{{ product.secondary_image.url }}" class="card-img-top object-fit-cover secondary-img" alt="{{ product.name }}">
                     {% endif %}
                     {% else %}
                     <div class="d-flex align-items-center justify-content-center h-100 text-muted">
@@ -199,14 +196,15 @@
                                 <i class="bi bi-three-dots-vertical"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                                <li><a class="dropdown-item" href="{% url 'products:product_update' product.pk %}"><i
-                                            class="bi bi-pencil me-2"></i> Modifier</a></li>
+                                <li><a class="dropdown-item" href="{% url 'products:product_update' product.pk %}"><i class="bi bi-pencil me-2"></i> Modifier</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item text-danger"
-                                        href="{% url 'products:product_delete' product.pk %}"><i
-                                            class="bi bi-trash me-2"></i> Supprimer</a></li>
+                                <li>
+                                    <button type="button" class="dropdown-item text-danger js-delete-product" data-delete-url="{% url 'products:product_delete' product.pk %}" data-product-id="{{ product.id }}">
+                                        <i class="bi bi-trash me-2"></i> Supprimer
+                                    </button>
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -229,16 +227,38 @@
             <li class="page-item"><a class="page-link border-0 shadow-sm rounded-circle me-2"
                     href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a></li>
             {% endif %}
-            <li class="page-item active"><span class="page-link border-0 shadow-sm rounded-pill px-3">{{ page_obj.number
-                    }} / {{ page_obj.paginator.num_pages }}</span></li>
+            <li class="page-item active"><span class="page-link border-0 shadow-sm rounded-pill px-3">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
             {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link border-0 shadow-sm rounded-circle ms-2"
-                    href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a></li>
+            <li class="page-item"><a class="page-link border-0 shadow-sm rounded-circle ms-2" href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a></li>
             {% endif %}
         </ul>
     </nav>
     {% endif %}
 </form>
+
+<form id="deleteProductForm" method="post" class="d-none">
+    {% csrf_token %}
+</form>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Supprimer le produit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Voulez-vous vraiment supprimer ce produit ?</p>
+                <small class="text-muted">Cette action va désactiver le produit.</small>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteProduct">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal Ajout Produit (Simplified for brevity, structure remains similar to previous but styled) -->
 {% include 'products/product_form_modal.html' with categories=categories %}
@@ -326,6 +346,63 @@
                 errorDiv.classList.remove('d-none');
                 errorDiv.textContent = "Erreur de connexion au serveur.";
             });
+    }
+</script>
+
+<script>
+    // Single product delete (avoid nested form inside bulk form)
+    let pendingDeleteUrl = null;
+    let pendingDeleteId = null;
+    const deleteModalEl = document.getElementById('deleteProductModal');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteProduct');
+    const deleteModal = deleteModalEl ? new bootstrap.Modal(deleteModalEl) : null;
+
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.js-delete-product');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const url = btn.getAttribute('data-delete-url');
+        const productId = btn.getAttribute('data-product-id');
+        if (!url) return;
+        pendingDeleteUrl = url;
+        pendingDeleteId = productId;
+        if (deleteModal) deleteModal.show();
+    });
+
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async function () {
+            if (!pendingDeleteUrl) return;
+            const form = document.getElementById('deleteProductForm');
+            if (!form) return;
+            const csrfInput = form.querySelector('input[name="csrfmiddlewaretoken"]');
+            const csrfToken = csrfInput ? csrfInput.value : '';
+            try {
+                const resp = await fetch(pendingDeleteUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok || data.success !== true) {
+                    alert(data.error || 'Erreur lors de la suppression.');
+                    return;
+                }
+                if (pendingDeleteId) {
+                    const cardCol = document.querySelector(`[data-product-id="${pendingDeleteId}"]`);
+                    if (cardCol) cardCol.remove();
+                }
+                if (deleteModal) deleteModal.hide();
+            } catch (e) {
+                console.error(e);
+                alert('Erreur lors de la suppression.');
+            } finally {
+                pendingDeleteUrl = null;
+                pendingDeleteId = null;
+            }
+        });
     }
 </script>
 {% endblock %}

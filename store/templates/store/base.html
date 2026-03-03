@@ -6,8 +6,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Montserrat:wght@300;400;700&family=Bodoni+Moda:ital,wght@0,400..900;1,400..900&family=Lora:ital,wght@0,400..700;1,400..700&family=Italianno&family=Parisienne&family=Outfit:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/fonts.css' %}">
     <!-- Bootstrap CSS (Keep for grid/utilities, override specific components) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -15,6 +16,8 @@
     <!-- Custom Modern CSS -->
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/des_store.css' %}?v=3.1">
+    <link rel="stylesheet" href="{% static 'css/des_store_part2.css' %}?v=1.4">
+    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.1">
     <style>
         /* CRITICAL: Inline Hover Effect for Storefront */
         .product-image {
@@ -232,14 +235,16 @@
 
                         {% get_active_categories as all_cats %}
                         {% for univ in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS"|split:"," %}
-                        <button class="tab-item" data-category="{{ univ }}" onclick="selectUniverse('{{ univ|escapejs }}')">
+                        <button class="tab-item" data-category="{{ univ }}"
+                            onclick="selectUniverse('{{ univ|escapejs }}')">
                             {{ univ }}
                         </button>
                         {% endfor %}
 
                         {% for category in all_cats %}
                         {% if category.name|upper not in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS" %}
-                        <button class="tab-item" data-category="{{ category.name }}" onclick="selectUniverse('{{ category.name|escapejs }}')">
+                        <button class="tab-item" data-category="{{ category.name }}"
+                            onclick="selectUniverse('{{ category.name|escapejs }}')">
                             {{ category.name|upper }}
                         </button>
                         {% endif %}
@@ -283,8 +288,7 @@
             {% get_active_categories as mobile_all_cats %}
             {% for category in mobile_all_cats %}
             {% if category.name|upper not in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS" %}
-            <button class="pill-item" onclick="selectUniverse('{{ category.name|escapejs }}')">
-                {{ category.name }}</button>
+            <button class="pill-item" onclick="selectUniverse('{{ category.name|escapejs }}')">{{ category.name}}</button>
             {% endif %}
             {% endfor %}
         </div>
@@ -304,15 +308,12 @@
             <div class="mobile-category">
                 <h3>Catalogue</h3>
                 <div class="mobile-subcategories">
-                    <button
-                        onclick="showView('catalogue'); filters.category='Tous'; renderCatalogueProducts(); toggleMobileMenu()">Tout
+                    <button onclick="showView('catalogue'); filters.category='Tous'; renderCatalogueProducts(); toggleMobileMenu()">Tout
                         voir</button>
                     {% get_active_categories as mobile_categories_fallback %}
                     {% with mobile_list=mobile_categories|default:categories|default:mobile_categories_fallback %}
                     {% for category in mobile_list %}
-                    <button
-                        onclick="filters.category='{{ category.name|escapejs }}'; showView('catalogue'); renderCatalogueProducts(); toggleMobileMenu()">{{category.name
-                        }}</button>
+                    <button onclick="filters.category='{{ category.name|escapejs }}'; showView('catalogue'); renderCatalogueProducts(); toggleMobileMenu()">{{ category.name }}</button>
                     {% empty %}
                     <span class="text-muted small px-2">Aucune catégorie</span>
                     {% endfor %}
@@ -333,8 +334,7 @@
         <div class="footer-container">
             <div class="newsletter">
                 <h4>{{ footer_config.newsletter_title|default:"Restez informé" }}</h4>
-                <p>{{ footer_config.newsletter_text|default:"Inscrivez-vous pour recevoir nos nouveautés et offres
-                    exclusives." }}</p>
+                <p>{{ footer_config.newsletter_text|default:"Inscrivez-vous pour recevoir nos nouveautés et  offresexclusives." }}</p>
                 <div class="newsletter-form">
                     <input type="email" placeholder="Votre email">
                     <button class="btn-primary">S'inscrire</button>
@@ -424,8 +424,10 @@
 
     {% include 'store/components/cart_drawer.html' %}
 
+
+
     <!-- Scripts -->
-    <script src="{% static 'js/des_store.js' %}?v=3.3"></script>
+    <script src="{% static 'js/des_store.js' %}?v=4.3"></script>
 </body>
 
 </html>

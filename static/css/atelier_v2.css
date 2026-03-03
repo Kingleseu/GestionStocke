@@ -1,0 +1,337 @@
+/* Atelier Premium Styling */
+:root {
+    --atelier-accent: #E21717;
+    /* Rouge */
+    --atelier-gold: #0A3D62;
+    /* Bleu */
+    --atelier-bg: #fff;
+    --atelier-transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-detail-container {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.product-detail-container.ready {
+    opacity: 1;
+    transform: translateY(0);
+    transition: var(--atelier-transition);
+}
+
+.main-image-wrapper {
+    cursor: zoom-in;
+    transition: var(--atelier-transition);
+}
+
+.main-image-wrapper:hover {
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+}
+
+/* Call to Action Section */
+.cta-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-atelier-outline {
+    border: 2px solid var(--atelier-accent);
+    background: transparent;
+    color: var(--atelier-accent);
+    padding: 18px;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: var(--atelier-transition);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-atelier-outline:hover {
+    background: var(--atelier-accent);
+    color: #fff;
+}
+
+.btn-atelier-primary {
+    background: var(--atelier-accent);
+    color: #fff;
+    border: none;
+    padding: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: var(--atelier-transition);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.btn-atelier-primary:hover {
+    background: #333;
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.btn-atelier-primary i {
+    font-size: 20px;
+}
+
+/* Atelier Layout & Sidebar */
+.atelier-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    background: #fff;
+}
+
+.atelier-preview {
+    flex: 1;
+    background: radial-gradient(circle at center, #ffffff 0%, #f0f0f0 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.atelier-sidebar {
+    width: 420px;
+    background: #fff;
+    border-left: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    box-shadow: -10px 0 50px rgba(0, 0, 0, 0.02);
+}
+
+.sidebar-header {
+    padding: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sidebar-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    margin: 0;
+}
+
+.btn-exit {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+}
+
+/* Multi-step progress */
+.atelier-steps {
+    display: flex;
+    padding: 0 30px;
+    gap: 10px;
+    height: 4px;
+    background: #f0f0f0;
+}
+
+.step-bar {
+    flex: 1;
+    background: #eee;
+    transition: background 0.5s ease;
+}
+
+.step-bar.active {
+    background: var(--atelier-accent);
+}
+
+/* Step content */
+.step-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px 30px;
+}
+
+.step-title {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #888;
+    margin-bottom: 25px;
+    display: block;
+}
+
+.sidebar-footer {
+    padding: 30px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.price-total {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: block;
+}
+
+/* UI Components */
+.choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.choice-button {
+    border: 1px solid #eee;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #fff;
+}
+
+.choice-button:hover {
+    border-color: #999;
+}
+
+.choice-button.active {
+    border-color: var(--atelier-accent);
+    background: #fafafa;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.choice-button img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    margin-bottom: 15px;
+}
+
+.choice-button span {
+    font-weight: 500;
+    font-size: 14px;
+    display: block;
+}
+
+.engraving-input-group {
+    margin-top: 20px;
+}
+
+.engraving-input {
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid #eee;
+    font-size: 32px;
+    padding: 10px 0;
+    font-family: inherit;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.engraving-input:focus {
+    border-color: var(--atelier-accent);
+}
+
+.font-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.font-pill {
+    padding: 10px 18px;
+    border: 1px solid #eee;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: all 0.2s;
+}
+
+.font-pill.active {
+    background: var(--atelier-accent);
+    color: #fff;
+    border-color: var(--atelier-accent);
+}
+
+/* View Switcher Overlay */
+.view-switcher {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 8px;
+    border-radius: 50px;
+    display: flex;
+    gap: 5px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.view-btn {
+    padding: 12px 25px;
+    border-radius: 40px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    color: #888;
+    transition: all 0.3s;
+}
+
+.view-btn.active {
+    background: var(--atelier-accent);
+    color: #fff;
+}
+
+.obs-hint {
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+    margin-top: 15px;
+    font-style: italic;
+}
+
+/* Animation Utilities */
+.reveal-text {
+    overflow: hidden;
+}
+
+.reveal-text span {
+    display: block;
+    transform: translateY(100%);
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-detail-container.ready .reveal-text span {
+    transform: translateY(0);
+}
+
+@media (max-width: 900px) {
+    .atelier-layout {
+        flex-direction: column;
+    }
+
+    .atelier-sidebar {
+        width: 100%;
+        height: 50vh;
+    }
+
+    .atelier-preview {
+        height: 50vh;
+    }
+}

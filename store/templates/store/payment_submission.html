@@ -1,0 +1,586 @@
+﻿{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Soumettre ma preuve – Commande #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="submit-page">
+
+    <!-- MINI HERO -->
+    <div class="submit-hero">
+        <div class="hero-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+        </div>
+        <div class="text-center" style="position:relative;z-index:2;">
+            <div class="upload-icon-ring mb-4">
+                <i class="bi bi-cloud-upload-fill"></i>
+            </div>
+            <div class="hero-badge">Étape 3 sur 3</div>
+            <h1 class="hero-title">Envoyer ma preuve<br>de paiement</h1>
+            <p class="hero-sub">Commande <strong>#{{ order.id }}</strong> · {{ order.total_amount|floatformat:0 }} FC
+            </p>
+        </div>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                <path d="M0,50 C360,100 1080,0 1440,50 L1440,100 L0,100 Z" fill="#f4f4f8" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- FORM BODY -->
+    <div class="submit-body">
+        <div class="container" style="max-width:600px;">
+
+            <!-- PROGRESS BAR (simple) -->
+            <div class="mini-steps mb-5">
+                <div class="ms-item done"><i class="bi bi-bag-check-fill"></i><span>Commande</span></div>
+                <div class="ms-line done"></div>
+                <div class="ms-item done"><i class="bi bi-cash-coin"></i><span>Paiement</span></div>
+                <div class="ms-line active"></div>
+                <div class="ms-item active"><i class="bi bi-cloud-upload-fill"></i><span>Preuve</span></div>
+            </div>
+
+            <!-- FORM CARD -->
+            <div class="form-card" data-aos="fade-up">
+                <form method="post" enctype="multipart/form-data" id="proofForm">
+                    {% csrf_token %}
+
+                    <!-- METHOD SELECT -->
+                    <div class="field-group">
+                        <label class="field-label">
+                            <i class="bi bi-credit-card me-2 text-violet"></i>
+                            Mode de paiement utilisé
+                        </label>
+                        <div class="custom-select-wrapper">
+                            {{ form.payment_method }}
+                        </div>
+                        {% if form.payment_method.errors %}<div class="field-error">{{ form.payment_method.errors }}
+                        </div>{% endif %}
+                    </div>
+
+                    <!-- REFERENCE -->
+                    <div class="field-group">
+                        <label class="field-label">
+                            <i class="bi bi-hash me-2 text-violet"></i>
+                            Référence de la transaction
+                        </label>
+                        {{ form.transaction_ref }}
+                        <div class="field-hint">Numéro de transaction reçu par SMS ou sur votre reçu</div>
+                        {% if form.transaction_ref.errors %}<div class="field-error">{{ form.transaction_ref.errors }}
+                        </div>{% endif %}
+                    </div>
+
+                    <!-- FILE UPLOAD -->
+                    <div class="field-group">
+                        <label class="field-label">
+                            <i class="bi bi-paperclip me-2 text-violet"></i>
+                            Preuve de paiement
+                        </label>
+                        <div class="file-drop-zone" id="fileDropZone"
+                            onclick="document.getElementById('proof-file-input').click()">
+                            <div class="file-drop-zone__icon">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                            </div>
+                            <div class="file-drop-zone__text">
+                                <strong>Glissez votre fichier ici</strong> ou <span class="text-violet">parcourir</span>
+                            </div>
+                            <div class="file-drop-zone__hint">JPG, PNG, PDF – Max 5 Mo</div>
+                            <div class="file-preview" id="filePreview" style="display:none;">
+                                <i class="bi bi-file-earmark-check text-success"></i>
+                                <span id="fileName">—</span>
+                            </div>
+                        </div>
+                        <input type="file" id="proof-file-input" name="proof_file" accept=".jpg,.jpeg,.png,.pdf"
+                            onchange="handleFile(this)" style="display:none;">
+                        {% if form.proof_file.errors %}<div class="field-error">{{ form.proof_file.errors }}</div>{% endif %}
+                    </div>
+
+                    <!-- SUBMIT -->
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span id="btnText">
+                            <i class="bi bi-send-fill me-2"></i>Envoyer pour vérification
+                        </span>
+                        <span id="btnLoading" style="display:none;">
+                            <span class="spinner"></span> Envoi en cours…
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- INFO CARD -->
+            <div class="info-strip" data-aos="fade-up" data-aos-delay="100">
+                <div class="info-item">
+                    <i class="bi bi-lightning-charge-fill text-yellow"></i>
+                    <span>Vérification en <strong>2–24h</strong></span>
+                </div>
+                <div class="info-divider"></div>
+                <div class="info-item">
+                    <i class="bi bi-shield-lock-fill text-green"></i>
+                    <span>Données <strong>sécurisées</strong></span>
+                </div>
+                <div class="info-divider"></div>
+                <div class="info-item">
+                    <i class="bi bi-bell-fill text-blue"></i>
+                    <span>Notification dès <strong>validation</strong></span>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'store:payment_instructions' order.id %}" class="back-link">
+                    <i class="bi bi-arrow-left me-1"></i>Retour aux instructions de paiement
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function handleFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const drop = document.getElementById('fileDropZone');
+        const preview = document.getElementById('filePreview');
+        const nameEl = document.getElementById('fileName');
+        nameEl.textContent = file.name;
+        preview.style.display = 'flex';
+        drop.classList.add('has-file');
+    }
+
+    // Drag and drop
+    const dropZone = document.getElementById('fileDropZone');
+    ['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, ev => {
+        ev.preventDefault(); dropZone.classList.add('dragging');
+    }));
+    ['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, ev => {
+        ev.preventDefault(); dropZone.classList.remove('dragging');
+        if (ev.dataTransfer && ev.dataTransfer.files.length) {
+            const inp = document.getElementById('proof-file-input');
+            inp.files = ev.dataTransfer.files;
+            handleFile(inp);
+        }
+    }));
+
+    // Spinner on submit
+    document.getElementById('proofForm').addEventListener('submit', () => {
+        document.getElementById('btnText').style.display = 'none';
+        document.getElementById('btnLoading').style.display = 'inline-flex';
+        document.getElementById('submitBtn').disabled = true;
+    });
+</script>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    .submit-page {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: #f4f4f8;
+        min-height: 100vh;
+    }
+
+    /* HERO */
+    .submit-hero {
+        position: relative;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+        padding: 72px 16px 90px;
+        overflow: hidden;
+    }
+
+    .hero-blobs {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+    }
+
+    .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.15;
+    }
+
+    .blob-1 {
+        width: 400px;
+        height: 400px;
+        background: #7c3aed;
+        top: -120px;
+        right: -80px;
+        animation: blobFloat 11s ease-in-out infinite;
+    }
+
+    .blob-2 {
+        width: 300px;
+        height: 300px;
+        background: #2563eb;
+        bottom: -60px;
+        left: -60px;
+        animation: blobFloat 9s 1.5s ease-in-out infinite reverse;
+    }
+
+    @keyframes blobFloat {
+
+        0%,
+        100% {
+            transform: translate(0, 0) scale(1);
+        }
+
+        50% {
+            transform: translate(20px, 15px) scale(1.07);
+        }
+    }
+
+    .upload-icon-ring {
+        display: inline-flex;
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #7c3aed, #6366f1);
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: white;
+        box-shadow: 0 0 0 14px rgba(124, 58, 237, 0.15), 0 0 0 28px rgba(124, 58, 237, 0.07);
+        animation: pulse 2.5s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 14px rgba(124, 58, 237, 0.15), 0 0 0 28px rgba(124, 58, 237, 0.07);
+        }
+
+        50% {
+            box-shadow: 0 0 0 20px rgba(124, 58, 237, 0.18), 0 0 0 38px rgba(124, 58, 237, 0.08);
+        }
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 4px 14px;
+        border-radius: 100px;
+        margin-bottom: 12px;
+    }
+
+    .hero-title {
+        font-size: clamp(1.9rem, 5vw, 2.9rem);
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        margin-bottom: 10px;
+    }
+
+    .hero-sub {
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.55);
+    }
+
+    .hero-sub strong {
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .hero-wave {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        line-height: 0;
+    }
+
+    .hero-wave svg {
+        width: 100%;
+        height: 70px;
+    }
+
+    /* MINI STEPS */
+    .submit-body {
+        padding: 36px 16px 80px;
+    }
+
+    .mini-steps {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .ms-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #9ca3af;
+    }
+
+    .ms-item i {
+        font-size: 1rem;
+    }
+
+    .ms-item.done {
+        color: #16a34a;
+    }
+
+    .ms-item.active {
+        color: #7c3aed;
+    }
+
+    .ms-line {
+        flex: 1;
+        height: 2px;
+        background: #e5e7eb;
+        max-width: 80px;
+        margin-bottom: 18px;
+    }
+
+    .ms-line.done {
+        background: linear-gradient(90deg, #22c55e, #6366f1);
+    }
+
+    .ms-line.active {
+        background: linear-gradient(90deg, #6366f1, transparent);
+    }
+
+    /* FORM CARD */
+    .form-card {
+        background: #ffffff;
+        border-radius: 24px;
+        padding: 36px 32px;
+        box-shadow: 0 4px 40px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.04);
+        margin-bottom: 20px;
+    }
+
+    @media (max-width:580px) {
+        .form-card {
+            padding: 24px 16px;
+        }
+    }
+
+    .field-group {
+        margin-bottom: 24px;
+    }
+
+    .field-label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #374151;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 8px;
+    }
+
+    .text-violet {
+        color: #7c3aed;
+    }
+
+    .custom-select-wrapper select,
+    .field-group input[type=text] {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 0.92rem;
+        color: #1f2937;
+        background: #fafafa;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        font-family: inherit;
+        outline: none;
+        appearance: none;
+    }
+
+    .custom-select-wrapper select:focus,
+    .field-group input[type=text]:focus {
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+        background: #fff;
+    }
+
+    .field-hint {
+        margin-top: 6px;
+        font-size: 0.76rem;
+        color: #9ca3af;
+    }
+
+    .field-error {
+        margin-top: 6px;
+        font-size: 0.78rem;
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+    /* FILE DROP ZONE */
+    .file-drop-zone {
+        border: 2px dashed #d1d5db;
+        border-radius: 16px;
+        padding: 32px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        background: #fafafa;
+    }
+
+    .file-drop-zone:hover,
+    .file-drop-zone.dragging {
+        border-color: #7c3aed;
+        background: #f5f3ff;
+    }
+
+    .file-drop-zone.has-file {
+        border-color: #22c55e;
+        background: #f0fdf4;
+    }
+
+    .file-drop-zone__icon {
+        font-size: 2.5rem;
+        color: #d1d5db;
+        line-height: 1;
+        margin-bottom: 10px;
+        transition: color 0.2s;
+    }
+
+    .file-drop-zone:hover .file-drop-zone__icon {
+        color: #7c3aed;
+    }
+
+    .file-drop-zone__text {
+        font-size: 0.9rem;
+        color: #374151;
+        margin-bottom: 4px;
+    }
+
+    .file-drop-zone__hint {
+        font-size: 0.76rem;
+        color: #9ca3af;
+    }
+
+    .file-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #16a34a;
+    }
+
+    /* SUBMIT BUTTON */
+    .submit-btn {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, #7c3aed, #4f46e5);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+        font-family: inherit;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(124, 58, 237, 0.45);
+    }
+
+    .submit-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .spinner {
+        width: 18px;
+        height: 18px;
+        border: 2.5px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* INFO STRIP */
+    .info-strip {
+        background: white;
+        border-radius: 16px;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        color: #374151;
+    }
+
+    .info-divider {
+        width: 1px;
+        height: 30px;
+        background: #e5e7eb;
+    }
+
+    .text-yellow {
+        color: #f59e0b;
+    }
+
+    .text-green {
+        color: #22c55e;
+    }
+
+    .text-blue {
+        color: #3b82f6;
+    }
+
+    /* BACK LINK */
+    .back-link {
+        font-size: 0.82rem;
+        color: #9ca3af;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: #7c3aed;
+    }
+
+    @media(max-width:560px) {
+        .info-strip {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .info-divider {
+            width: 60%;
+            height: 1px;
+        }
+    }
+</style>
+{% endblock %}

@@ -51,13 +51,61 @@ class Cart(models.Model):
     def __str__(self):
         return f"Cart ({self.id})"
 
+
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     
+    # === PERSONNALISATION ===
+    customization_data = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        verbose_name="Données de personnalisation",
+        help_text="Structure: {'choices': {'zone_id': value}}"
+    )
+    
+    # Prix figé (sécurité)
+    price_at_addition = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Prix unitaire figé",
+        help_text="Prix Base + Options au moment de l'ajout"
+    )
+    
+    # Preview générée (optionnelle)
+    preview_image = models.ImageField(
+        upload_to='cart_previews/',
+        blank=True,
+        null=True,
+        verbose_name="Aperçu personnalisation"
+    )
+    
+    # Données de production (générées à la commande)
+    production_data = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        verbose_name="Instructions de production"
+    )
+
+    def save(self, *args, **kwargs):
+        # Si c'est un nouvel item et qu'on n'a pas encore fixé le prix
+        if not self.pk and self.price_at_addition is None and self.product:
+             # Fallback simple (le vrai calcul doit se faire via le Service avant le save)
+             self.price_at_addition = self.product.selling_price
+        super().save(*args, **kwargs)
+
     def total_price(self):
-        return self.product.selling_price * self.quantity
+        # On utilise le prix figé s'il existe, sinon le calcul dynamique (old way)
+        unit_price = self.price_at_addition
+        if unit_price is None:
+             unit_price = self.product.selling_price
+        
+        return unit_price * self.quantity
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
@@ -67,11 +115,12 @@ class WebOrder(models.Model):
     A completed order placed via the website.
     """
     STATUS_CHOICES = [
-        ('PENDING', 'En attente'),
-        ('PAID', 'Payé'),
-        ('SHIPPED', 'Expédié'),
-        ('DELIVERED', 'Livré'),
-        ('CANCELLED', 'Annulé'),
+        ('pending_payment', 'En attente de paiement'),
+        ('awaiting_verification', 'En attente de vérification'),
+        ('paid', 'Payé'),
+        ('cancelled', 'Annulé'),
+        ('shipped', 'Expédié'),
+        ('delivered', 'Livré'),
     ]
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
@@ -81,22 +130,104 @@ class WebOrder(models.Model):
     address = models.TextField()
     city = models.CharField(max_length=100)
     
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending_payment')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Order #{self.id} - {self.full_name}"
+        return f"Order #{self.id} - {self.full_name} ({self.get_status_display()})"
 
-class WebOrderItem(models.Model):
-    order = models.ForeignKey(WebOrder, related_name='items', on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
-    quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at time of purchase
+class ManualPayment(models.Model):
+    PAYMENT_METHODS = [
+        ('m-pesa', 'M-Pesa'),
+        ('airtel', 'Airtel Money'),
+        ('orange', 'Orange Money'),
+        ('virement', 'Virement Bancaire'),
+        ('cash', 'Cash / Espèces'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('submitted', 'Soumis'),
+        ('approved', 'Approuvé'),
+        ('rejected', 'Rejeté'),
+    ]
+
+    order = models.OneToOneField(WebOrder, on_delete=models.CASCADE, related_name='manual_payment')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    transaction_ref = models.CharField(max_length=100, verbose_name="Référence Transaction")
+    proof_file = models.FileField(upload_to='payment_proofs/', verbose_name="Preuve de paiement")
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    rejection_reason = models.TextField(blank=True, null=True, verbose_name="Motif de rejet")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name}"
+        return f"Paiement pour Commande {self.order.id} ({self.get_status_display()})"
+    
+    class Meta:
+        verbose_name = "Paiement Manuel"
+        verbose_name_plural = "Paiements Manuels"
+
+class WebOrderItem(models.Model):
+    """Item de commande avec snapshot complet (prix, personnalisation, production)"""
+    order = models.ForeignKey(WebOrder, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    product_name = models.CharField(max_length=200, blank=True, default='', verbose_name="Nom produit (snapshot)")  # Au cas où product supprimé
+    quantity = models.PositiveIntegerField()
+    
+    # Prix figé
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name="Prix unitaire (snapshot)"
+    )
+    
+    # Personnalisation
+    customization_data = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        verbose_name="Données personnalisation"
+    )
+    
+    # Preview sauvegardée
+    preview_image = models.ImageField(
+        upload_to='order_previews/',
+        blank=True,
+        null=True,
+        verbose_name="Aperçu personnalisation"
+    )
+
+    # Photo client originale
+    client_image = models.ImageField(
+        upload_to='order_client_photos/',
+        blank=True,
+        null=True,
+        verbose_name="Photo client originale"
+    )
+    
+    # Données pour l'atelier
+    production_data = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        verbose_name="Instructions atelier",
+        help_text="Instructions de création/gravure/impression"
+    )
+    
+    def __str__(self):
+        name = self.product.name if self.product else self.product_name
+        return f"{self.quantity} x {name}"
+    
+    def save(self, *args, **kwargs):
+        # Sauvegarder le nom du produit au moment de la commande
+        if self.product and not self.product_name:
+            self.product_name = self.product.name
+        super().save(*args, **kwargs)
 
 
 # ============================================

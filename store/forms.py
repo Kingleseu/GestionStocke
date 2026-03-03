@@ -1,5 +1,5 @@
 from django import forms
-from .models import HeroSection, HeroCard, AboutSection, AboutStat, TrustSignal, FooterConfig, SocialLink, FooterLink, Universe, Collection
+from .models import HeroSection, HeroCard, AboutSection, AboutStat, TrustSignal, FooterConfig, SocialLink, FooterLink, Universe, Collection, ManualPayment
 from accounts.models import Shop, UserProfile
 from products.models import Category
 
@@ -171,4 +171,14 @@ class CollectionForm(forms.ModelForm):
             'image': forms.FileInput(attrs={'class': 'form-control'}),
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        }
+
+class ManualPaymentForm(forms.ModelForm):
+    class Meta:
+        model = ManualPayment
+        fields = ['payment_method', 'transaction_ref', 'proof_file']
+        widgets = {
+            'payment_method': forms.Select(attrs={'class': 'form-select'}),
+            'transaction_ref': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: TXN-123456789'}),
+            'proof_file': forms.FileInput(attrs={'class': 'form-control'}),
         }

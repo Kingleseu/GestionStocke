@@ -1,0 +1,335 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/atelier_v2.css' %}">
+<link rel="stylesheet" href="{% static 'css/atelier_premium.css' %}">
+
+<div class="atelier-layout">
+    <div class="atelier-preview">
+        <div id="konva-container"></div>
+
+        <div class="view-switcher">
+            <button class="view-btn active" onclick="switchView('front')">FACE</button>
+            <button class="view-btn" onclick="switchView('back')">DOS</button>
+        </div>
+    </div>
+
+    <div class="atelier-sidebar">
+        <div class="sidebar-header">
+            <h2>L'Atelier</h2>
+            <button class="btn-exit" onclick="window.history.back()">&times;</button>
+        </div>
+
+        <div class="atelier-steps">
+            <div id="step-1" class="step-bar active"></div>
+            <div id="step-2" class="step-bar"></div>
+            <div id="step-3" class="step-bar"></div>
+        </div>
+
+        <div class="step-container" id="step-content">
+            <!-- Rendered by JS -->
+        </div>
+
+        <div class="sidebar-footer">
+            <span class="price-total"><span id="total-price">0</span> FC</span>
+            <button class="btn-atelier-primary" id="btn-next" onclick="nextAction()" style="width: 100%;">
+                CONTINUER
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/konva@9/konva.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="{% static 'js/atelier_engine.js' %}"></script>
+
+<script>
+    const CONFIG = {
+        productId: "{{ product.id }}",
+        basePrice: parseFloat("{{ product.selling_price }}"),
+        image: "{{ product.image.url }}",
+        rules: {% if customization_rules_json %}{{ customization_rules_json | safe }}{% else %} null{% endif %}
+    };
+
+    let engine;
+    let currentStep = 1;
+
+    function init() {
+        engine = new AtelierStudio(CONFIG);
+
+        // Check for edit mode
+        const editDataJson = sessionStorage.getItem('atelier_edit_data');
+        if (editDataJson) {
+            try {
+                const editData = JSON.parse(editDataJson);
+                // Only restore if it matches current product
+                if (String(editData.productId) === String(CONFIG.productId)) {
+                    console.log("Restoring edit session:", editData);
+                    engine.state.choices = editData.choices;
+                    // Clear it so it doesn't persist forever
+                    sessionStorage.removeItem('atelier_edit_data');
+                }
+            } catch (e) {
+                console.error("Error restoring edit data", e);
+            }
+        }
+
+        renderStep();
+        updateDisplayPrice();
+
+        // Premium Entrance
+        gsap.from(".atelier-sidebar", { x: 420, duration: 1, ease: "expo.out" });
+        gsap.from(".atelier-preview", { opacity: 0, duration: 1.5 });
+    }
+
+    function renderStep() {
+        const container = document.getElementById('step-content');
+        if (!container) return;
+        container.innerHTML = '';
+
+        // Update bars
+        for (let i = 1; i <= 3; i++) {
+            const bar = document.getElementById(`step-${i}`);
+            if (bar) bar.classList.toggle('active', i <= currentStep);
+        }
+
+        if (currentStep === 1) {
+            renderMedalSelection(container);
+        } else if (currentStep === 2) {
+            renderEngravingSetup(container);
+        } else if (currentStep === 3) {
+            renderSummary(container);
+        }
+    }
+
+    function renderMedalSelection(container) {
+        const zone = CONFIG.rules.zones.find(z => z.id === 'studio_component');
+        if (!zone) { nextAction(); return; }
+
+        container.innerHTML = `
+            <span class="step-title">Étape 1 : Votre Modèle</span>
+            <div class="component-grid">
+                ${zone.options.map(opt => `
+                    <div class="component-option ${engine.state.choices.studio_component === opt.value ? 'active' : ''}" 
+                         onclick="selectComponent('${opt.value}', '${opt.image_url}')">
+                        <img src="${opt.image_url}" alt="${opt.label}" class="component-image">
+                        <div class="component-label">${opt.label}</div>
+                        <small style="color: var(--zag-gray);">+ ${parseFloat(opt.price_modifier).toLocaleString()} FC</small>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function renderEngravingSetup(container) {
+        const zone = CONFIG.rules.zones.find(z => z.id === 'studio_engraving');
+        if (!zone) { nextAction(); return; }
+
+        const maxLen = zone.constraints?.max_length || 25;
+        const currentLen = (engine.state.choices.studio_engraving.text || '').length;
+
+        container.innerHTML = `
+            <span class="step-title">Étape 2 : Vos Mots Doux</span>
+            
+            <div class="text-input-wrapper">
+                <label class="control-label">Message à graver</label>
+                <input type="text" class="text-input" id="eng-text" maxlength="${maxLen}" 
+                       placeholder="Votre message..." value="${engine.state.choices.studio_engraving.text}"
+                       oninput="onTextUpdate(this.value)">
+                <div class="char-counter ${currentLen >= maxLen ? 'warning' : ''}" id="char-counter">
+                    ${currentLen}/${maxLen}
+                </div>
+            </div>
+
+            <div class="control-section" style="margin-top: 2rem;">
+                <label class="control-label">Style d'écriture</label>
+                <div class="font-selector">
+                    ${(zone.constraints?.allowed_fonts || []).map(font => {
+            const isSelected = engine.state.choices.studio_engraving.font === font;
+            let fontClass = 'sans';
+            if (font.toLowerCase().includes('script') || font.includes('Parisienne')) fontClass = 'script';
+            if (font.toLowerCase().includes('display')) fontClass = 'serif';
+
+            return `
+                        <div class="font-option ${isSelected ? 'active' : ''}" 
+                             onclick="selectFont('${font}')">
+                            <div class="font-preview ${fontClass}" style="font-family: '${font}'">Abc</div>
+                            <div class="font-name">${font}</div>
+                        </div>
+                        `;
+        }).join('')}
+                </div>
+            </div>
+        `;
+
+        // Auto zoom to center
+        engine.zoomTo(1.6);
+    }
+
+    function renderSummary(container) {
+        const componentZone = CONFIG.rules.zones.find(z => z.id === 'studio_component');
+        const selectedModel = componentZone ? componentZone.options.find(o => o.value === engine.state.choices.studio_component)?.label : "Standard";
+        const engravedText = engine.state.choices.studio_engraving.text;
+
+        container.innerHTML = `
+            <span class="step-title">Étape 3 : Confirmation</span>
+            <div style="text-align: center; margin-top: 2rem;">
+                <h3 style="font-family: var(--font-serif); margin-bottom: 1rem;">Votre création est prête !</h3>
+                <p style="color: var(--zag-gray); margin-bottom: 2rem;">Vérifiez les détails ci-dessous avant d'ajouter au panier.</p>
+                
+                <div class="control-panel" style="text-align: left;">
+                    <div class="control-section">
+                        <span class="control-label">Votre Message</span>
+                        <div style="font-size: 1.5rem; color: var(--zag-accent); font-family: '${engine.state.choices.studio_engraving.font || 'Inter'}'; margin: 0.5rem 0;">
+                            ${engravedText || '<span style="opacity:0.5; font-style:italic;">Sans gravure</span>'}
+                        </div>
+                    </div>
+                    
+                    <div class="control-section">
+                        <span class="control-label">Modèle choisi</span>
+                        <div>${selectedModel}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        engine.zoomTo(1);
+        const nextBtn = document.getElementById('btn-next');
+        if (nextBtn) nextBtn.textContent = "AJOUTER AU PANIER";
+    }
+
+    function selectComponent(id, img) {
+        engine.state.choices.studio_component = id;
+        renderStep();
+        updateDisplayPrice();
+    }
+
+    function onTextUpdate(val) {
+        engine.state.choices.studio_engraving.text = val;
+        engine.updateEngraving(val, engine.state.choices.studio_engraving.font);
+
+        // Update counter
+        const counter = document.getElementById('char-counter');
+        const maxLen = 15; // Should ideally get from zone config
+        if (counter) {
+            counter.textContent = `${val.length}/${maxLen}`;
+            if (val.length >= maxLen) counter.classList.add('warning');
+            else counter.classList.remove('warning');
+        }
+
+        updateDisplayPrice();
+    }
+
+    function selectFont(font) {
+        engine.state.choices.studio_engraving.font = font;
+        engine.updateEngraving(engine.state.choices.studio_engraving.text, font);
+        renderStep();
+    }
+
+    function nextAction() {
+        if (currentStep < 3) {
+            currentStep++;
+            renderStep();
+        } else {
+            submitToCart();
+        }
+    }
+
+    function updateDisplayPrice() {
+        let base = CONFIG.basePrice;
+        let extras = 0;
+        let breakdownHtml = '';
+
+        // Component Price
+        const compZone = CONFIG.rules.zones.find(z => z.id === 'studio_component');
+        if (compZone && engine.state.choices.studio_component) {
+            const opt = compZone.options.find(o => o.value === engine.state.choices.studio_component);
+            if (opt) {
+                const cost = parseFloat(opt.price_modifier);
+                extras += cost;
+                if (cost > 0) {
+                    breakdownHtml += `
+                        <div class="price-line">
+                            <span class="price-label">Option ${opt.label}</span>
+                            <span class="price-value">+ ${cost.toLocaleString()} FC</span>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Engraving Price
+        const engZone = CONFIG.rules.zones.find(z => z.id === 'studio_engraving');
+        if (engZone && engine.state.choices.studio_engraving.text) {
+            const formula = engZone.price_formula || { base: 0, per_char: 0 };
+            let engCost = parseFloat(formula.base);
+            engCost += engine.state.choices.studio_engraving.text.length * parseFloat(formula.per_char);
+
+            extras += engCost;
+            if (engCost > 0) {
+                breakdownHtml += `
+                    <div class="price-line">
+                        <span class="price-label">Gravure personnalisée</span>
+                        <span class="price-value">+ ${engCost.toLocaleString()} FC</span>
+                    </div>
+                `;
+            }
+        }
+
+        const total = base + extras;
+
+        // Update UI
+        const footerTitle = document.querySelector('.sidebar-footer');
+        // We inject the breakdown before the total
+        const existingBreakdown = document.getElementById('price-breakdown-container');
+        if (existingBreakdown) {
+            existingBreakdown.innerHTML = breakdownHtml;
+        } else {
+            // Create if not exists
+            const div = document.createElement('div');
+            div.id = 'price-breakdown-container';
+            div.className = 'price-breakdown';
+            div.style.marginBottom = '1rem';
+            div.innerHTML = breakdownHtml;
+            footerTitle.insertBefore(div, footerTitle.firstChild);
+        }
+
+        const priceEl = document.getElementById('total-price');
+        if (priceEl) priceEl.textContent = total.toLocaleString();
+    }
+
+    function submitToCart() {
+        const btn = document.getElementById('btn-next');
+        btn.disabled = true;
+        btn.textContent = "CHARGEMENT...";
+
+        const payload = {
+            customization: {
+                is_studio: true,
+                choices: engine.state.choices
+            }
+        };
+
+        fetch("{% url 'store:add_to_cart' product.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = "{% url 'store:cart' %}";
+                } else {
+                    alert("Erreur: " + data.error);
+                    btn.disabled = false;
+                    btn.textContent = "AJOUTER AU PANIER";
+                }
+            });
+    }
+
+    window.addEventListener('load', init);
+</script>
+{% endblock %}

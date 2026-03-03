@@ -2,9 +2,22 @@
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Nouveau Produit</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+                <div class="d-flex align-items-center">
+                    <h5 class="modal-title fw-bold mb-0"><i class="bi bi-plus-circle me-2"></i>Nouveau Produit</h5>
+                </div>
+                <div class="ms-auto d-flex align-items-center">
+                    <div class="dropdown me-2">
+                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="modalMoreMenu"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="modalMoreMenu">
+                            <li><a class="dropdown-item" href="#" id="enableBulkDelete">Supprimer des formes...</a></li>
+                        </ul>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
             </div>
             <div class="modal-body p-4 bg-light">
                 <form id="addProductForm" method="post" enctype="multipart/form-data"
@@ -34,6 +47,11 @@
                             <label class="form-label fw-bold">Prix Vente</label>
                             <input type="number" name="selling_price" class="form-control" step="0.01" required>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Prix de gravure</label>
+                            <input type="number" name="engraving_price" class="form-control" step="0.01" value="0">
+                            <small class="text-muted">Prix additionnel si personnalisé.</small>
+                        </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold">Stock Actuel</label>
                             <input type="number" name="current_stock" class="form-control" value="0" required>
@@ -51,6 +69,39 @@
                                 {% endfor %}
                             </select>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Couleur</label>
+                            <select name="color_choice" id="colorChoice" class="form-select"
+                                onchange="toggleCustomColorField()">
+                                <option value="argent">Argent</option>
+                                <option value="or">Or</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                        <div class="col-12 d-none" id="customColorFieldModal">
+                            <label class="form-label fw-bold">Couleurs disponibles</label>
+                            <div class="color-swatch-grid" id="customColorPaletteModal">
+                                <button type="button" class="color-swatch" data-color="#7a0f28"
+                                    style="background:#7a0f28;"></button>
+                                <button type="button" class="color-swatch" data-color="#b76e79"
+                                    style="background:#b76e79;"></button>
+                                <button type="button" class="color-swatch" data-color="#d4af37"
+                                    style="background:#d4af37;"></button>
+                                <button type="button" class="color-swatch" data-color="#c0c0c0"
+                                    style="background:#c0c0c0;"></button>
+                                <button type="button" class="color-swatch" data-color="#0f172a"
+                                    style="background:#0f172a;"></button>
+                                <button type="button" class="color-swatch" data-color="#2563eb"
+                                    style="background:#2563eb;"></button>
+                                <button type="button" class="color-swatch" data-color="#16a34a"
+                                    style="background:#16a34a;"></button>
+                                <button type="button" class="color-swatch" data-color="#f97316"
+                                    style="background:#f97316;"></button>
+                                <button type="button" class="color-swatch" data-color="#ffffff"
+                                    style="background:#ffffff;"></button>
+                            </div>
+                            <input type="hidden" name="custom_color" id="customColorInput">
+                        </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">Image</label>
                             <input type="file" name="image" class="form-control">
@@ -60,13 +111,712 @@
                             <input type="file" name="secondary_image" class="form-control">
                             <small class="text-muted">S'affiche au passage de la souris</small>
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Image supplémentaire 1</label>
+                            <input type="file" name="extra_image_1" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Image supplémentaire 2</label>
+                            <input type="file" name="extra_image_2" class="form-control">
+                        </div>
+                        <div class="col-12 py-2">
+                            <div
+                                class="form-check form-switch card p-3 border-info-subtle bg-info-subtle bg-opacity-10">
+                                <input class="form-check-input ms-0 me-2" type="checkbox" name="is_customizable"
+                                    id="isCustomizable" onchange="toggleCustomizationConfig()">
+                                <label class="form-check-label fw-bold" for="isCustomizable">✨ Activer la
+                                    Personnalisation (Atelier Studio)</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Type de gravure</label>
+                            <select name="engraving_mode" class="form-select">
+                                <option value="text">Texte uniquement</option>
+                                <option value="image">Image / Photo uniquement</option>
+                                <option value="both">Texte + Image</option>
+                            </select>
+                            <small class="text-muted">Ce choix s'applique automatiquement a ce produit.</small>
+                        </div>
+
+                        <!-- Atelier Studio Config Section -->
+                        <div id="customizationConfig" class="col-12 d-none shadow-sm rounded-3 p-3 bg-white border">
+                            <h6 class="text-primary fw-bold mb-3"><i class="bi bi-tools me-2"></i>Configuration de
+                                l'Atelier</h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label small fw-bold">Modèle de Personnalisation</label>
+                                    <select name="customization_template" class="form-select form-select-sm">
+                                        <option value="">-- Par défaut --</option>
+                                        {% for tpl in customization_templates %}
+                                        <option value="{{ tpl.id }}">{{ tpl.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label small fw-bold mb-2">Composants autorisés (Formes)</label>
+                                    <div class="component-selector-grid">
+                                        {% for comp in components %}
+                                        <div class="component-visual-card" data-component-id="{{ comp.id }}"
+                                            onclick="toggleComponentSelection(this)">
+                                            <input type="checkbox" name="allowed_components" value="{{ comp.id }}"
+                                                class="d-none">
+                                            <button type="button" class="delete-btn" onclick="event.stopPropagation(); deleteComponent('{{ comp.id }}', this.closest('.component-visual-card'))" title="Supprimer"><i class="bi bi-trash"></i></button>
+                                            <div class="card-image-wrapper">
+                                                {% if comp.image %}
+                                                <img src="{{ comp.image.url }}" alt="{{ comp.name }}">
+                                                {% elif comp.shape_identifier %}
+                                                <img src="/media/customization/components/medallion_{{ comp.shape_identifier }}.png" alt="{{ comp.name }}">
+                                                {% else %}
+                                                <div class="no-img-placeholder"><i class="bi bi-image"></i></div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="card-name">{{ comp.name|truncatechars:15 }}</div>
+                                            <div class="selection-indicator"><i class="bi bi-check-circle-fill"></i>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                        <div class="component-visual-card add-component-card"
+                                            onclick="openComponentModal()">
+                                            <div class="card-image-wrapper add-component-icon">
+                                                <i class="bi bi-plus-lg"></i>
+                                            </div>
+                                            <div class="card-name">Ajouter forme</div>
+                                        </div>
+                                    </div>
+                                    <div class="add-component-hint">Cliquez sur "Ajouter forme" pour creer un nouveau
+                                        composant.</div>
+                                    <div id="newComponentHiddenInputs" class="d-none"></div>
+                                    <small class="text-muted d-block mt-2">Cliquez sur les formes pour les autoriser
+                                        dans le studio.</small>
+                                </div>
+                                <div class="col-md-12 mt-3">
+                                    <label class="form-label small fw-bold mb-2">Polices autorisées</label>
+                                    <div class="font-selector-pills">
+                                        {% for font in fonts %}
+                                        <div class="font-pill" onclick="toggleFontSelection(this)">
+                                            <input type="checkbox" name="allowed_fonts" value="{{ font.id }}"
+                                                class="d-none">
+                                            <span style="font-family: '{{ font.font_family }}'; font-size: 1.1rem;">{{ font.name }}</span>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted d-block mt-2">Choisissez les polices disponibles pour la
+                                        gravure.</small>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-12">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="is_active" id="isActive" checked>
                                 <label class="form-check-label" for="isActive">Produit Actif</label>
                             </div>
                         </div>
+
+                        <style>
+                            .component-selector-grid {
+                                display: grid;
+                                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                                gap: 12px;
+                            }
+
+                            .component-visual-card {
+                                position: relative;
+                                background: #fff;
+                                border: 2px solid #eee;
+                                border-radius: 12px;
+                                padding: 8px;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                                text-align: center;
+                                user-select: none;
+                            }
+
+                            .component-visual-card:hover {
+                                border-color: #ddd;
+                                transform: translateY(-2px);
+                            }
+
+                            .component-visual-card.selected {
+                                border-color: #0d6efd;
+                                background: #f0f7ff;
+                                box-shadow: 0 4px 10px rgba(13, 110, 253, 0.1);
+                            }
+
+                            .component-visual-card .delete-btn {
+                                position: absolute;
+                                top: 6px;
+                                right: 6px;
+                                background: rgba(255, 255, 255, 0.9);
+                                border-radius: 6px;
+                                padding: 4px;
+                                display: none;
+                                color: #dc3545;
+                                cursor: pointer;
+                                z-index: 5;
+                                border: none;
+                            }
+
+                            .component-visual-card:hover .delete-btn {
+                                display: block;
+                            }
+
+                            .component-visual-card.deletable {
+                                outline: 2px dashed #f87171;
+                            }
+
+                            .component-visual-card.delete-selected {
+                                box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.12);
+                            }
+
+                            .card-image-wrapper {
+                                aspect-ratio: 1;
+                                background: #f8f9fa;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                margin-bottom: 6px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            }
+
+                            .card-image-wrapper img {
+                                width: 100%;
+                                height: 100%;
+                                object-fit: contain;
+                                padding: 4px;
+                            }
+
+                            .card-name {
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: #444;
+                            }
+
+                            .selection-indicator {
+                                position: absolute;
+                                top: -6px;
+                                right: -6px;
+                                color: #0d6efd;
+                                font-size: 18px;
+                                opacity: 0;
+                                transform: scale(0);
+                                transition: 0.2s;
+                            }
+
+                            .component-visual-card.selected .selection-indicator {
+                                opacity: 1;
+                                transform: scale(1);
+                            }
+
+                            .font-selector-pills {
+                                display: flex;
+                                flex-wrap: wrap;
+                                gap: 8px;
+                            }
+
+                            .font-pill {
+                                border: 1px solid #ddd;
+                                padding: 4px 12px;
+                                border-radius: 20px;
+                                cursor: pointer;
+                                transition: 0.2s;
+                                font-size: 13px;
+                                background: white;
+                            }
+
+                            .font-pill.selected {
+                                background: #0d6efd;
+                                color: white;
+                                border-color: #0d6efd;
+                            }
+
+                            .color-swatch-grid {
+                                display: flex;
+                                flex-wrap: wrap;
+                                gap: 10px;
+                            }
+
+                            .color-swatch {
+                                width: 28px;
+                                height: 28px;
+                                border-radius: 999px;
+                                border: 1px solid #ddd;
+                                cursor: pointer;
+                            }
+
+                            .color-swatch.selected {
+                                outline: 2px solid #0d6efd;
+                                outline-offset: 2px;
+                            }
+
+                            .add-component-card {
+                                border-style: dashed;
+                                background: #f9fafb;
+                                color: #1f2937;
+                                min-height: 140px;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                            }
+
+                            .add-component-icon {
+                                font-size: 20px;
+                                color: #0d6efd;
+                            }
+
+                            .add-component-hint {
+                                margin-top: 8px;
+                                font-size: 12px;
+                                color: #6b7280;
+                            }
+
+                            .add-component-preview {
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                                font-size: 12px;
+                                color: #0f172a;
+                                margin-top: 6px;
+                            }
+
+                            .add-component-preview .dot {
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 999px;
+                                background: #10b981;
+                            }
+
+                            .component-modal-backdrop {
+                                position: fixed;
+                                inset: 0;
+                                background: rgba(15, 23, 42, 0.5);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                z-index: 2000;
+                            }
+
+                            .component-modal {
+                                width: 520px;
+                                max-width: 92%;
+                                background: #fff;
+                                border-radius: 14px;
+                                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+                                overflow: hidden;
+                            }
+
+                            .component-modal-header {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-between;
+                                padding: 16px 20px;
+                                background: #0f172a;
+                                color: #fff;
+                            }
+
+                            .component-modal-body {
+                                padding: 18px 20px;
+                            }
+
+                            .component-modal-footer {
+                                display: flex;
+                                justify-content: flex-end;
+                                gap: 10px;
+                                padding: 12px 20px 18px;
+                            }
+                        </style>
+
+                        <script>
+                            function toggleComponentSelection(card) {
+                                // If in deletable/bulk-delete mode, toggle delete-selected state
+                                if (card.classList.contains('deletable')) {
+                                    card.classList.toggle('delete-selected');
+                                    return;
+                                }
+                                const input = card.querySelector('input');
+                                const grid = card.closest('.component-selector-grid');
+                                if (grid) {
+                                    grid.querySelectorAll('.component-visual-card').forEach(c => {
+                                        if (c === card || c.classList.contains('add-component-card')) return;
+                                        const otherInput = c.querySelector('input');
+                                        if (otherInput) otherInput.checked = false;
+                                        c.classList.remove('selected');
+                                    });
+                                }
+                                input.checked = true;
+                                card.classList.add('selected');
+
+                                const hiddenContainer = document.getElementById('newComponentHiddenInputs');
+                                const compId = card.getAttribute('data-component-id');
+                                if (hiddenContainer && compId) {
+                                    hiddenContainer.innerHTML = '';
+                                    const hiddenInput = document.createElement('input');
+                                    hiddenInput.type = 'hidden';
+                                    hiddenInput.name = 'allowed_components';
+                                    hiddenInput.value = compId;
+                                    hiddenContainer.appendChild(hiddenInput);
+                                }
+                            }
+                            function toggleFontSelection(pill) {
+                                const input = pill.querySelector('input');
+                                input.checked = !input.checked;
+                                pill.classList.toggle('selected', input.checked);
+                            }
+
+                            function openComponentModal() {
+                                const backdrop = document.getElementById('componentModalBackdrop');
+                                if (backdrop) backdrop.classList.remove('d-none');
+                            }
+
+                            function closeComponentModal() {
+                                const backdrop = document.getElementById('componentModalBackdrop');
+                                if (backdrop) backdrop.classList.add('d-none');
+                            }
+
+                            function getCookie(name) {
+                                let cookieValue = null;
+                                if (document.cookie && document.cookie !== '') {
+                                    const cookies = document.cookie.split(';');
+                                    for (let i = 0; i < cookies.length; i++) {
+                                        const cookie = cookies[i].trim();
+                                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                            break;
+                                        }
+                                    }
+                                }
+                                return cookieValue;
+                            }
+
+                            // Small helper to show Bootstrap toasts
+                            function showToast(message, type = 'info', timeout = 4000) {
+                                const containerId = 'toastContainer';
+                                let container = document.getElementById(containerId);
+                                if (!container) {
+                                    container = document.createElement('div');
+                                    container.id = containerId;
+                                    container.style.position = 'fixed';
+                                    container.style.top = '12px';
+                                    container.style.right = '12px';
+                                    container.style.zIndex = 99999;
+                                    document.body.appendChild(container);
+                                }
+
+                                const toast = document.createElement('div');
+                                toast.className = 'toast align-items-center text-bg-' + (type === 'error' ? 'danger' : (type === 'success' ? 'success' : (type === 'warning' ? 'warning' : 'secondary'))) + ' border-0';
+                                toast.setAttribute('role', 'alert');
+                                toast.setAttribute('aria-live', 'assertive');
+                                toast.setAttribute('aria-atomic', 'true');
+                                toast.style.minWidth = '220px';
+                                toast.style.marginTop = '8px';
+
+                                toast.innerHTML = `
+                                    <div class="d-flex">
+                                        <div class="toast-body">${message}</div>
+                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                    </div>
+                                `;
+
+                                container.appendChild(toast);
+                                try {
+                                    const bsToast = new bootstrap.Toast(toast, { delay: timeout });
+                                    bsToast.show();
+                                    toast.addEventListener('hidden.bs.toast', () => toast.remove());
+                                } catch (e) {
+                                    // Fallback if bootstrap not available
+                                    setTimeout(() => toast.remove(), timeout);
+                                }
+                            }
+
+                            async function applyNewComponent() {
+                                const name = document.getElementById('newComponentName');
+                                const type = document.getElementById('newComponentType');
+                                const image = document.getElementById('newComponentImage');
+                                const preview = document.getElementById('newComponentPreview');
+                                const hiddenContainer = document.getElementById('newComponentHiddenInputs');
+                                const customizableCheck = document.getElementById('isCustomizable');
+                                const config = document.getElementById('customizationConfig');
+                                if (!name || !type || !image) return;
+                                if (!name.value.trim() || !image.files.length) return;
+
+                                // Prepare UI locally while creating on server
+                                if (customizableCheck && !customizableCheck.checked) {
+                                    customizableCheck.checked = true;
+                                }
+                                if (config && config.classList.contains('d-none')) {
+                                    config.classList.remove('d-none');
+                                }
+
+                                // Send to server via AJAX
+                                try {
+                                    const url = "{% url 'products:create_component_ajax' %}";
+                                    const fd = new FormData();
+                                    fd.append('new_component_name', name.value.trim());
+                                    fd.append('new_component_type', type.value);
+                                    fd.append('new_component_image', image.files[0]);
+
+                                    const resp = await fetch(url, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRFToken': getCookie('csrftoken')
+                                        },
+                                        body: fd
+                                    });
+
+                                    const data = await resp.json();
+                                    if (!resp.ok || !data.success) {
+                                        console.error('Erreur création composant', data);
+                                        showToast('Erreur lors de la création de la forme: ' + (data.error || 'Erreur serveur'), 'error');
+                                        // fallback: still show preview and close modal
+                                        if (preview) {
+                                            preview.classList.remove('d-none');
+                                            const label = preview.querySelector('.label');
+                                            if (label) label.textContent = name.value.trim() + ' (' + type.value + ')';
+                                        }
+                                        closeComponentModal();
+                                        return;
+                                    }
+
+                                    const comp = data.component;
+                                    // Insert new component card into the grid
+                                    const grid = document.querySelector('.component-selector-grid');
+                                    const addCard = grid.querySelector('.add-component-card');
+                                    const card = document.createElement('div');
+                                    card.className = 'component-visual-card selected';
+                                    card.setAttribute('onclick', 'toggleComponentSelection(this)');
+                                    card.setAttribute('data-component-id', comp.id);
+                                    card.innerHTML = `\n                                        <input type="checkbox" name="allowed_components" value="${comp.id}" class="d-none" checked>\n                                        <div class="card-image-wrapper">\n                                            ${comp.image_url ? `<img src="${comp.image_url}" alt="${comp.name}">` : `<div class="no-img-placeholder"><i class="bi bi-image"></i></div>`}\n                                        </div>\n                                        <div class="card-name">${comp.name}</div>\n                                        <div class="selection-indicator"><i class="bi bi-check-circle-fill"></i></div>\n                                    `;
+
+                                    if (addCard && addCard.parentNode) {
+                                        addCard.parentNode.insertBefore(card, addCard);
+                                    } else if (grid) {
+                                        grid.appendChild(card);
+                                    }
+
+                                    if (hiddenContainer && !hiddenContainer.querySelector(`input[value="${comp.id}"]`)) {
+                                        const hiddenInput = document.createElement('input');
+                                        hiddenInput.type = 'hidden';
+                                        hiddenInput.name = 'allowed_components';
+                                        hiddenInput.value = comp.id;
+                                        hiddenContainer.appendChild(hiddenInput);
+                                    }
+
+                                    showToast('Forme « ' + comp.name + ' » ajoutée', 'success');
+
+                                    // Update preview
+                                    if (preview) {
+                                        preview.classList.remove('d-none');
+                                        const label = preview.querySelector('.label');
+                                        if (label) label.textContent = name.value.trim() + ' (' + type.value + ')';
+                                    }
+
+                                    // Reset modal fields
+                                    name.value = '';
+                                    image.value = '';
+                                    type.value = 'medallion';
+
+                                    closeComponentModal();
+                                } catch (err) {
+                                    console.error('Erreur lors de la requête AJAX:', err);
+                                    showToast('Erreur lors de la requête serveur', 'error');
+                                    closeComponentModal();
+                                }
+                            }
+
+                            function toggleCustomizationConfig() {
+                                const check = document.getElementById('isCustomizable');
+                                const config = document.getElementById('customizationConfig');
+                                if (check && config) {
+                                    if (check.checked) {
+                                        config.classList.remove('d-none');
+                                        config.classList.add('animate__animated', 'animate__fadeInDown');
+                                    } else {
+                                        config.classList.add('d-none');
+                                    }
+                                }
+                            }
+
+                            function toggleCustomColorField() {
+                                const select = document.getElementById('colorChoice');
+                                const field = document.getElementById('customColorFieldModal');
+                                const input = document.getElementById('customColorInput');
+                                const palette = document.getElementById('customColorPaletteModal');
+                                if (!select || !field) return;
+                                const isCustom = select.value === 'autre';
+                                field.classList.toggle('d-none', !isCustom);
+                                if (input) input.required = isCustom;
+                                if (!isCustom && input) input.value = '';
+                                if (isCustom && palette && input && !input.value) {
+                                    const first = palette.querySelector('.color-swatch');
+                                    if (first) first.click();
+                                }
+                            }
+
+                            function setupCustomColorSwatches() {
+                                const palette = document.getElementById('customColorPaletteModal');
+                                const input = document.getElementById('customColorInput');
+                                if (!palette || !input) return;
+                                const swatches = palette.querySelectorAll('.color-swatch');
+                                swatches.forEach(btn => {
+                                    btn.addEventListener('click', () => {
+                                        const color = btn.getAttribute('data-color');
+                                        input.value = color || '';
+                                        swatches.forEach(s => s.classList.toggle('selected', s === btn));
+                                    });
+                                });
+                                if (!input.value && swatches.length > 0) {
+                                    swatches[0].click();
+                                }
+                            }
+
+                            // Deletion helpers and bulk-delete flow
+                            async function deleteComponent(componentId, cardElement) {
+                                if (!confirm('Supprimer cette forme ?')) return;
+                                try {
+                                    const url = "{% url 'products:delete_component_ajax' %}";
+                                    const fd = new FormData();
+                                    fd.append('component_id', componentId);
+                                    fd.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+                                    const resp = await fetch(url, { method: 'POST', body: fd });
+                                    const data = await resp.json();
+                                    if (resp.ok && data.success) {
+                                        if (cardElement && cardElement.parentNode) cardElement.parentNode.removeChild(cardElement);
+                                        const hiddenContainer = document.getElementById('newComponentHiddenInputs');
+                                        if (hiddenContainer) {
+                                            const hiddenInput = hiddenContainer.querySelector(`input[value=\"${componentId}\"]`);
+                                            if (hiddenInput) hiddenInput.remove();
+                                        }
+                                        showToast('Forme supprimée', 'success');
+                                    } else {
+                                        showToast('Erreur suppression: ' + (data.error || ''), 'error');
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                    showToast('Erreur lors de la suppression.', 'error');
+                                }
+                            }
+
+                            // Bulk delete
+                            let bulkDeleteMode = false;
+                            function toggleBulkDeleteMode() {
+                                bulkDeleteMode = !bulkDeleteMode;
+                                const grid = document.querySelector('.component-selector-grid');
+                                if (!grid) return;
+                                const cards = grid.querySelectorAll('.component-visual-card');
+                                cards.forEach(c => {
+                                    if (c.classList.contains('add-component-card')) return;
+                                    c.classList.toggle('deletable', bulkDeleteMode);
+                                    if (!bulkDeleteMode) c.classList.remove('delete-selected');
+                                });
+
+                                let footer = document.getElementById('bulkDeleteFooter');
+                                if (!footer) {
+                                    footer = document.createElement('div');
+                                    footer.id = 'bulkDeleteFooter';
+                                    footer.className = 'mt-2 d-flex gap-2';
+                                    footer.innerHTML = `<button class="btn btn-danger btn-sm" id="confirmBulkDelete">Supprimer les sélectionnées</button><button class="btn btn-light btn-sm" id="cancelBulkDelete">Annuler</button>`;
+                                    const container = document.querySelector('#customizationConfig .row');
+                                    if (container) container.appendChild(footer);
+                                }
+                                footer.style.display = bulkDeleteMode ? 'flex' : 'none';
+
+                                if (bulkDeleteMode) {
+                                    document.getElementById('confirmBulkDelete').addEventListener('click', performBulkDelete);
+                                    document.getElementById('cancelBulkDelete').addEventListener('click', toggleBulkDeleteMode);
+                                }
+                            }
+
+                            async function performBulkDelete() {
+                                if (!confirm('Confirmer suppression des formes sélectionnées ?')) return;
+                                const grid = document.querySelector('.component-selector-grid');
+                                const selected = grid.querySelectorAll('.component-visual-card.delete-selected');
+                                if (!selected.length) { showToast('Aucune forme sélectionnée.', 'warning'); return; }
+                                const ids = [];
+                                selected.forEach(s => {
+                                    const inp = s.querySelector('input[name="allowed_components"]');
+                                    if (inp) ids.push(inp.value);
+                                });
+
+                                try {
+                                    const url = "{% url 'products:bulk_delete_components_ajax' %}";
+                                    const fd = new FormData();
+                                    ids.forEach(id => fd.append('component_ids[]', id));
+                                    fd.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+                                    const resp = await fetch(url, { method: 'POST', body: fd });
+                                    const data = await resp.json();
+                                    if (resp.ok && data.success) {
+                                        selected.forEach(s => s.parentNode && s.parentNode.removeChild(s));
+                                        showToast('Suppression effectuée (' + (data.deleted_count || ids.length) + ')', 'success');
+                                        toggleBulkDeleteMode();
+                                    } else {
+                                        showToast('Erreur suppression multiple: ' + (data.error || ''), 'error');
+                                    }
+                                } catch (err) {
+                                    console.error(err);
+                                    showToast('Erreur lors de la suppression multiple.', 'error');
+                                }
+                            }
+
+                            document.addEventListener('click', function (e) {
+                                if (e.target && e.target.id === 'enableBulkDelete') {
+                                    e.preventDefault();
+                                    toggleBulkDeleteMode();
+                                }
+                            });
+
+                            document.addEventListener('DOMContentLoaded', function () {
+                                toggleCustomColorField();
+                                setupCustomColorSwatches();
+                            });
+                        </script>
                     </div>
+
+
+                    <div class="component-modal-backdrop d-none" id="componentModalBackdrop">
+                        <div class="component-modal">
+                            <div class="component-modal-header">
+                                <h6><i class="bi bi-plus-lg me-2"></i>Ajouter une forme</h6>
+                                <button type="button" class="btn-close" onclick="closeComponentModal()"></button>
+                            </div>
+                            <div class="component-modal-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Nom de la forme</label>
+                                        <input type="text" id="newComponentName" name="new_component_name"
+                                            class="form-control" placeholder="Ex: Coeur, Croix, Rond...">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Type</label>
+                                        <select id="newComponentType" name="new_component_type" class="form-select">
+                                            <option value="medallion">Medailon</option>
+                                            <option value="charm">Breloque</option>
+                                            <option value="bead">Perle</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Image</label>
+                                        <input type="file" id="newComponentImage" name="new_component_image"
+                                            class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="component-modal-footer">
+                                <button type="button" class="btn btn-light"
+                                    onclick="closeComponentModal()">Annuler</button>
+                                <button type="button" class="btn btn-dark"
+                                    onclick="applyNewComponent()">Ajouter</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="add-component-preview d-none" id="newComponentPreview">
+                        <span class="dot"></span>
+                        <span class="label">Nouvelle forme ajoutee</span>
+                    </div>
+
                 </form>
             </div>
             <div class="modal-footer border-0 bg-white">

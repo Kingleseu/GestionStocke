@@ -1,0 +1,748 @@
+﻿{% extends 'store/base.html' %}
+{% load static store_tags %}
+
+{% block content %}
+<!-- Inject current product into window.djangoProducts BEFORE loading des_store.js -->
+<script>
+    // Initialize or append to window.djangoProducts
+    if (!window.djangoProducts) {
+        window.djangoProducts = [];
+    }
+
+    // Push current product into the array
+    const currentProductData = {
+        id: "{{ product.id }}",
+        name: "{{ product.name|escapejs }}",
+        price: parseFloat("{{ product.selling_price }}"),
+        selling_price: parseFloat("{{ product.selling_price }}"),
+        image: "{% if product.image %}{{ product.image.url }}{% endif %}",
+        secondary_image: "{% if product.secondary_image %}{{ product.secondary_image.url }}{% endif %}",
+        category: "{{ product.category.name|default:'Bijoux'|escapejs }}",
+        description: "{{ product.description|default:''|escapejs }}",
+        customizable: {{ product.is_customizable|yesno:"true,false" }},
+    engraving_price: parseFloat("{{ product.engraving_price|default:0 }}"),
+        current_stock: {{ product.current_stock|default:0 }}
+    };
+
+    // Only add if not already present
+    if (!window.djangoProducts.find(p => String(p.id) === String(currentProductData.id))) {
+        window.djangoProducts.push(currentProductData);
+    }
+</script>
+
+<link rel="stylesheet" href="{% static 'css/atelier_v2.css' %}">
+<style>
+    .product-detail-container {
+        padding: 120px 24px 80px;
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 60px;
+        min-height: 80vh;
+    }
+
+    /* Left: Gallery & Preview */
+    .product-gallery {
+        position: sticky;
+        top: 110px;
+        height: fit-content;
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    .thumbnail-column {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .thumb-nav {
+        width: 42px;
+        height: 42px;
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #1f2937;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .thumb-nav:hover {
+        border-color: #111827;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    .thumb-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 420px;
+        overflow: auto;
+        padding: 4px 0;
+        scrollbar-width: none;
+    }
+
+    .thumb-list::-webkit-scrollbar {
+        display: none;
+    }
+
+    .thumb-item {
+        width: 70px;
+        height: 70px;
+        border-radius: 10px;
+        border: 1px solid #eee;
+        background: #fff;
+        overflow: hidden;
+        cursor: pointer;
+        padding: 0;
+        display: block;
+        transition: all 0.2s ease;
+    }
+
+    .main-image-wrapper {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #f3efe8;
+        aspect-ratio: 1;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
+    }
+
+    #previewCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        /* Let clicks pass through */
+        z-index: 10;
+    }
+
+    .main-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .main-image-wrapper:hover .main-image {
+        transform: scale(1.02);
+    }
+
+    .thumb-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .thumb-item.active {
+        border-color: #0f172a;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+    }
+
+    .wishlist-btn {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(255, 255, 255, 0.92);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+        z-index: 11;
+    }
+
+    .wishlist-btn i {
+        font-size: 1.1rem;
+        color: #111;
+    }
+
+    /* Right: Info & Form */
+    .product-info {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .product-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 34px;
+        color: #1a1a1a;
+        margin: 0;
+    }
+
+    .pdp-breadcrumbs {
+        font-size: 13px;
+        color: #9ca3af;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .pdp-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .product-price {
+        font-size: 26px;
+        font-weight: 700;
+        color: #0f172a;
+        white-space: nowrap;
+    }
+
+    .price-details {
+        font-size: 13px;
+        color: #6b7280;
+        font-weight: 400;
+        margin-top: 4px;
+    }
+
+    .pdp-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        background: #7a0f28;
+        color: #fff;
+        font-size: 12px;
+        letter-spacing: 0.4px;
+        border-radius: 6px;
+        width: fit-content;
+    }
+
+    .pdp-installments {
+        font-size: 14px;
+        color: #111827;
+    }
+
+    .btn-outline {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #111827;
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-weight: 600;
+        cursor: pointer;
+        width: fit-content;
+    }
+
+    .btn-outline:hover {
+        border-color: #111827;
+    }
+
+    .pdp-colors {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .pdp-colors span {
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .pdp-swatch-list {
+        display: flex;
+        gap: 10px;
+    }
+
+    .pdp-swatch {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        cursor: pointer;
+        padding: 0;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+    }
+
+    .pdp-swatch.active {
+        border-color: #0f172a;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.2);
+        outline: 2px solid rgba(15, 23, 42, 0.15);
+        outline-offset: 2px;
+    }
+
+    .product-description {
+        font-size: 15px;
+        line-height: 1.6;
+        color: #555;
+        border-top: 1px solid #eee;
+        padding-top: 18px;
+    }
+
+    /* Customization Form */
+    .customization-section {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 25px;
+        margin-top: 10px;
+        padding-top: 0;
+        border: none;
+        padding-left: 0;
+    }
+
+    .cust-group {
+        margin-bottom: 25px;
+    }
+
+    .cust-label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 10px;
+        color: #333;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .cust-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: 'Outfit', sans-serif;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+
+    .cust-input:focus {
+        border-color: #1a1a1a;
+        outline: none;
+    }
+
+    /* Font Selection */
+    .font-options {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .font-option {
+        border: 1px solid #ddd;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .font-option.selected {
+        background: #1a1a1a;
+        color: #fff;
+        border-color: #1a1a1a;
+    }
+
+    /* Actions */
+    .actions {
+        display: grid;
+        gap: 14px;
+        margin-top: 10px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        .product-detail-container {
+            grid-template-columns: 1fr;
+            padding-top: 80px;
+        }
+
+        .product-gallery {
+            position: static;
+            grid-template-columns: 1fr;
+        }
+
+        .thumbnail-column {
+            flex-direction: row;
+            justify-content: center;
+        }
+
+        .thumb-list {
+            flex-direction: row;
+            max-height: unset;
+            overflow: auto;
+        }
+    }
+
+    /* Extra premium polish */
+    .product-detail-container.ready {
+        opacity: 1;
+        transform: none;
+    }
+
+    .btn-atelier-primary {
+        background: #0b1421;
+        color: #fff;
+        padding: 18px;
+        border-radius: 6px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: all 0.3s;
+        border: none;
+    }
+
+    .btn-atelier-primary:hover {
+        background: #111827;
+        transform: translateY(-2px);
+    }
+
+    .btn-atelier-outline {
+        background: #fff;
+        color: #0b1421;
+        padding: 16px;
+        border-radius: 6px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border: 1px solid #0b1421;
+        cursor: pointer;
+    }
+
+    .btn-atelier-outline:hover {
+        background: #f9fafb;
+    }
+
+    .gravure-available:hover {
+        background: #f8f8f8;
+    }
+
+    .gravure-available i.bi-pencil-square {
+        font-size: 1.2rem;
+        color: #E21717;
+    }
+</style>
+
+{% static 'img/placeholder.png' as placeholder_img %}
+<div class="product-detail-container">
+    <div class="product-gallery">
+        <div class="thumbnail-column">
+            <button class="thumb-nav up" type="button" aria-label="Défiler vers le haut">
+                <i class="bi bi-chevron-up"></i>
+            </button>
+            <div class="thumb-list" id="thumbList">
+                <button class="thumb-item active" type="button"
+                    data-full="{% if product.image %}{{ product.image.url }}{% else %}{{ placeholder_img }}{% endif %}">
+                    <img src="{% if product.image %}{{ product.image.url }}{% else %}{{ placeholder_img }}{% endif %}"
+                        alt="{{ product.name }}">
+                </button>
+                {% if product.secondary_image %}
+                <button class="thumb-item" type="button" data-full="{{ product.secondary_image.url }}">
+                    <img src="{{ product.secondary_image.url }}" alt="{{ product.name }}">
+                </button>
+                {% endif %}
+                {% if product.extra_image_1 %}
+                <button class="thumb-item" type="button" data-full="{{ product.extra_image_1.url }}">
+                    <img src="{{ product.extra_image_1.url }}" alt="{{ product.name }}">
+                </button>
+                {% endif %}
+                {% if product.extra_image_2 %}
+                <button class="thumb-item" type="button" data-full="{{ product.extra_image_2.url }}">
+                    <img src="{{ product.extra_image_2.url }}" alt="{{ product.name }}">
+                </button>
+                {% endif %}
+            </div>
+            <button class="thumb-nav down" type="button" aria-label="Défiler vers le bas">
+                <i class="bi bi-chevron-down"></i>
+            </button>
+        </div>
+
+        <div class="main-image-wrapper">
+            <button class="wishlist-btn" type="button" aria-label="Ajouter aux favoris">
+                <i class="bi bi-heart"></i>
+            </button>
+            {% if product.image %}
+            <img id="productImage" src="{{ product.image.url }}" class="main-image" alt="{{ product.name }}"
+                crossorigin="anonymous">
+            {% else %}
+            <img id="productImage" src="{{ placeholder_img }}" class="main-image" alt="Produit">
+            {% endif %}
+            <canvas id="previewCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="product-info">
+        <button onclick="history.back()"
+            style="background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:8px; color:#666; margin-bottom:10px; font-size:14px; padding:0;">
+            <i class="bi bi-arrow-left"></i> Retour
+        </button>
+        <div class="pdp-breadcrumbs">
+            <span>Bijouterie en ligne</span>
+            <span>/</span>
+            {% if product.category %}
+            <span>{{ product.category.name }}</span>
+            <span>/</span>
+            {% endif %}
+            <span>{{ product.name }}</span>
+        </div>
+
+        <div class="pdp-title-row">
+            <h1 class="product-title">{{ product.name }}</h1>
+            <div class="product-price">
+                <span id="displayPrice">{{ product.selling_price }}</span> FC
+            </div>
+        </div>
+
+        {% if product.is_customizable %}
+        <span class="pdp-badge">Gravure</span>
+        <div class="price-details" id="customizationSummary"></div>
+        {% endif %}
+
+        <div class="pdp-installments">Payer en 3x sans frais</div>
+        <button class="btn-outline" type="button" id="scrollDescription">Voir le descriptif</button>
+
+        <div class="pdp-colors">
+            <span>Couleurs :</span>
+            <div class="pdp-swatch-list">
+                {% if product.color_choice == 'autre' and product.custom_color %}
+                <button class="pdp-swatch active" type="button" data-color="{{ product.custom_color }}"
+                    style="background: {{ product.custom_color }};"></button>
+                {% elif product.color_choice == 'or' %}
+                <button class="pdp-swatch active" type="button" data-color="or" style="background: #d4af37;"></button>
+                {% else %}
+                <button class="pdp-swatch active" type="button" data-color="argent"
+                    style="background: #c0c0c0;"></button>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="product-description" id="productDescription">
+            {{ product.description|linebreaks }}
+        </div>
+
+        {% if product.is_customizable %}
+        <div class="gravure-available" id="gravureBanner"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; cursor: pointer;"
+            onclick="openAtelier()">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="bi bi-pencil-square"></i>
+                <span style="font-weight: 600;">Gravure disponible (+{{ product.engraving_price }} FC)</span>
+            </div>
+            <div style="color: #666; font-size: 0.8rem;">Gratuite dès 100 000 FC <i class="bi bi-chevron-right"></i>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="actions">
+            <button id="addToCartBtn" class="btn-atelier-primary" onclick="addToCart()">
+                AJOUTER AU PANIER — {{ product.selling_price }} FC
+            </button>
+            <button type="button" class="btn-atelier-outline">RETIRER EN MAGASIN</button>
+        </div>
+    </div>
+</div>
+
+{% if similar_products %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 0 24px 80px;">
+    <div class="checkout-section-divider"
+        style="margin: 0 0 30px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">
+        <h3 style="font-family: 'Playfair Display', serif; font-size: 28px; color: #1a1a1a; margin: 0;">Vous aimerez
+            aussi</h3>
+    </div>
+    <div class="similar-products-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px;">
+        {% for prod in similar_products %}
+        <div class="product-card" onclick="window.location.href='{% url 'store:product_detail' prod.id %}'"
+            style="cursor: pointer; transition: transform 0.3s ease;">
+            <div class="product-image-wrapper"
+                style="position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 12px; margin-bottom: 15px; background: #f9f9f9;">
+                {% if prod.image %}
+                <img src="{{ prod.image.url }}" alt="{{ prod.name }}"
+                    style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
+                {% else %}
+                <img src="{{ placeholder_img }}" alt="{{ prod.name }}"
+                    style="width: 100%; height: 100%; object-fit: cover;">
+                {% endif %}
+                <button class="wishlist-btn"
+                    style="position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; font-size: 0.9rem;"
+                    onclick="event.stopPropagation();">
+                    <i class="bi bi-heart"></i>
+                </button>
+            </div>
+            <h4 style="font-size: 16px; color: #1a1a1a; margin: 0 0 6px; font-weight: 500;">{{ prod.name }}</h4>
+            <p style="font-weight: 700; color: #111;">{{ prod.selling_price }} FC</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<style>
+    .similar-products-grid .product-card:hover .product-image-wrapper img {
+        transform: scale(1.05);
+    }
+
+    .similar-products-grid .product-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endif %}
+
+<script>
+    // Initial Data
+    const BASE_PRICE = parseFloat("{{ product.selling_price }}");
+    const PRODUCT_ID = "{{ product.id }}";
+    // Parse Rules safely
+    const RULES = {% if customization_rules_json %}{{ customization_rules_json|safe }} {% else %} null{% endif %};
+
+    let currentCustomization = {
+        choices: {},
+        quantity: 1,
+        currentStep: 1,
+        isStudio: !!(RULES && RULES.is_studio)
+    };
+
+    // DOM Elements
+    const priceDisplay = document.getElementById('displayPrice');
+    const summaryDisplay = document.getElementById('customizationSummary');
+    const canvas = document.getElementById('previewCanvas');
+    const productImg = document.getElementById('productImage');
+
+    function openAtelier() {
+        // Open the interactive customization modal
+        if (typeof openProductModal === 'function') {
+            openProductModal(PRODUCT_ID);
+        } else {
+            window.location.href = "{% url 'store:studio' product.id %}";
+        }
+    }
+
+    function addToCart() {
+        const btn = document.getElementById('addToCartBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = "Ajout...";
+        }
+
+        // Add item to cart array
+        const cartItem = {
+            id: PRODUCT_ID,
+            name: currentProductData.name,
+            price: BASE_PRICE,
+            customization_price: BASE_PRICE,
+            image: currentProductData.image,
+            quantity: currentCustomization.quantity || 1,
+            customization: currentCustomization
+        };
+
+        // Add to cart
+        if (!window.cart) window.cart = [];
+        cart.push(cartItem);
+
+        // Update UI and open cart
+        if (typeof updateCartUI === 'function') updateCartUI();
+        if (typeof saveCart === 'function') saveCart();
+        if (typeof toggleCart === 'function') toggleCart();
+
+        // Reset button
+        setTimeout(() => {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = `AJOUTER AU PANIER — ${BASE_PRICE} FC`;
+            }
+        }, 500);
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+        // Premium View Transition
+        const container = document.querySelector('.product-detail-container');
+        if (container) setTimeout(() => container.classList.add('ready'), 100);
+
+        const thumbList = document.getElementById('thumbList');
+        const thumbButtons = document.querySelectorAll('.thumb-item');
+        const swatchButtons = document.querySelectorAll('.pdp-swatch');
+        const navUp = document.querySelector('.thumb-nav.up');
+        const navDown = document.querySelector('.thumb-nav.down');
+        const descBtn = document.getElementById('scrollDescription');
+        const descSection = document.getElementById('productDescription');
+
+        const setActiveThumb = (fullSrc) => {
+            thumbButtons.forEach(btn => {
+                const match = btn.getAttribute('data-full') === fullSrc;
+                btn.classList.toggle('active', match);
+            });
+        };
+
+        const handleSelect = (btn) => {
+            const fullSrc = btn.getAttribute('data-full');
+            if (!fullSrc || !productImg) return;
+            productImg.src = fullSrc;
+            setActiveThumb(fullSrc);
+        };
+
+        const setActiveSwatch = (activeBtn) => {
+            swatchButtons.forEach(btn => {
+                btn.classList.toggle('active', btn === activeBtn);
+            });
+        };
+
+        thumbButtons.forEach(btn => btn.addEventListener('click', () => handleSelect(btn)));
+        swatchButtons.forEach(btn => btn.addEventListener('click', () => setActiveSwatch(btn)));
+
+        if (navUp && thumbList) {
+            navUp.addEventListener('click', () => {
+                thumbList.scrollBy({ top: -90, behavior: 'smooth' });
+            });
+        }
+
+        if (navDown && thumbList) {
+            navDown.addEventListener('click', () => {
+                thumbList.scrollBy({ top: 90, behavior: 'smooth' });
+            });
+        }
+
+        if (descBtn && descSection) {
+            descBtn.addEventListener('click', () => {
+                descSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    });
+</script>
+
+<!-- PRODUCT SIDEBAR (Single, Glassmorphism) -->
+<div class="product-sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="product-sidebar glass-sidebar">
+    <div class="sidebar-header-fixed">
+        <h3 id="sidebarTitle">Détails Produit</h3>
+        <button class="close-sidebar-btn" onclick="closeSidebar()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-scroll-content" id="sidebarContent">
+        <div style="padding: 2rem; text-align: center; color: #888;">Chargement...</div>
+    </div>
+
+    <div class="sidebar-footer-fixed">
+        <div class="price-row">
+            <span class="total-label">Total</span>
+            <span class="total-price" id="sidebarTotal">0.00 FC</span>
+        </div>
+        <button class="add-to-cart-btn-sidebar" id="sidebarAddBtn">Ajouter au panier</button>
+    </div>
+</div>
+
+<!-- Initialize customization state if product is customizable -->
+<script>
+    // Initialize customization state if the product is customizable
+    if (currentProductData.customizable && typeof initCustomizationState === 'function') {
+        document.addEventListener('DOMContentLoaded', function () {
+            initCustomizationState(currentProductData.id);
+        });
+    }
+</script>
+{% endblock %}

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from products.views import get_product_customization_data_public
 
 app_name = 'store'
 
@@ -7,9 +8,16 @@ urlpatterns = [
     path('style-guide/', views.StoreStyleGuideView.as_view(), name='style_guide'),
     path('', views.StoreCatalogView.as_view(), name='catalog'),
     path('cart/', views.StoreCartView.as_view(), name='cart'),
+    path('product/<int:pk>/', views.StoreProductDetailView.as_view(), name='product_detail'),
+    path('studio/<int:pk>/', views.StoreStudioView.as_view(), name='studio'),
     path('add/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
     path('checkout/', views.StoreCheckoutView.as_view(), name='checkout'),
+    path('payment-instructions/<int:order_id>/', views.ManualPaymentInstructionsView.as_view(), name='payment_instructions'),
+    path('payment-submit/<int:order_id>/', views.ManualPaymentSubmissionView.as_view(), name='payment_submit'),
     path('api/sync-cart/', views.sync_cart, name='sync_cart'),
+    
+    # API endpoints
+    path('api/product/<int:product_id>/customization-data/', get_product_customization_data_public, name='get_customization_data'),
 
     # Administration Site Web
     path('admin/', views.WebsiteDashboardView.as_view(), name='admin_dashboard'),
@@ -64,4 +72,15 @@ urlpatterns = [
     path('admin/collections/<int:pk>/update/', views.CollectionUpdateView.as_view(), name='admin_collection_update'),
     path('admin/collections/<int:pk>/delete/', views.CollectionDeleteView.as_view(), name='admin_collection_delete'),
     path('admin/collections/sync/', views.sync_collections, name='admin_collections_sync'),
+    
+    # Web Orders Management
+    path('admin/orders/', views.WebOrderListView.as_view(), name='admin_weborders'),
+    path('admin/orders/whatsapp/', views.WebOrderWhatsAppView.as_view(), name='admin_weborders_whatsapp'),
+    path('admin/orders/<int:pk>/', views.WebOrderDetailView.as_view(), name='admin_weborder_detail'),
+    path('admin/orders/<int:pk>/update-status/', views.update_order_status, name='admin_weborder_update_status'),
+    
+    # Payments Management
+    path('admin/payments/', views.AdminPaymentListView.as_view(), name='admin_payments'),
+    path('admin/payments/<int:pk>/approve/', views.approve_payment, name='admin_payment_approve'),
+    path('admin/payments/<int:pk>/reject/', views.reject_payment, name='admin_payment_reject'),
 ]
