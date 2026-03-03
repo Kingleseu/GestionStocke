@@ -1,0 +1,5 @@
+postgresql://postgres.zgtfpccwbifxttwidqgv:0iiVSpQqrmJf8tMC@aws-1-eu-west-1@aws-1-eu- west-1.pooler.supabase.com:6543/postgres
+
+GWJ3gfwlPhfaNeCG
+
+postgresql://postgres.zgtfpccwbifxttwidqgv:GWJ3gfwlPhfaNeCG@aws-1-eu-west-1.pooler.supabase.com:6543/postgres
