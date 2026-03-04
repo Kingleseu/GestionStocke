@@ -124,8 +124,7 @@
                 <div class="d-flex align-items-center">
                     <div class="d-flex align-items-center">
                         {% if user.is_authenticated %}
-                        <button type="button" id="sidebarCollapse"
-                            class="btn btn-sm btn-light d-md-none me-3 shadow-sm border">
+                        <button type="button" id="sidebarCollapse" class="btn btn-sm btn-light me-3 shadow-sm border">
                             <i class="bi bi-list"></i>
                         </button>
                         {% endif %}
@@ -248,19 +247,25 @@
         document.addEventListener('DOMContentLoaded', function () {
             const sidebarCollapse = document.getElementById('sidebarCollapse');
             const sidebar = document.getElementById('sidebar');
+            const wrapper = document.querySelector('.wrapper');
+
             if (sidebarCollapse) {
                 sidebarCollapse.addEventListener('click', function () {
-                    sidebar.classList.toggle('active'); // active class needs handling in CSS if we want mobile toggle
-                    // For now modern.css handles desktop fixed width. Mobile needs @media query.
-                    if (window.innerWidth < 992) {
-                        if (sidebar.style.marginLeft === '0px') {
-                            sidebar.style.marginLeft = '-280px';
-                        } else {
-                            sidebar.style.marginLeft = '0px';
-                        }
-                    }
+                    sidebar.classList.toggle('active');
+                    if (wrapper) wrapper.classList.toggle('sidebar-active');
                 });
             }
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function (event) {
+                const isClickInsideSidebar = sidebar.contains(event.target);
+                const isClickInsideToggle = sidebarCollapse.contains(event.target);
+
+                if (!isClickInsideSidebar && !isClickInsideToggle && sidebar.classList.contains('active') && window.innerWidth < 992) {
+                    sidebar.classList.remove('active');
+                    if (wrapper) wrapper.classList.remove('sidebar-active');
+                }
+            });
         });
     </script>
 

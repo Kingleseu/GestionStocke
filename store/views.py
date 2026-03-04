@@ -8,6 +8,13 @@ from accounts.decorators import manager_required
 from .models import HeroSection, HeroCard, AboutSection, AboutStat, FooterConfig, SocialLink, FooterLink, StoreSettings, Universe, Collection, WebOrder, ManualPayment
 from accounts.models import Shop
 from .forms import HeroSectionForm, HeroCardForm, AboutSectionForm, AboutStatForm, FooterConfigForm, SocialLinkForm, FooterLinkForm, CategoryForm, UniverseForm, CollectionForm, ShopForm, ManualPaymentForm
+# Promotions
+try:
+    from promotions.models import Promotion
+    from promotions.forms import PromotionForm
+    PROMOTIONS_ENABLED = True
+except ImportError:
+    PROMOTIONS_ENABLED = False
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.db.models import Q
@@ -28,8 +35,16 @@ class SPAContextMixin:
         # Products - Order by newest first
         products_qs = Product.objects.filter(is_active=True).order_by('-id')
         products_data = []
+        
+        # Try to import pricing function
+        try:
+            from promotions.utils import calculate_product_price
+            has_promo = True
+        except ImportError:
+            has_promo = False
+        
         for product in products_qs:
-            products_data.append({
+            product_obj = {
                 'id': str(product.id),
                 'name': product.name,
                 'price': float(product.selling_price),
@@ -48,7 +63,19 @@ class SPAContextMixin:
                 'production_delay': product.production_delay_days,
                 'stock': product.current_stock,
                 'badge': 'Nouveau' if product.current_stock > 0 else 'Épuisé'
-            })
+            }
+            
+            # Add promotion pricing if available
+            if has_promo:
+                pricing = calculate_product_price(product)
+                product_obj['pricing'] = {
+                    'original_price': float(pricing['original_price']),
+                    'discounted_price': float(pricing['discounted_price']),
+                    'discount_percent': float(pricing['discount_percent']),
+                    'has_promotion': pricing['has_promotion']
+                }
+            
+            products_data.append(product_obj)
         ctx['products_json'] = json.dumps(products_data)
 
         # Settings
@@ -346,21 +373,56 @@ class StoreProductDetailView(SPAContextMixin, TemplateView):
         context['product'] = product
         context.update(self.get_spa_context(self.request))
         
+        # Get pricing with promotions
+        try:
+            from promotions.utils import calculate_product_price
+            pricing = calculate_product_price(product)
+            context['product_pricing'] = pricing
+        except ImportError:
+            context['product_pricing'] = {
+                'original_price': float(product.selling_price),
+                'discounted_price': float(product.selling_price),
+                'discount_percent': 0,
+                'has_promotion': False,
+                'savings': 0
+            }
+        
         # Inject customization rules directly for template usage
         if product.is_customizable and product.effective_customization_rules:
              import json
              context['customization_rules_json'] = json.dumps(product.effective_customization_rules)
 
-        # Similar Products
+        # Similar Products with pricing
         if product.category:
-            context['similar_products'] = Product.objects.filter(
+            similar_products = Product.objects.filter(
                 category=product.category, 
                 is_active=True
             ).exclude(id=product.id).order_by('-id')[:4]
         else:
-            context['similar_products'] = Product.objects.filter(
+            similar_products = Product.objects.filter(
                 is_active=True
             ).exclude(id=product.id).order_by('-id')[:4]
+        
+        # Calculate pricing for each similar product
+        similar_with_pricing = []
+        for prod in similar_products:
+            try:
+                from promotions.utils import calculate_product_price
+                pricing = calculate_product_price(prod)
+            except ImportError:
+                pricing = {
+                    'original_price': float(prod.selling_price),
+                    'discounted_price': float(prod.selling_price),
+                    'discount_percent': 0,
+                    'has_promotion': False,
+                    'savings': 0
+                }
+            similar_with_pricing.append({
+                'product': prod,
+                'pricing': pricing
+            })
+        
+        context['similar_products'] = similar_with_pricing
         
         return context
 
@@ -537,6 +599,17 @@ class WebsiteDashboardView(TemplateView):
         context['collections_count'] = Collection.objects.count()
         context['pending_payments_count'] = ManualPayment.objects.filter(status='submitted').count()
         context['shop'] = self.request.user.profile.shop
+        
+        # Promotions
+        if PROMOTIONS_ENABLED:
+            from django.utils import timezone
+            context['promotions_count'] = Promotion.objects.count()
+            context['active_promotions_count'] = Promotion.objects.filter(
+                start_date__lte=timezone.now(),
+                end_date__gte=timezone.now(),
+                is_active=True
+            ).count()
+        
         return context
 
 @method_decorator(manager_required, name='dispatch')
@@ -1487,3 +1560,124 @@ def reject_payment(request, pk):
         payment.order.save()
         messages.warning(request, f"❌ Paiement pour la commande #{payment.order.id} rejeté.")
     return redirect('store:admin_weborder_detail', pk=payment.order.id)
+
+
+# ======================== PROMOTIONS ADMIN VIEWS ========================
+
+if PROMOTIONS_ENABLED:
+    
+    class PromotionListView(ListView):
+        model = Promotion
+        template_name = 'store/admin/promotions_list.html'
+        context_object_name = 'promotions'
+        paginate_by = 20
+        
+        def get_queryset(self):
+            return Promotion.objects.all().order_by('-created_at')
+        
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            # Ajouter les statistiques
+            from django.utils import timezone
+            context['active_count'] = Promotion.objects.filter(
+                start_date__lte=timezone.now(),
+                end_date__gte=timezone.now(),
+                is_active=True
+            ).count()
+            context['upcoming_count'] = Promotion.objects.filter(
+                start_date__gt=timezone.now(),
+                is_active=True
+            ).count()
+            return context
+    
+    
+    @method_decorator(manager_required, name='dispatch')
+    class PromotionCreateView(CreateView):
+        model = Promotion
+        form_class = PromotionForm
+        template_name = 'store/admin/promotions_form.html'
+        success_url = reverse_lazy('store:admin_promotions')
+        
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            from products.models import Category
+            
+            # Categories pour le filtre du modal
+            context['categories'] = Category.objects.all()
+            return context
+        
+        def form_valid(self, form):
+            form.instance.created_by = self.request.user
+            messages.success(self.request, "✅ Promotion créée avec succès.")
+            return super().form_valid(form)
+    
+    
+    @method_decorator(manager_required, name='dispatch')
+    class PromotionUpdateView(UpdateView):
+        model = Promotion
+        form_class = PromotionForm
+        template_name = 'store/admin/promotions_form.html'
+        success_url = reverse_lazy('store:admin_promotions')
+        
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            from products.models import Category
+            
+            # Categories pour le filtre du modal
+            context['categories'] = Category.objects.all()
+            return context
+        
+        def form_valid(self, form):
+            messages.success(self.request, "✅ Promotion mise à jour avec succès.")
+            return super().form_valid(form)
+
+
+@manager_required
+def get_products_json(request):
+    """API endpoint pour charger les produits en JSON"""
+    import json
+    from django.http import JsonResponse
+    from products.models import Product
+    
+    products = Product.objects.filter(is_active=True).values(
+        'id', 'name', 'selling_price', 'category__id', 'category__name'
+    ).order_by('name')
+    
+    return JsonResponse(list(products), safe=False)
+
+
+@method_decorator(manager_required, name='dispatch')
+class PromotionDeleteView(DeleteView):
+    model = Promotion
+    success_url = reverse_lazy('store:admin_promotions')
+    template_name = 'store/admin/confirm_delete.html'
+    
+    def delete(self, request, *args, **kwargs):
+        messages.warning(request, "🗑️ Promotion supprimée.")
+        return super().delete(request, *args, **kwargs)
+
+
+def get_active_promotions_api(request):
+    """API endpoint that returns all active promotions for the countdown timer."""
+    from django.utils import timezone
+    from django.http import JsonResponse
+    from promotions.models import Promotion
+    from django.db.models import Q
+    
+    # Get promotions that are currently active (between start and end dates)
+    now = timezone.now()
+    active_promotions = Promotion.objects.filter(
+        Q(start_date__lte=now) & Q(end_date__gte=now) & Q(is_active=True)
+    ).values(
+        'id', 'name', 'discount_value', 'discount_type', 
+        'scope', 'start_date', 'end_date', 'is_active'
+    ).order_by('-end_date')
+    
+    # Convert to list and format dates as ISO strings for JavaScript
+    promotions_list = []
+    for promo in active_promotions:
+        promo['start_date'] = promo['start_date'].isoformat() if promo['start_date'] else None
+        promo['end_date'] = promo['end_date'].isoformat() if promo['end_date'] else None
+        promotions_list.append(promo)
+    
+    return JsonResponse(promotions_list, safe=False)

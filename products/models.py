@@ -215,6 +215,38 @@ class Product(models.Model):
             return "Faible"
         return "OK"
     
+    def get_pricing(self):
+        """
+        Retourne le pricing avec promotions appliquées.
+        À utiliser dans les templates et vues.
+        
+        Returns:
+            dict: {
+                'original_price': Decimal,
+                'discounted_price': Decimal,
+                'discount_amount': Decimal,
+                'discount_percent': Decimal,
+                'has_promotion': bool,
+                'promotion': Promotion ou None,
+                'savings': str
+            }
+        """
+        try:
+            from promotions.utils import calculate_product_price
+            return calculate_product_price(self)
+        except ImportError:
+            # Si l'app promotions n'est pas installée, retourner un pricing simple
+            from decimal import Decimal
+            return {
+                'original_price': Decimal(str(self.selling_price)),
+                'discounted_price': Decimal(str(self.selling_price)),
+                'discount_amount': Decimal('0.00'),
+                'discount_percent': Decimal('0.00'),
+                'has_promotion': False,
+                'promotion': None,
+                'savings': '0.00€',
+            }
+    
     def generate_barcode(self):
         """Génère un code-barres EAN-13 unique"""
         while True:

@@ -956,6 +956,20 @@ html {
     /* Offset from screen edge */
 }
 
+@media (max-width: 768px) {
+    .zag-grid {
+        padding: 40px 0 !important;
+        padding-left: calc(50% - 130px) !important;
+        padding-right: calc(50% - 130px) !important;
+    }
+
+    .zag-card {
+        flex: 0 0 260px !important;
+        min-width: 260px !important;
+        margin: 0 15px !important;
+    }
+}
+
 .zag-grid {
     display: flex;
     gap: 0px;
@@ -1574,6 +1588,26 @@ html {
 @media (max-width: 600px) {
     .product-sidebar {
         width: 100%;
+    }
+
+    .sidebar-header-fixed {
+        padding: 1rem;
+    }
+
+    .sidebar-scroll-content {
+        padding: 1rem;
+    }
+
+    .sidebar-title {
+        font-size: 18px;
+    }
+
+    .sidebar-footer-fixed {
+        padding: 1rem;
+    }
+
+    .total-price {
+        font-size: 20px;
     }
 }
 

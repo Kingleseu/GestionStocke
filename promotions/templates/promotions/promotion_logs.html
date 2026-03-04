@@ -1,0 +1,253 @@
+<!-- promotions/promotion_logs.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Logs - {{ promotion.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .logs-header {
+        background: linear-gradient(135deg, #E63946 0%, #B1242F 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
+    }
+    
+    .logs-header h1 {
+        margin: 0;
+    }
+    
+    .logs-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .logs-table thead {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #E63946;
+    }
+    
+    .logs-table th {
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .logs-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .logs-table tbody tr:hover {
+        background-color: #f9f9f9;
+    }
+    
+    .action-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 3px;
+        font-size: 0.85em;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .action-created {
+        background-color: #3498db;
+    }
+    
+    .action-updated {
+        background-color: #f39c12;
+    }
+    
+    .action-activated {
+        background-color: #2ecc71;
+    }
+    
+    .action-deactivated {
+        background-color: #e74c3c;
+    }
+    
+    .action-started {
+        background-color: #27ae60;
+    }
+    
+    .action-ended {
+        background-color: #7f8c8d;
+    }
+    
+    .action-deleted {
+        background-color: #c0392b;
+    }
+    
+    .detail-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .detail-modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .detail-modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .detail-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .detail-modal-close {
+        font-size: 1.5em;
+        cursor: pointer;
+        color: #999;
+    }
+    
+    .detail-modal-close:hover {
+        color: #333;
+    }
+    
+    .empty-logs {
+        text-align: center;
+        padding: 50px;
+        color: #999;
+    }
+    
+    .empty-logs-icon {
+        font-size: 3em;
+        margin-bottom: 15px;
+    }
+    
+    .btn-back {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #3498db;
+        color: white;
+        border-radius: 5px;
+        text-decoration: none;
+        margin-bottom: 30px;
+    }
+    
+    .btn-back:hover {
+        background-color: #2980b9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{% url 'promotions:promotion_detail' promotion.pk %}" class="btn-back">← Retour à la promotion</a>
+    
+    <div class="logs-header">
+        <h1>📜 Historique de {{ promotion.name }}</h1>
+        <p style="margin: 10px 0 0 0;">Consultez toutes les modifications et actions effectuées sur cette promotion</p>
+    </div>
+    
+    {% if logs %}
+    <div class="logs-container">
+        <table class="logs-table">
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Date/Heure</th>
+                    <th>Effectuée par</th>
+                    <th>Détails</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        <span class="action-badge action-{{ log.action }}">
+                            {{ log.get_action_display }}
+                        </span>
+                    </td>
+                    <td>{{ log.timestamp|date:"d/m/Y H:i:s" }}</td>
+                    <td>
+                        {% if log.performed_by %}
+                            {{ log.performed_by.get_full_name|default:log.performed_by.username }}
+                        {% else %}
+                            <em>Automatique</em>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.details %}
+                            <button onclick="showDetails({{ log.id }})" style="background: none; border: none; color: #3498db; cursor: pointer; text-decoration: underline;">
+                                Voir détails
+                            </button>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="logs-container">
+        <div class="empty-logs">
+            <div class="empty-logs-icon">📭</div>
+            <h3>Aucun historique</h3>
+            <p>Aucune action n'a encore été enregistrée pour cette promotion.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal pour les détails -->
+<div id="detailsModal" class="detail-modal">
+    <div class="detail-modal-content">
+        <div class="detail-modal-header">
+            <h3>Détails de l'action</h3>
+            <span class="detail-modal-close" onclick="closeDetails()">&times;</span>
+        </div>
+        <pre id="detailsContent" style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"></pre>
+    </div>
+</div>
+
+<script>
+    function showDetails(logId) {
+        // Ici on affiche les détails (simplifié)
+        const modal = document.getElementById('detailsModal');
+        modal.classList.add('show');
+    }
+    
+    function closeDetails() {
+        const modal = document.getElementById('detailsModal');
+        modal.classList.remove('show');
+    }
+    
+    // Fermer le modal en cliquant en dehors
+    document.getElementById('detailsModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDetails();
+        }
+    });
+</script>
+{% endblock %}

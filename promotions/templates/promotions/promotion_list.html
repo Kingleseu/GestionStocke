@@ -1,0 +1,395 @@
+<!-- promotions/promotion_list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Promotions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .promo-header {
+        background: linear-gradient(135deg, #E63946 0%, #B1242F 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
+    }
+    
+    .promo-header h1 {
+        margin: 0;
+        font-size: 2.5em;
+        font-weight: bold;
+    }
+    
+    .promo-header p {
+        margin: 10px 0 0 0;
+        font-size: 1.1em;
+        opacity: 0.95;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .stat-card.active {
+        border-left-color: #2ecc71;
+    }
+    
+    .stat-card.upcoming {
+        border-left-color: #3498db;
+    }
+    
+    .stat-card.expired {
+        border-left-color: #95a5a6;
+    }
+    
+    .stat-card.inactive {
+        border-left-color: #e74c3c;
+    }
+    
+    .stat-card .number {
+        font-size: 2em;
+        font-weight: bold;
+        color: #E63946;
+    }
+    
+    .stat-card .label {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .promo-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #eee;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .promo-card:hover {
+        box-shadow: 0 4px 15px rgba(230, 57, 70, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .promo-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+    
+    .promo-card-title {
+        flex: 1;
+    }
+    
+    .promo-card-title h3 {
+        margin: 0;
+        color: #1A1A1A;
+        font-size: 1.3em;
+    }
+    
+    .promo-discount {
+        font-size: 1.1em;
+        color: #E63946;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+    
+    .promo-badge {
+        background-color: #E63946;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: bold;
+        display: inline-block;
+        white-space: nowrap;
+    }
+    
+    .promo-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+        padding: 15px 0;
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .promo-info-item {
+        text-align: center;
+    }
+    
+    .promo-info-label {
+        font-size: 0.85em;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .promo-info-value {
+        font-size: 0.95em;
+        color: #1A1A1A;
+        font-weight: 600;
+        margin-top: 5px;
+    }
+    
+    .promo-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+    
+    .btn-action {
+        padding: 8px 15px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-view {
+        background-color: #1F77B4;
+        color: white;
+    }
+    
+    .btn-view:hover {
+        background-color: #1a5f96;
+    }
+    
+    .btn-edit {
+        background-color: #3498db;
+        color: white;
+    }
+    
+    .btn-edit:hover {
+        background-color: #2980b9;
+    }
+    
+    .btn-delete {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background-color: #c0392b;
+    }
+    
+    .btn-primary {
+        background-color: #E63946;
+        color: white;
+        padding: 12px 30px;
+    }
+    
+    .btn-primary:hover {
+        background-color: #B1242F;
+    }
+    
+    .filters {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .filters input, .filters select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 0.95em;
+    }
+    
+    .filter-button {
+        background-color: #1F77B4;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    
+    .filter-button:hover {
+        background-color: #1a5f96;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+    
+    .empty-state-icon {
+        font-size: 4em;
+        margin-bottom: 20px;
+    }
+    
+    .empty-state h3 {
+        color: #666;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="promo-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>🎉 Gestion des Promotions</h1>
+                <p>Créez et gérez vos promotions programmables</p>
+            </div>
+            {% if perms.promotions.add_promotion %}
+            <a href="{% url 'promotions:promotion_create' %}" class="btn btn-primary">
+                ➕ Nouvelle Promotion
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card active">
+            <div class="number">{{ stats.active }}</div>
+            <div class="label">Actives</div>
+        </div>
+        <div class="stat-card upcoming">
+            <div class="number">{{ stats.upcoming }}</div>
+            <div class="label">Programmées</div>
+        </div>
+        <div class="stat-card expired">
+            <div class="number">{{ stats.expired }}</div>
+            <div class="label">Expirées</div>
+        </div>
+        <div class="stat-card inactive">
+            <div class="number">{{ stats.total }}</div>
+            <div class="label">Totales</div>
+        </div>
+    </div>
+    
+    <!-- Filtres -->
+    <form method="get" class="filters">
+        <input type="text" name="search" value="{{ search }}" placeholder="Rechercher une promotion..." style="flex: 1; min-width: 200px;">
+        <select name="status">
+            <option value="all" {% if status == 'all' %}selected{% endif %}>Tous</option>
+            <option value="active" {% if status == 'active' %}selected{% endif %}>Actives</option>
+            <option value="upcoming" {% if status == 'upcoming' %}selected{% endif %}>Programmées</option>
+            <option value="expired" {% if status == 'expired' %}selected{% endif %}>Expirées</option>
+            <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactives</option>
+        </select>
+        <button type="submit" class="filter-button">🔍 Filtrer</button>
+    </form>
+    
+    <!-- Liste des promotions -->
+    {% if promotions %}
+        {% for promo in promotions %}
+        <div class="promo-card">
+            <div class="promo-card-header">
+                <div class="promo-card-title">
+                    <h3>{{ promo.name }}</h3>
+                    <div class="promo-discount">
+                        {% if promo.discount_type == 'percentage' %}
+                            -{{ promo.discount_value }}%
+                        {% else %}
+                            -{{ promo.discount_value }}€
+                        {% endif %}
+                    </div>
+                </div>
+                <span class="promo-badge" style="background-color: 
+                    {% if promo.status == 'active' %}#2ecc71
+                    {% elif promo.status == 'upcoming' %}#3498db
+                    {% elif promo.status == 'expired' %}#95a5a6
+                    {% else %}#e74c3c
+                    {% endif %}">
+                    {% if promo.status == 'active' %}🟢 ACTIVE
+                    {% elif promo.status == 'upcoming' %}🟡 PROGRAMMÉE
+                    {% elif promo.status == 'expired' %}⚫ EXPIRÉE
+                    {% else %}🔴 INACTIVE
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="promo-info">
+                <div class="promo-info-item">
+                    <div class="promo-info-label">Portée</div>
+                    <div class="promo-info-value">
+                        {% if promo.scope == 'all_products' %}🌍 Tous
+                        {% elif promo.scope == 'specific_products' %}📦 Produits ({{ promo.products.count }})
+                        {% else %}📂 Catégories
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="promo-info-item">
+                    <div class="promo-info-label">Début</div>
+                    <div class="promo-info-value">{{ promo.start_date|date:"d/m/Y H:i" }}</div>
+                </div>
+                <div class="promo-info-item">
+                    <div class="promo-info-label">Fin</div>
+                    <div class="promo-info-value">{{ promo.end_date|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+            
+            <div class="promo-actions">
+                <a href="{% url 'promotions:promotion_detail' promo.pk %}" class="btn-action btn-view">👁️ Détails</a>
+                {% if perms.promotions.change_promotion %}
+                <a href="{% url 'promotions:promotion_update' promo.pk %}" class="btn-action btn-edit">✏️ Modifier</a>
+                {% endif %}
+                {% if perms.promotions.delete_promotion %}
+                <a href="{% url 'promotions:promotion_delete' promo.pk %}" class="btn-action btn-delete" onclick="return confirm('Êtes-vous sûr?')">🗑️ Supprimer</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>Aucune promotion trouvée</h3>
+            <p>Commencez par créer votre première promotion!</p>
+            {% if perms.promotions.add_promotion %}
+            <a href="{% url 'promotions:promotion_create' %}" class="btn btn-primary" style="margin-top: 20px;">
+                ➕ Créer une promotion
+            </a>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <divstyle="margin-top: 30px; text-align: center;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1" class="btn btn-secondary">Première</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary">Précédente</a>
+        {% endif %}
+        
+        <span style="margin: 0 10px;">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">Suivante</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-secondary">Dernière</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

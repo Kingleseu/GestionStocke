@@ -1,0 +1,698 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.id %}
+        Modifier Promotion - Administration
+    {% else %}
+        Nouvelle Promotion - Administration
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                {% if form.instance.id %}
+                    Modifier la Promotion
+                {% else %}
+                    Créer une Nouvelle Promotion
+                {% endif %}
+            </h2>
+            <p class="text-muted mb-0">Configurez la réduction, les dates et la portée de votre promotion</p>
+        </div>
+        <a href="{% url 'store:admin_promotions' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i> Retour
+        </a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="needs-validation">
+        {% csrf_token %}
+
+        <!-- Informations Générales -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3" style="border-bottom: 2px solid #E63946;">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2" style="color: #E63946;"></i>Informations Générales</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4  mb-3">
+                        <label for="id_name" class="form-label"><strong>Nom de la Promotion</strong></label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                        <small class="text-muted d-block mt-1">Ex: "Soldes d'été", "Black Friday", "Réduction nouveau client"</small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_is_active" class="form-label"><strong>Activer la Promotion</strong></label>
+                        <div class="form-check mt-2">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="id_is_active">
+                                Promouvoir en avant plan
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Réduction -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3" style="border-bottom: 2px solid #E63946;">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-percent me-2" style="color: #E63946;"></i>Réduction</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_discount_type" class="form-label"><strong>Type de Réduction</strong></label>
+                        {{ form.discount_type }}
+                        {% if form.discount_type.errors %}
+                        <div class="invalid-feedback d-block">{{ form.discount_type.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_discount_value" class="form-label"><strong>Valeur de la Réduction</strong></label>
+                        <div class="input-group">
+                            {{ form.discount_value }}
+                            <span class="input-group-text" id="discount_unit">%</span>
+                        </div>
+                        {% if form.discount_value.errors %}
+                        <div class="invalid-feedback d-block">{{ form.discount_value.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="alert alert-info small">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Conseil:</strong> Une réduction en pourcentage est généralement plus efficace pour les clients.
+                    Utilisez un montant fixe pour une promo spécifique.
+                </div>
+            </div>
+        </div>
+
+        <!-- Portée de la Promotion -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3" style="border-bottom: 2px solid #E63946;">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-target me-2" style="color: #E63946;"></i>Portée de la Promotion</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_scope" class="form-label"><strong>Appliquer à</strong></label>
+                        {{ form.scope }}
+                        {% if form.scope.errors %}
+                        <div class="invalid-feedback d-block">{{ form.scope.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Categories Section -->
+                <div id="categories-section" style="display: none;">
+                    <label class="form-label"><strong>Catégories</strong></label>
+                    <div class="mb-3 p-3 border rounded" style="background-color: #f8f9fa;">
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            {{ form.categories }}
+                        </div>
+                    </div>
+                    {% if form.categories.errors %}
+                    <div class="invalid-feedback d-block">{{ form.categories.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Products Section with Modal -->
+                <div id="products-section" style="display: none;">
+                    <label class="form-label"><strong>Produits Sélectionnés</strong></label>
+                    
+                    <!-- Selected Products Display (Chips) -->
+                    <div class="mb-3 p-3 border rounded" style="background-color: #f8f9fa; min-height: 60px;">
+                        <div id="selected-products-chips" class="d-flex flex-wrap gap-2">
+                            <small class="text-muted align-self-center">Cliquez sur "Sélectionner Produits" pour ajouter</small>
+                        </div>
+                    </div>
+
+                    <!-- Hidden field to store selected products -->
+                    {{ form.products }}
+
+                    <!-- Button to open modal -->
+                    <button type="button" id="open-products-modal-btn" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#productsModal">
+                        <i class="bi bi-plus-circle me-2"></i>Sélectionner Produits
+                    </button>
+
+                    {% if form.products.errors %}
+                    <div class="invalid-feedback d-block">{{ form.products.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Product Selection -->
+        <div class="modal fade" id="productsModal" tabindex="-1" aria-labelledby="productsModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content border-0">
+                    <div class="modal-header bg-light" style="border-bottom: 2px solid #E63946;">
+                        <h5 class="modal-title fw-bold" id="productsModalLabel">
+                            <i class="bi bi-box2 me-2" style="color: #E63946;"></i>Sélectionner Produits
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Search & Filter -->
+                        <div class="row g-2 mb-4">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="product-search" class="form-control" placeholder="Rechercher un produit...">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <select id="category-filter" class="form-select">
+                                    <option value="">Toutes les catégories</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Products Grid -->
+                        <div id="products-grid" class="row g-2">
+                            <div class="text-center text-muted col-12">
+                                <div class="spinner-border spinner-border-sm me-2"></div>Chargement...
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <nav aria-label="Products pagination" class="mt-4">
+                            <ul class="pagination justify-content-center" id="products-pagination">
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-outline-secondary" id="modal-clear-all">
+                            <i class="bi bi-x-circle me-1"></i>Effacer tout
+                        </button>
+                        <button type="button" class="btn btn-outline-primary me-2" id="modal-select-all">
+                            <i class="bi bi-check-circle me-1"></i>Sélectionner tout
+                        </button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">
+                            <i class="bi bi-check-lg me-1"></i>Fermer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden data container -->
+        <div id="products-data" style="display: none;"></div>
+
+        <!-- Programmation (Dates) -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3" style="border-bottom: 2px solid #E63946;">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-calendar me-2" style="color: #E63946;"></i>Programmation</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_start_date" class="form-label"><strong>Date et Heure de Début</strong></label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                        <div class="invalid-feedback d-block">{{ form.start_date.errors.0 }}</div>
+                        {% endif %}
+                        <small class="text-muted d-block mt-1">À partir de quand la promo est active</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_end_date" class="form-label"><strong>Date et Heure de Fin</strong></label>
+                        {{ form.end_date }}
+                        {% if form.end_date.errors %}
+                        <div class="invalid-feedback d-block">{{ form.end_date.errors.0 }}</div>
+                        {% endif %}
+                        <small class="text-muted d-block mt-1">Jusqu'à quand la promo est active</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Marketing et Badge -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3" style="border-bottom: 2px solid #E63946;">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-megaphone me-2" style="color: #E63946;"></i>Marketing et Affichage</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="id_banner_message" class="form-label"><strong>Message Bannière</strong></label>
+                    {{ form.banner_message }}
+                    {% if form.banner_message.errors %}
+                    <div class="invalid-feedback d-block">{{ form.banner_message.errors.0 }}</div>
+                    {% endif %}
+                    <small class="text-muted d-block mt-1">Message affiché dans la bannière promotionnelle</small>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="id_banner_image" class="form-label"><strong>Image Bannière</strong></label>
+                        {{ form.banner_image }}
+                        {% if form.banner_image.errors %}
+                        <div class="invalid-feedback d-block">{{ form.banner_image.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mt-4">
+                            {{ form.display_badge }}
+                            <label class="form-check-label" for="id_display_badge">
+                                <strong>Afficher un badge sur les produits</strong>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3" id="badge-text-section" style="display: none;">
+                    <label for="id_badge_custom_text" class="form-label"><strong>Texte du Badge</strong></label>
+                    {{ form.badge_custom_text }}
+                    {% if form.badge_custom_text.errors %}
+                    <div class="invalid-feedback d-block">{{ form.badge_custom_text.errors.0 }}</div>
+                    {% endif %}
+                    <small class="text-muted d-block mt-1">Ex: "En promotion", "Solde", "-30%"</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes Internes -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3" style="border-bottom: 2px solid #E63946;">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-chat-left-text me-2" style="color: #E63946;"></i>Notes Internes</h5>
+            </div>
+            <div class="card-body">
+                <label for="id_note_business" class="form-label"><strong>Notes Privées</strong></label>
+                {{ form.note_business }}
+                {% if form.note_business.errors %}
+                <div class="invalid-feedback d-block">{{ form.note_business.errors.0 }}</div>
+                {% endif %}
+                <small class="text-muted d-block mt-1">Notes visibles uniquement par l'équipe admin</small>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2 mb-4">
+            <button type="submit" class="btn btn-danger btn-lg">
+                <i class="bi bi-check-circle me-2"></i>
+                {% if form.instance.id %}
+                    Mettre à Jour
+                {% else %}
+                    Créer la Promotion
+                {% endif %}
+            </button>
+            <a href="{% url 'store:admin_promotions' %}" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-x-circle me-2"></i> Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+    #id_name, #id_discount_type, #id_discount_value, #id_scope, #id_start_date, #id_end_date,
+    #id_banner_message, #id_banner_image, #id_badge_custom_text, #id_note_business {
+        border-color: #dee2e6;
+        transition: all 0.3s ease;
+    }
+
+    #id_name:focus, #id_discount_type:focus, #id_discount_value:focus, #id_scope:focus, 
+    #id_start_date:focus, #id_end_date:focus, #id_banner_message:focus, #id_banner_image:focus,
+    #id_badge_custom_text:focus, #id_note_business:focus {
+        border-color: #E63946;
+        box-shadow: 0 0 0 0.2rem rgba(230, 57, 70, 0.25);
+    }
+
+    .form-check input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+
+    .form-check-label {
+        padding-left: 8px;
+        margin-top: 2px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const SCOPE_PRODUCTS = 'specific_products';
+    const SCOPE_CATEGORIES = 'specific_categories';
+    const scopeSelect = document.getElementById('id_scope');
+    const categoriesSection = document.getElementById('categories-section');
+    const productsSection = document.getElementById('products-section');
+    const displayBadgeCheckbox = document.getElementById('id_display_badge');
+    const badgeTextSection = document.getElementById('badge-text-section');
+    const productsModalElement = document.getElementById('productsModal');
+    let lastScopeValue = scopeSelect ? scopeSelect.value : '';
+
+    function openProductsModal() {
+        if (!productsModalElement) return;
+
+        if (window.bootstrap && window.bootstrap.Modal) {
+            window.bootstrap.Modal.getOrCreateInstance(productsModalElement).show();
+            return;
+        }
+
+        // Fallback when Bootstrap JS is not available.
+        productsModalElement.classList.add('show');
+        productsModalElement.style.display = 'block';
+        productsModalElement.removeAttribute('aria-hidden');
+    }
+    
+    function updateScopes(autoOpenProductsModal = false) {
+        if (!scopeSelect || !categoriesSection || !productsSection) return;
+        const scope = scopeSelect.value;
+        categoriesSection.style.display = scope === SCOPE_CATEGORIES ? 'block' : 'none';
+        productsSection.style.display = scope === SCOPE_PRODUCTS ? 'block' : 'none';
+
+        if (autoOpenProductsModal && scope === SCOPE_PRODUCTS && lastScopeValue !== SCOPE_PRODUCTS) {
+            openProductsModal();
+        }
+
+        lastScopeValue = scope;
+    }
+    
+    function updateBadgeSection() {
+        if (!displayBadgeCheckbox || !badgeTextSection) return;
+        badgeTextSection.style.display = displayBadgeCheckbox.checked ? 'block' : 'none';
+    }
+
+    // Update discount unit label
+    const discountTypeSelect = document.getElementById('id_discount_type');
+    const discountUnit = document.getElementById('discount_unit');
+    
+    function updateDiscountUnit() {
+        if (!discountTypeSelect || !discountUnit) return;
+        if (discountTypeSelect.value === 'percentage') {
+            discountUnit.textContent = '%';
+        } else {
+            discountUnit.textContent = 'FC';
+        }
+    }
+
+    if (scopeSelect) {
+        scopeSelect.addEventListener('change', function() { updateScopes(true); });
+    }
+    if (displayBadgeCheckbox) {
+        displayBadgeCheckbox.addEventListener('change', updateBadgeSection);
+    }
+    if (discountTypeSelect) {
+        discountTypeSelect.addEventListener('change', updateDiscountUnit);
+    }
+    
+    // Initialize on page load
+    updateScopes(false);
+    updateBadgeSection();
+    updateDiscountUnit();
+});
+
+// ==================== PRODUCTS MODAL LOGIC ====================
+let allProducts = [];
+let selectedProducts = new Set();
+let currentPage = 1;
+const itemsPerPage = 12;
+let isLoadingProducts = true;
+
+function parseProductIds(rawValue) {
+    if (!rawValue) return [];
+    const matches = String(rawValue).match(/\d+/g);
+    if (!matches) return [];
+
+    const ids = matches
+        .map(id => parseInt(id, 10))
+        .filter(id => Number.isInteger(id) && id > 0);
+
+    return Array.from(new Set(ids));
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎯 Initializing promotions form...');
+    
+    // Load products via AJAX
+    fetch('{% url "store:api_products_json" %}')
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            console.log('✅ Produits chargés:', data.length);
+            allProducts = Array.isArray(data) ? data : [];
+            isLoadingProducts = false;
+            renderProducts();
+        })
+        .catch(error => {
+            console.error('❌ Erreur lors du chargement des produits:', error);
+            isLoadingProducts = false;
+            document.getElementById('products-grid').innerHTML = 
+                '<div class="col-12 alert alert-danger">Erreur: Impossible de charger les produits</div>';
+        });
+
+    // Load already selected products from hidden field
+    const productsField = document.getElementById('id_products');
+    if (productsField && productsField.value) {
+        selectedProducts = new Set(parseProductIds(productsField.value));
+    }
+
+    // Event listeners
+    const productSearchInput = document.getElementById('product-search');
+    const categoryFilter = document.getElementById('category-filter');
+    const selectAllBtn = document.getElementById('modal-select-all');
+    const clearAllBtn = document.getElementById('modal-clear-all');
+    const openModalBtn = document.getElementById('open-products-modal-btn');
+
+    if (productSearchInput) {
+        productSearchInput.addEventListener('input', function() {
+            currentPage = 1;
+            renderProducts();
+        });
+    }
+
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', function() {
+            currentPage = 1;
+            renderProducts();
+        });
+    }
+
+    if (selectAllBtn) selectAllBtn.addEventListener('click', selectAllProducts);
+    if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllProducts);
+    if (openModalBtn) {
+        openModalBtn.addEventListener('click', function() {
+            renderProducts();
+        });
+    }
+
+    // Modal close event - update chips display
+    const modal = document.getElementById('productsModal');
+    if (modal) {
+        modal.addEventListener('hidden.bs.modal', updateChipsDisplay);
+        modal.addEventListener('show.bs.modal', renderProducts);
+        modal.addEventListener('shown.bs.modal', function() {
+            if (productSearchInput) productSearchInput.focus();
+        });
+    }
+
+    // Initial render
+    renderProducts();
+    updateChipsDisplay();
+});
+
+function getFilteredProducts() {
+    const productSearchInput = document.getElementById('product-search');
+    const categoryFilter = document.getElementById('category-filter');
+    const searchTerm = (productSearchInput ? productSearchInput.value : '').toLowerCase();
+    const categoryId = categoryFilter ? categoryFilter.value : '';
+
+    return allProducts.filter(product => {
+        const productName = (product.name || '').toLowerCase();
+        const matchesSearch = productName.includes(searchTerm);
+        const matchesCategory = !categoryId || product.category__id == categoryId;
+        return matchesSearch && matchesCategory;
+    });
+}
+
+function renderProducts() {
+    const productsGrid = document.getElementById('products-grid');
+    
+    // Show loading state
+    if (isLoadingProducts) {
+        productsGrid.innerHTML = '<div class="col-12 text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>Chargement des produits...</div>';
+        return;
+    }
+    
+    // No products available
+    if (allProducts.length === 0) {
+        productsGrid.innerHTML = '<div class="col-12 text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>Aucun produit disponible</div>';
+        return;
+    }
+    
+    const filtered = getFilteredProducts();
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageProducts = filtered.slice(start, end);
+
+    productsGrid.innerHTML = '';
+
+    if (pageProducts.length === 0) {
+        productsGrid.innerHTML = '<div class="col-12 text-center text-muted py-4"><i class="bi bi-inbox me-2"></i>Aucun produit trouvé</div>';
+    } else {
+        pageProducts.forEach(product => {
+            const isSelected = selectedProducts.has(product.id);
+            const chip = document.createElement('div');
+            chip.className = 'col-md-6 col-lg-4';
+            chip.innerHTML = `
+                <div class="card h-100 border ${isSelected ? 'border-danger' : 'border-light'}" style="cursor: pointer; transition: all 0.2s;">
+                    <div class="card-body">
+                        <div class="form-check d-flex">
+                            <input class="form-check-input me-2 product-checkbox" type="checkbox" value="${product.id}" 
+                                   ${isSelected ? 'checked' : ''} style="width: 20px; height: 20px;">
+                            <div class="flex-grow-1">
+                                <label class="form-check-label fw-bold text-dark" style="cursor: pointer;">
+                                    ${product.name}
+                                </label>
+                                <div class="small text-muted mt-2">
+                                    <i class="bi bi-tag me-1"></i>${product.category__name || 'Sans catégorie'}
+                                    <br>
+                                    <strong style="color: #E63946;">${parseFloat(product.selling_price).toFixed(0)} FC</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            productsGrid.appendChild(chip);
+
+            // Add event listener to checkbox
+            chip.querySelector('.product-checkbox').addEventListener('change', function() {
+                if (this.checked) {
+                    selectedProducts.add(parseInt(this.value));
+                    chip.querySelector('.card').classList.replace('border-light', 'border-danger');
+                    chip.querySelector('.card').style.backgroundColor = '#fff5f5';
+                } else {
+                    selectedProducts.delete(parseInt(this.value));
+                    chip.querySelector('.card').classList.replace('border-danger', 'border-light');
+                    chip.querySelector('.card').style.backgroundColor = 'transparent';
+                }
+                updateChipsDisplay();
+            });
+
+            // Click on card also toggles checkbox
+            chip.querySelector('.card-body').addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox') {
+                    chip.querySelector('.product-checkbox').click();
+                }
+            });
+        });
+    }
+
+    renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+    const pagination = document.getElementById('products-pagination');
+    pagination.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    const prevLink = document.createElement('a');
+    prevLink.className = 'page-link';
+    prevLink.href = '#';
+    prevLink.textContent = 'Précédent';
+    prevLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentPage > 1) {
+            currentPage--;
+            renderProducts();
+        }
+    });
+    prevLi.appendChild(prevLink);
+    pagination.appendChild(prevLi);
+
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        const link = document.createElement('a');
+        link.className = 'page-link';
+        link.href = '#';
+        link.textContent = i;
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentPage = i;
+            renderProducts();
+        });
+        li.appendChild(link);
+        pagination.appendChild(li);
+    }
+
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    const nextLink = document.createElement('a');
+    nextLink.className = 'page-link';
+    nextLink.href = '#';
+    nextLink.textContent = 'Suivant';
+    nextLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderProducts();
+        }
+    });
+    nextLi.appendChild(nextLink);
+    pagination.appendChild(nextLi);
+}
+
+function selectAllProducts() {
+    const filtered = getFilteredProducts();
+    filtered.forEach(product => selectedProducts.add(product.id));
+    renderProducts();
+    updateChipsDisplay();
+}
+
+function clearAllProducts() {
+    selectedProducts.clear();
+    renderProducts();
+    updateChipsDisplay();
+}
+
+function updateChipsDisplay() {
+    const chipsContainer = document.getElementById('selected-products-chips');
+    chipsContainer.innerHTML = '';
+
+    if (selectedProducts.size === 0) {
+        chipsContainer.innerHTML = '<small class="text-muted align-self-center">Cliquez sur "Sélectionner Produits" pour ajouter</small>';
+    } else {
+        selectedProducts.forEach(productId => {
+            const product = allProducts.find(p => p.id === productId);
+            if (product) {
+                const chip = document.createElement('span');
+                chip.className = 'badge bg-danger p-2 d-flex align-items-center gap-1';
+                chip.innerHTML = `
+                    ${product.name}
+                    <i class="bi bi-x" style="cursor: pointer;" onclick="removeProductChip(${productId})"></i>
+                `;
+                chipsContainer.appendChild(chip);
+            }
+        });
+    }
+
+    // Update hidden field
+    const productsField = document.getElementById('id_products');
+    if (productsField) {
+        productsField.value = Array.from(selectedProducts).join(',');
+    }
+}
+
+function removeProductChip(productId) {
+    selectedProducts.delete(parseInt(productId, 10));
+    updateChipsDisplay();
+    renderProducts();
+}
+</script>
+{% endblock %}

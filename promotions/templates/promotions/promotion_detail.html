@@ -1,0 +1,454 @@
+<!-- promotions/promotion_detail.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ promotion.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-header {
+        background: linear-gradient(135deg, #E63946 0%, #B1242F 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
+    }
+    
+    .detail-header h1 {
+        margin: 0;
+        font-size: 2.5em;
+    }
+    
+    .detail-content {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+    }
+    
+    @media (max-width: 968px) {
+        .detail-content {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .detail-section {
+        background: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .detail-section h2 {
+        font-size: 1.3em;
+        color: #1A1A1A;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 3px solid #E63946;
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #666;
+    }
+    
+    .detail-value {
+        color: #1A1A1A;
+        font-weight: 500;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9em;
+        color: white;
+    }
+    
+    .status-active {
+        background-color: #2ecc71;
+    }
+    
+    .status-upcoming {
+        background-color: #3498db;
+    }
+    
+    .status-expired {
+        background-color: #95a5a6;
+    }
+    
+    .status-inactive {
+        background-color: #e74c3c;
+    }
+    
+    .discount-badge {
+        background-color: #E63946;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-weight: bold;
+        font-size: 1.1em;
+        display: inline-block;
+    }
+    
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .product-card {
+        text-align: center;
+        padding: 12px;
+        border: 1px solid #eee;
+        border-radius: 5px;
+        background: #fafafa;
+    }
+    
+    .product-card img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 3px;
+        margin-bottom: 8px;
+    }
+    
+    .product-card-name {
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9em;
+    }
+    
+    .product-card-price {
+        color: #E63946;
+        font-weight: bold;
+        margin-top: 5px;
+    }
+    
+    .price-example {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        border-left: 4px solid #E63946;
+    }
+    
+    .price-original {
+        text-decoration: line-through;
+        color: #999;
+    }
+    
+    .price-discounted {
+        color: #2ecc71;
+        font-weight: bold;
+        font-size: 1.2em;
+    }
+    
+    .save-amount {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+    
+    .actions-section {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.95em;
+        font-weight: 600;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-primary {
+        background-color: #E63946;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #B1242F;
+    }
+    
+    .btn-secondary {
+        background-color: #3498db;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #2980b9;
+    }
+    
+    .btn-danger {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background-color: #c0392b;
+    }
+    
+    .timeline {
+        margin-top: 20px;
+    }
+    
+    .timeline-item {
+        display: flex;
+        gap: 15px;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .timeline-item:last-child {
+        border-bottom: none;
+    }
+    
+    .timeline-time {
+        color: #999;
+        min-width: 100px;
+        font-size: 0.9em;
+    }
+    
+    .timeline-action {
+        flex: 1;
+        font-size: 0.9em;
+    }
+    
+    .timeline-action-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        font-weight: bold;
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="detail-header">
+        <div style="display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h1>{{ promotion.name }}</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.95;">{{ promotion.description }}</p>
+            </div>
+            <span class="status-badge status-{{ promotion.status }}">
+                {% if promotion.status == 'active' %}🟢 ACTIVE
+                {% elif promotion.status == 'upcoming' %}🟡 PROGRAMMÉE
+                {% elif promotion.status == 'expired' %}⚫ EXPIRÉE
+                {% else %}🔴 INACTIVE
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    
+    <!-- Contenu -->
+    <div class="detail-content">
+        <!-- Colonne gauche -->
+        <div>
+            <!-- Informations principales -->
+            <div class="detail-section">
+                <h2>📊 Informations Principales</h2>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Réduction:</span>
+                    <span class="discount-badge">
+                        {% if promotion.discount_type == 'percentage' %}
+                            -{{ promotion.discount_value }}%
+                        {% else %}
+                            -{{ promotion.discount_value }}€
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Type:</span>
+                    <span class="detail-value">{{ promotion.get_discount_type_display }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Portée:</span>
+                    <span class="detail-value">
+                        {% if promotion.scope == 'all_products' %}🌍 Tous les produits
+                        {% elif promotion.scope == 'specific_products' %}📦 Produits sélectionnés
+                        {% else %}📂 Catégories sélectionnées
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Programmation -->
+            <div class="detail-section">
+                <h2>⏰ Programmation</h2>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Début:</span>
+                    <span class="detail-value">{{ promotion.start_date|date:"d/m/Y H:i" }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Fin:</span>
+                    <span class="detail-value">{{ promotion.end_date|date:"d/m/Y H:i" }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Actuelle:</span>
+                    <span class="detail-value">{% if promotion.is_active %}✅ Oui{% else %}❌ Non{% endif %}</span>
+                </div>
+            </div>
+            
+            <!-- Produits affectés -->
+            <div class="detail-section">
+                <h2>📦 Produits Affectés</h2>
+                <p style="color: #666; margin: 0 0 15px 0;">{{ product_count }} produit(s) affecté(s)</p>
+                
+                {% if applicable_products %}
+                <div class="products-grid">
+                    {% for product in applicable_products %}
+                    <div class="product-card">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        {% else %}
+                        <div style="width: 100%; height: 100px; background: #eee; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: #999;">
+                            Pas d'image
+                        </div>
+                        {% endif %}
+                        <div class="product-card-name">{{ product.name }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color: #999; text-align: center; padding: 20px;">Aucun produit affecté</p>
+                {% endif %}
+            </div>
+            
+            <!-- Exemples de prix -->
+            {% if price_examples %}
+            <div class="detail-section">
+                <h2>💰 Exemples de Prix Réduits</h2>
+                
+                {% for example in price_examples %}
+                <div class="price-example">
+                    <strong>{{ example.product.name }}</strong>
+                    <div style="margin-top: 8px;">
+                        <span class="price-original">{{ example.pricing.original_price }}€</span>
+                        →
+                        <span class="price-discounted">{{ example.pricing.discounted_price }}€</span>
+                        <span class="save-amount">(Économie: {{ example.pricing.savings }})</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Colonne droite (Sidebar) -->
+        <div>
+            <!-- Actions -->
+            <div class="detail-section">
+                <h2>⚙️ Actions</h2>
+                <div class="actions-section" style="flex-direction: column;">
+                    {% if perms.promotions.change_promotion %}
+                    <a href="{% url 'promotions:promotion_update' promotion.pk %}" class="btn btn-primary">
+                        ✏️ Modifier
+                    </a>
+                    {% endif %}
+                    
+                    {% if perms.promotions.delete_promotion %}
+                    <a href="{% url 'promotions:promotion_delete' promotion.pk %}" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette promotion?')">
+                        🗑️ Supprimer
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'promotions:promotion_list' %}" class="btn btn-secondary">
+                        ← Retour
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Métadonnées -->
+            <div class="detail-section">
+                <h2>📋 Infos Supplémentaires</h2>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Créée:</span>
+                    <span class="detail-value">{{ promotion.created_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Par:</span>
+                    <span class="detail-value">{{ promotion.created_by.get_full_name|default:"Admin" }}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Modifiée:</span>
+                    <span class="detail-value">{{ promotion.updated_at|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+            
+            <!-- Banner Preview -->
+            {% if promotion.banner_image %}
+            <div class="detail-section">
+                <h2>🎨 Bannière</h2>
+                <img src="{{ promotion.banner_image.url }}" alt="Banner" style="width: 100%; border-radius: 5px;">
+                {% if promotion.banner_message %}
+                <p style="margin-top: 12px; font-style: italic; color: #666;">{{ promotion.banner_message }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- Journaux (Logs) -->
+            {% if logs %}
+            <div class="detail-section">
+                <h2>📜 Historique</h2>
+                <div class="timeline">
+                    {% for log in logs %}
+                    <div class="timeline-item">
+                        <div class="timeline-time">{{ log.timestamp|date:"d/m H:i" }}</div>
+                        <div class="timeline-action">
+                            <span class="timeline-action-badge" style="background-color: 
+                                {% if log.action == 'created' %}#3498db
+                                {% elif log.action == 'updated' %}#f39c12
+                                {% elif log.action == 'activated' %}#2ecc71
+                                {% elif log.action == 'deactivated' %}#e74c3c
+                                {% else %}#95a5a6
+                                {% endif %}">
+                                {{ log.get_action_display }}
+                            </span>
+                            {% if log.performed_by %}
+                            par {{ log.performed_by.get_full_name|default:"Admin" }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'promotions:promotion_logs' promotion.pk %}" style="color: #3498db; text-decoration: none; margin-top: 12px; display: inline-block;">
+                    Voir tous les logs →
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

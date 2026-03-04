@@ -15,6 +15,7 @@ urlpatterns = [
     path('inventory/', include('inventory.urls')),
     path('reports/', include('reports.urls')),
     path('store/', include('store.urls')),  # E-commerce
+    path('promotions/', include('promotions.urls')),  # Gestion des promotions
     
     # Page d'accueil - Écran de caisse
     path('', include('sales.urls')),

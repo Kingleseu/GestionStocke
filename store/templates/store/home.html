@@ -14,9 +14,9 @@
 
     .categories-container {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-        gap: 25px;
-        max-width: 600px;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 15px;
+        max-width: 800px;
         margin: 0 auto;
     }
 
@@ -145,25 +145,29 @@
     }
 
     .navigator-grid {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        /* Allow wrapping */
-        gap: 25px;
-        max-width: 1600px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 15px;
+        max-width: 1400px;
         margin: 0 auto;
-        padding: 0 20px;
+        padding: 0 15px;
+    }
+
+    @media (min-width: 768px) {
+        .navigator-grid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 25px;
+        }
     }
 
     .universe-card {
         background: transparent;
-        padding: 15px 10px;
+        padding: 10px;
         text-align: center;
         cursor: pointer;
         transition: transform 0.3s ease;
         position: relative;
-        width: 160px;
-        flex-shrink: 0;
+        width: 100%;
     }
 
     .universe-card:nth-child(n) {
@@ -298,7 +302,8 @@
 </div>
 
 <!-- Home View - SPA Navigation -->
-<div id="homeView" class="view {% if active_view == 'home' or not active_view and not is_django_view and not request.GET.view %}active{% endif %}">
+<div id="homeView"
+    class="view {% if active_view == 'home' or not active_view and not is_django_view and not request.GET.view %}active{% endif %}">
 
 
     <!-- CONTENT SECTIONS -->
@@ -1064,7 +1069,8 @@
                         <div class="total-row"><span>Sous-total</span><span id="checkoutSubtotal">0.00 FC</span></div>
                         <div class="total-row"><span>Livraison</span><span id="checkoutDelivery">0.00 FC</span></div>
                         <div class="total-row"><span>TVA (16%)</span><span id="checkoutTax">0.00 FC</span></div>
-                        <div class="total-row final-total"><span>Total</span><span id="checkoutTotal">0.00 FC</span></div>
+                        <div class="total-row final-total"><span>Total</span><span id="checkoutTotal">0.00 FC</span>
+                        </div>
                     </div>
                     <div class="summary-footer">
                         <button type="button" class="btn-ghost w-100" onclick="showView('catalogue')">
@@ -1148,7 +1154,54 @@
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function () {
         // Standard initialization if needed
+        
+        // Update product prices with promotions
+        updateProductPrices();
     });
+    
+    // Update Product Prices with Promotions
+    function updateProductPrices() {
+        if (!window.djangoProducts || !Array.isArray(window.djangoProducts)) return;
+        
+        let updated = 0;
+        
+        window.djangoProducts.forEach(productData => {
+            if (!productData.pricing) return;
+            
+            const card = document.querySelector(`[data-id="${productData.id}"]`);
+            if (!card) return;
+            
+            const priceElement = card.querySelector('.product-price');
+            if (!priceElement) return;
+            
+            const pricing = productData.pricing;
+            
+            if (pricing.has_promotion) {
+                const discountPercent = Math.round(pricing.discount_percent);
+                const originalPrice = Math.round(pricing.original_price);
+                const discountedPrice = Math.round(pricing.discounted_price);
+                
+                priceElement.innerHTML = `
+                    <span style="text-decoration: line-through; color: #999; font-size: 0.95em; margin-right: 6px; display: inline-block;">
+                        ${originalPrice} FC
+                    </span>
+                    <span style="font-size: 1.1em; font-weight: bold; color: #E63946; display: inline-block;">
+                        ${discountedPrice} FC
+                    </span>
+                    <span class="badge bg-danger ms-2" style="padding: 2px 6px; font-size: 0.75em; margin-left: 4px; display: inline-block;">-${discountPercent}%</span>
+                `;
+                updated++;
+            } else {
+                const price = Math.round(pricing.original_price);
+                priceElement.textContent = `${price} FC`;
+            }
+        });
+    }
+    
+    // Run updates on page load and periodically
+    setTimeout(updateProductPrices, 100);
+    setTimeout(updateProductPrices, 500);
+    setTimeout(updateProductPrices, 1000);
 </script>
 
 {% endblock %}

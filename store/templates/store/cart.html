@@ -51,7 +51,7 @@
                                     </div>
                                 </td>
                                 <td class="text-center align-middle">
-                                    <span class="fw-bold text-primary">{{ item.product.selling_price }} FC</span>
+                                    <span class="fw-bold text-primary product-cart-price" data-product-id="{{ item.product.id }}">{{ item.product.selling_price }} FC</span>
                                 </td>
                                 <td class="text-center align-middle">
                                     <div class="d-inline-flex align-items-center gap-2">
@@ -140,4 +140,53 @@
         </div>
     </div>
 </div>
+
+<!-- Update Cart Item Prices with Promotions -->
+<script>
+    function updateCartPrices() {
+        if (!window.djangoProducts || !Array.isArray(window.djangoProducts)) return;
+        
+        let updated = 0;
+        
+        window.djangoProducts.forEach(productData => {
+            if (!productData.pricing) return;
+            
+            // Find all price elements for this product in cart
+            const priceElements = document.querySelectorAll(`[data-product-id="${productData.id}"].product-cart-price`);
+            priceElements.forEach(priceEl => {
+                const pricing = productData.pricing;
+                
+                if (pricing.has_promotion) {
+                    const discountPercent = Math.round(pricing.discount_percent);
+                    const originalPrice = Math.round(pricing.original_price);
+                    const discountedPrice = Math.round(pricing.discounted_price);
+                    
+                    priceEl.innerHTML = `
+                        <span style="text-decoration: line-through; color: #999; font-size: 0.9em; margin-right: 6px;">
+                            ${originalPrice}
+                        </span>
+                        <span style="color: #E63946; font-weight: bold;">
+                            ${discountedPrice} FC
+                        </span>
+                        <span class="badge bg-danger ms-2" style="font-size: 0.7em;">-${discountPercent}%</span>
+                    `;
+                    updated++;
+                } else {
+                    const price = Math.round(pricing.original_price);
+                    priceEl.textContent = `${price} FC`;
+                }
+            });
+        });
+    }
+    
+    // Run on document ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateCartPrices);
+    } else {
+        updateCartPrices();
+    }
+    
+    setTimeout(updateCartPrices, 100);
+    setTimeout(updateCartPrices, 500);
+</script>
 {% endblock %}

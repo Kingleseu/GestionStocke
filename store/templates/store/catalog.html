@@ -48,14 +48,21 @@
         .products-list {
             flex: 1;
             overflow-y: auto;
-            padding: 2rem;
+            padding: 1rem;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 2.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 1rem;
             align-content: start;
             scroll-behavior: smooth;
             padding-bottom: 200px;
-            /* Space for mobile */
+        }
+
+        @media (min-width: 768px) {
+            .products-list {
+                padding: 2rem;
+                grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                gap: 2.5rem;
+            }
         }
 
         /* Cart Drawer (Bills Panel) */
@@ -144,7 +151,8 @@
 
                             <!-- Image -->
                             {% if product.image %}
-                            <img src="{{ product.image.url }}" class="product-image primary-img" alt="{{ product.name }}">
+                            <img src="{{ product.image.url }}" class="product-image primary-img"
+                                alt="{{ product.name }}">
                             {% if product.secondary_image %}
                             <img src="{{ product.secondary_image.url }}" class="product-image secondary-img"
                                 alt="{{ product.name }}">
@@ -166,7 +174,9 @@
                         <div class="product-info">
                             <div class="product-category-label">{{ product.category.name|default:"Collection" }}</div>
                             <h3 class="product-name">{{ product.name }}</h3>
-                            <div class="product-price">{{ product.selling_price }} FC</div>
+                            <div class="product-price" data-product-id="{{ product.id }}" data-price="{{ product.selling_price }}">
+                                {{ product.selling_price }} FC
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -244,23 +254,8 @@
     <!-- JS Injections -->
     <script>
         const DELIVERY_FEE = parseFloat("{{ delivery_fee|default:0 }}");
-        window.djangoProducts = [
-            {% for product in products %}
-            {
-                id: "{{ product.id }}",
-                name: "{{ product.name|escapejs }}",
-                price: parseFloat("{{ product.selling_price }}"),
-                selling_price: parseFloat("{{ product.selling_price }}"),
-                image: "{% if product.image %}{{ product.image.url }}{% endif %}",
-                secondary_image: "{% if product.secondary_image %}{{ product.secondary_image.url }}{% endif %}",
-                category: "{{ product.category.name|default:'Bijoux'|escapejs }}",
-                description: "{{ product.description|default:\"Un bijou d'exception conçu avec élégance et finesse.\"|escapejs }}",
-                customizable: {{ product.is_customizable|yesno:"true,false" }},
-                current_stock: {{ product.current_stock|default:0 }}
-            }{% if not forloop.last %}, {% endif %}
-            {% endfor %}
-        ];
-
+        // Use products_json from SPA context (includes promotion pricing)
+        window.djangoProducts = JSON.parse('{{ products_json|escapejs }}');
         window.djangoCart = [];
         window.csrfToken = "{{ csrf_token }}";
         window.urls = {
@@ -268,6 +263,69 @@
             syncCart: "{% url 'store:sync_cart' %}",
             productDetail: "{% url 'store:product_detail' 0 %}"
         };
+    </script>
+
+    <!-- Update Product Prices with Promotions -->
+    <script>
+        function updateProductPrices() {
+            if (!window.djangoProducts || !Array.isArray(window.djangoProducts)) {
+                console.warn('window.djangoProducts not available');
+                return;
+            }
+            
+            let updated = 0;
+            
+            // Find all product prices in DOM
+            const priceElements = document.querySelectorAll('[data-product-id][data-price]');
+            
+            priceElements.forEach(priceEl => {
+                const productId = priceEl.getAttribute('data-product-id');
+                const productData = window.djangoProducts.find(p => String(p.id) === String(productId));
+                
+                if (!productData || !productData.pricing) return;
+                
+                const pricing = productData.pricing;
+                
+                if (pricing.has_promotion) {
+                    const discountPercent = Math.round(pricing.discount_percent);
+                    const originalPrice = Math.round(pricing.original_price);
+                    const discountedPrice = Math.round(pricing.discounted_price);
+                    
+                    priceEl.innerHTML = `
+                        <span style="text-decoration: line-through; color: #999; font-size: 0.95em; margin-right: 6px; display: inline-block;">
+                            ${originalPrice} FC
+                        </span>
+                        <span style="font-size: 1.1em; font-weight: bold; color: #E63946; display: inline-block;">
+                            ${discountedPrice} FC
+                        </span>
+                        <span class="badge bg-danger" style="padding: 3px 8px; font-size: 0.75em; margin-left: 6px; display: inline-block; background: linear-gradient(135deg, #E63946 0%, #d62828 100%);">
+                            <i class="bi bi-lightning-fill" style="margin-right: 3px;"></i>-${discountPercent}%
+                        </span>
+                    `;
+                    updated++;
+                } else {
+                    const price = Math.round(pricing.original_price);
+                    priceEl.textContent = `${price} FC`;
+                }
+            });
+            
+            if (updated > 0) {
+                console.log(`✅ Updated ${updated} product prices with promotions`);
+            }
+        }
+        
+        // Execute on document ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateProductPrices);
+        } else {
+            updateProductPrices();
+        }
+        
+        // Run multiple times to ensure catch all content
+        setTimeout(updateProductPrices, 50);
+        setTimeout(updateProductPrices, 200);
+        setTimeout(updateProductPrices, 500);
+        setTimeout(updateProductPrices, 1000);
     </script>
 
     <!-- Scripts -->

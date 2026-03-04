@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'inventory',
     'reports',
     'store',  # E-commerce Storefront
+    'promotions',  # Gestion des promotions
     
     # Cloudinary
     'cloudinary_storage',

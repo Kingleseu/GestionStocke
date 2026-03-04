@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Promotions - Administration{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Gestion des Promotions</h2>
+            <p class="text-muted mb-0">Créez et gérez vos réductions programmables, codes promo et bannières marketing</p>
+        </div>
+        <div>
+            <a href="{% url 'store:admin_dashboard' %}" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left me-2"></i> Retour
+            </a>
+            <a href="{% url 'store:admin_promotion_add' %}" class="btn btn-danger">
+                <i class="bi bi-plus-lg me-2"></i> Nouvelle Promotion
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Total de Promotions</h6>
+                    <h3 class="fw-bold" style="color: #E63946;">{{ promotions.count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Promotions Actives</h6>
+                    <h3 class="fw-bold text-success">{{ active_count }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">À Venir</h6>
+                    <h3 class="fw-bold text-warning">{{ upcoming_count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promotions Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3" style="border-bottom: 2px solid #E63946;">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-tag-fill me-2" style="color: #E63946;"></i>Vos Promotions</h5>
+        </div>
+        <div class="card-body">
+            {% if object_list %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th><i class="bi bi-hash me-2"></i>ID</th>
+                            <th><i class="bi bi-bookmark me-2"></i>Nom</th>
+                            <th><i class="bi bi-percent me-2"></i>Réduction</th>
+                            <th><i class="bi bi-calendar me-2"></i>Période</th>
+                            <th><i class="bi bi-traffic-cone me-2"></i>Portée</th>
+                            <th><i class="bi bi-lightbulb me-2"></i>État</th>
+                            <th><i class="bi bi-gear me-2"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for promotion in object_list %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-secondary">#{{ promotion.id }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ promotion.name }}</strong>
+                                {% if promotion.banner_message %}
+                                <br><small class="text-muted">{{ promotion.banner_message|truncatewords:5 }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: #E63946;">
+                                    {% if promotion.discount_type == 'percentage' %}
+                                        -{{ promotion.discount_value }}%
+                                    {% else %}
+                                        -{{ promotion.discount_value }} FC
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <small>
+                                    <strong>Début:</strong> {{ promotion.start_date|date:"d/m/Y H:i" }}<br>
+                                    <strong>Fin:</strong> {{ promotion.end_date|date:"d/m/Y H:i" }}
+                                </small>
+                            </td>
+                            <td>
+                                {% if promotion.scope == 'all_products' %}
+                                    <span class="badge bg-info">Tous produits</span>
+                                {% elif promotion.scope == 'specific_categories' %}
+                                    <span class="badge bg-info">Catégories</span>
+                                {% else %}
+                                    <span class="badge bg-info">Produits sélectionnés</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if promotion.is_running %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-play-circle-fill me-1"></i>Active
+                                    </span>
+                                {% elif promotion.is_expired %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-stop-circle-fill me-1"></i>Expirée
+                                    </span>
+                                {% elif promotion.is_upcoming %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-hourglass-split me-1"></i>À venir
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">
+                                        <i class="bi bi-pause-circle-fill me-1"></i>Brouillon
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'store:admin_promotion_update' promotion.id %}" 
+                                       class="btn btn-sm btn-outline-primary" title="Modifier">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a href="{% url 'store:admin_promotion_delete' promotion.id %}" 
+                                       class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">Première</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédente</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivante</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Dernière</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Aucune promotion créée</strong><br>
+                Commencez à créer vos premières promotions en cliquant sur le bouton "Nouvelle Promotion" ci-dessus.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(230, 57, 70, 0.05);
+    }
+</style>
+{% endblock %}

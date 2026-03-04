@@ -19,10 +19,12 @@
         secondary_image: "{% if product.secondary_image %}{{ product.secondary_image.url }}{% endif %}",
         category: "{{ product.category.name|default:'Bijoux'|escapejs }}",
         description: "{{ product.description|default:''|escapejs }}",
-        customizable: {{ product.is_customizable|yesno:"true,false" }},
-    engraving_price: parseFloat("{{ product.engraving_price|default:0 }}"),
-        current_stock: {{ product.current_stock|default:0 }}
+        customizable: {% if product.is_customizable %}true{% else %}false{% endif %},
+        engraving_price: parseFloat("{{ product.engraving_price|default:0 }}"),
+        current_stock: {{ product.current_stock|default:0 }},
+        customization_rules: {% if customization_rules_json %}{{ customization_rules_json|safe }}{% else %}null{% endif %}
     };
+    window.currentProductData = currentProductData;
 
     // Only add if not already present
     if (!window.djangoProducts.find(p => String(p.id) === String(currentProductData.id))) {
@@ -40,6 +42,8 @@
         grid-template-columns: 1.1fr 0.9fr;
         gap: 60px;
         min-height: 80vh;
+        opacity: 1;
+        /* Always visible — no JS dependency */
     }
 
     /* Left: Gallery & Preview */
@@ -494,7 +498,21 @@
         <div class="pdp-title-row">
             <h1 class="product-title">{{ product.name }}</h1>
             <div class="product-price">
-                <span id="displayPrice">{{ product.selling_price }}</span> FC
+                {% if product_pricing.has_promotion %}
+                    <!-- Prix original barré -->
+                    <span style="text-decoration: line-through; color: #999; font-size: 0.9em; margin-right: 8px;">
+                        {{ product_pricing.original_price|floatformat:0 }} FC
+                    </span>
+                    <!-- Prix réduit -->
+                    <span id="displayPrice" style="font-size: 1.2em; font-weight: bold; color: #E63946;">
+                        {{ product_pricing.discounted_price|floatformat:0 }} FC
+                    </span>
+                    <!-- Badge réduction -->
+                    <span class="badge bg-danger ms-2">-{{ product_pricing.discount_percent|floatformat:0 }}%</span>
+                {% else %}
+                    <!-- Prix normal -->
+                    <span id="displayPrice">{{ product_pricing.original_price|floatformat:0 }}</span> FC
+                {% endif %}
             </div>
         </div>
 
@@ -539,8 +557,13 @@
         {% endif %}
 
         <div class="actions">
-            <button id="addToCartBtn" class="btn-atelier-primary" onclick="addToCart()">
-                AJOUTER AU PANIER — {{ product.selling_price }} FC
+            <button id="addToCartBtn" class="btn-atelier-primary" onclick="handleAddToCartPDP()">
+                AJOUTER AU PANIER — 
+                {% if product_pricing.has_promotion %}
+                    {{ product_pricing.discounted_price|floatformat:0 }} FC
+                {% else %}
+                    {{ product.selling_price }} FC
+                {% endif %}
             </button>
             <button type="button" class="btn-atelier-outline">RETIRER EN MAGASIN</button>
         </div>
@@ -556,7 +579,8 @@
     </div>
     <div class="similar-products-grid"
         style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px;">
-        {% for prod in similar_products %}
+        {% for item in similar_products %}
+        {% with prod=item.product pricing=item.pricing %}
         <div class="product-card" onclick="window.location.href='{% url 'store:product_detail' prod.id %}'"
             style="cursor: pointer; transition: transform 0.3s ease;">
             <div class="product-image-wrapper"
@@ -575,8 +599,21 @@
                 </button>
             </div>
             <h4 style="font-size: 16px; color: #1a1a1a; margin: 0 0 6px; font-weight: 500;">{{ prod.name }}</h4>
-            <p style="font-weight: 700; color: #111;">{{ prod.selling_price }} FC</p>
+            <p style="font-weight: 700; color: #111; margin-bottom: 0;">
+                {% if pricing.has_promotion %}
+                    <span style="text-decoration: line-through; color: #999; font-size: 0.95em; margin-right: 6px;">
+                        {{ pricing.original_price|floatformat:0 }} FC
+                    </span>
+                    <span style="font-size: 1.1em; font-weight: bold; color: #E63946;">
+                        {{ pricing.discounted_price|floatformat:0 }} FC
+                    </span>
+                    <span class="badge bg-danger ms-2">-{{ pricing.discount_percent|floatformat:0 }}%</span>
+                {% else %}
+                    <span>{{ pricing.original_price|floatformat:0 }} FC</span>
+                {% endif %}
+            </p>
         </div>
+        {% endwith %}
         {% endfor %}
     </div>
 </div>
@@ -592,18 +629,31 @@
 {% endif %}
 
 <script>
-    // Initial Data
-    const BASE_PRICE = parseFloat("{{ product.selling_price }}");
-    const PRODUCT_ID = "{{ product.id }}";
-    // Parse Rules safely
-    const RULES = {% if customization_rules_json %}{{ customization_rules_json|safe }} {% else %} null{% endif %};
+    // Initial Data moved to top
 
-    let currentCustomization = {
-        choices: {},
-        quantity: 1,
-        currentStep: 1,
-        isStudio: !!(RULES && RULES.is_studio)
-    };
+    const PRODUCT_ID = String(currentProductData.id);
+    const BASE_PRICE = Number(currentProductData.selling_price || currentProductData.price || 0);
+    const RULES = currentProductData.customization_rules || null;
+
+    // Ensure we have a safe customization object once des_store.js is loaded.
+    function ensureCustomizationState() {
+        if (typeof productCustomizations === 'undefined') {
+            return null;
+        }
+
+        if (!productCustomizations[PRODUCT_ID]) {
+            if (typeof initCustomizationState === 'function') {
+                initCustomizationState(PRODUCT_ID);
+            } else {
+                productCustomizations[PRODUCT_ID] = { choices: {}, quantity: 1, extra_cost: 0 };
+            }
+        }
+
+        const customization = productCustomizations[PRODUCT_ID];
+        if (!customization.choices) customization.choices = {};
+        customization.isStudio = !!(RULES && RULES.is_studio);
+        return customization;
+    }
 
     // DOM Elements
     const priceDisplay = document.getElementById('displayPrice');
@@ -620,40 +670,73 @@
         }
     }
 
-    function addToCart() {
+    async function handleAddToCartPDP() {
         const btn = document.getElementById('addToCartBtn');
         if (btn) {
             btn.disabled = true;
-            btn.textContent = "Ajout...";
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>AJOUT EN COURS...';
         }
 
-        // Add item to cart array
-        const cartItem = {
-            id: PRODUCT_ID,
-            name: currentProductData.name,
-            price: BASE_PRICE,
-            customization_price: BASE_PRICE,
-            image: currentProductData.image,
-            quantity: currentCustomization.quantity || 1,
-            customization: currentCustomization
-        };
-
-        // Add to cart
-        if (!window.cart) window.cart = [];
-        cart.push(cartItem);
-
-        // Update UI and open cart
-        if (typeof updateCartUI === 'function') updateCartUI();
-        if (typeof saveCart === 'function') saveCart();
-        if (typeof toggleCart === 'function') toggleCart();
-
-        // Reset button
-        setTimeout(() => {
-            if (btn) {
-                btn.disabled = false;
-                btn.textContent = `AJOUTER AU PANIER — ${BASE_PRICE} FC`;
+        try {
+            if (typeof addToCart !== 'function') {
+                console.error("❌ global addToCart not found!");
+                return;
             }
-        }, 500);
+
+            const currentCustomization = ensureCustomizationState();
+
+            // --- SYNC PDP CUSTOMIZATION INTO THE GLOBAL STATE ---
+            // The global addToCart() reads from productCustomizations[productId].
+            // We must populate it with whatever the user configured on this page
+            // (engraving text, choices, extra cost, etc.) before calling it.
+            if (typeof productCustomizations !== 'undefined') {
+                // Merge the PDP's local customization into the global state
+                const globalCustom = ensureCustomizationState();
+                if (globalCustom) {
+                    // Copy choices (engraving text, images, etc.)
+                    if (currentCustomization && currentCustomization.choices) {
+                        Object.assign(globalCustom.choices, currentCustomization.choices);
+                    }
+
+                    // Copy extra cost (price of engraving)
+                    if (currentCustomization && currentCustomization.extra_cost) {
+                        globalCustom.extra_cost = currentCustomization.extra_cost;
+                    }
+
+                    // Also check for engraving text entered directly on the PDP form
+                    const engravingInput = document.getElementById('engravingText') ||
+                        document.querySelector('[name="engraving_text"]') ||
+                        document.querySelector('.engraving-input');
+                    if (engravingInput && engravingInput.value.trim()) {
+                        globalCustom.choices.engraving_text = engravingInput.value.trim();
+                        globalCustom.extra_cost = (globalCustom.extra_cost || 0) + {% if product.is_customizable %}{{ product.engraving_price|default:0 }}{% else %}0{% endif %};
+                        globalCustom.isCustomizing = true;
+                        console.log("📝 Engraving text captured:", globalCustom.choices.engraving_text);
+                    }
+
+                    productCustomizations[PRODUCT_ID] = globalCustom;
+                }
+            }
+
+            // Now call the global addToCart with full customization context
+            await addToCart(PRODUCT_ID);
+            console.log("✅ Produit ajouté au panier");
+
+            // Open the cart drawer
+            if (typeof toggleCart === 'function') {
+                toggleCart();
+            }
+
+        } catch (err) {
+            console.error("❌ Failed to add to cart:", err);
+        } finally {
+            setTimeout(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `AJOUTER AU PANIER — ${BASE_PRICE.toLocaleString()} FC`;
+                }
+            }, 800);
+        }
     }
 
     // Init

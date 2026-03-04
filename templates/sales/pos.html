@@ -75,9 +75,25 @@
     </div>
 
     <!-- RIGHT: Cart Area -->
-    <div class="pos-cart-area shadow-lg">
+    <div class="pos-cart-area shadow-lg" id="posCartArea">
+        <!-- Mobile Toggle Bar -->
+        <div class="cart-mobile-preview d-lg-none" onclick="toggleMobileCart()">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-cart3"></i>
+                <span class="fw-bold">Panier</span>
+                <span class="badge bg-white text-primary rounded-pill" id="mobileCartCount">0</span>
+            </div>
+            <div class="fw-bold" id="mobileCartTotal">0.00 FC</div>
+            <i class="bi bi-chevron-up"></i>
+        </div>
+
         <div class="cart-header bg-white d-flex align-items-center justify-content-between">
-            <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-cart3 me-2 text-primary"></i>Panier</h5>
+            <h5 class="fw-bold mb-0 text-dark">
+                <button class="btn btn-sm btn-light d-lg-none me-2" onclick="toggleMobileCart()">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <i class="bi bi-cart3 me-2 text-primary"></i>Panier
+            </h5>
             <button class="btn btn-sm btn-light text-danger" onclick="clearCart()" title="Vider">
                 <i class="bi bi-trash"></i>
             </button>
@@ -435,6 +451,32 @@
             })
             .finally(() => setTimeout(() => { isScanning = false; }, 2000));
     }
-    function onScanFailure(err) { } 
+    function onScanFailure(err) { }
+
+    // Mobile UI Toggles
+    function toggleMobileCart() {
+        if (window.innerWidth >= 992) return;
+        const cartArea = document.getElementById('posCartArea');
+        cartArea.classList.toggle('expanded');
+    }
+
+    // Sync mobile previews
+    function syncMobileCartPreviews() {
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+        const mobileTotal = document.getElementById('mobileCartTotal');
+        const mobileCount = document.getElementById('mobileCartCount');
+
+        if (mobileTotal) mobileTotal.textContent = total.toFixed(2) + ' FC';
+        if (mobileCount) mobileCount.textContent = count;
+    }
+
+    // Override updateCart to include sync
+    const originalUpdateCart = updateCart;
+    updateCart = function () {
+        originalUpdateCart();
+        syncMobileCartPreviews();
+    };
 </script>
 {% endblock %}

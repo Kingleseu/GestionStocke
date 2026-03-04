@@ -84,3 +84,14 @@ urlpatterns = [
     path('admin/payments/<int:pk>/approve/', views.approve_payment, name='admin_payment_approve'),
     path('admin/payments/<int:pk>/reject/', views.reject_payment, name='admin_payment_reject'),
 ]
+
+# Add Promotions URLs if the app is available
+if hasattr(views, 'PromotionListView'):
+    urlpatterns += [
+        path('admin/promotions/', views.PromotionListView.as_view(), name='admin_promotions'),
+        path('admin/promotions/add/', views.PromotionCreateView.as_view(), name='admin_promotion_add'),
+        path('admin/promotions/<int:pk>/update/', views.PromotionUpdateView.as_view(), name='admin_promotion_update'),
+        path('admin/promotions/<int:pk>/delete/', views.PromotionDeleteView.as_view(), name='admin_promotion_delete'),
+        path('api/products-json/', views.get_products_json, name='api_products_json'),
+        path('admin/api/active-promotions/', views.get_active_promotions_api, name='api_active_promotions'),
+    ]

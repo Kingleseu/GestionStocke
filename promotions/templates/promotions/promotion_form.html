@@ -1,0 +1,442 @@
+<!-- promotions/promotion_form.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #E63946 0%, #B1242F 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(230, 57, 70, 0.2);
+    }
+    
+    .form-header h1 {
+        margin: 0;
+        font-size: 2em;
+    }
+    
+    .form-container {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .form-section {
+        margin-bottom: 40px;
+        padding-bottom: 30px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    
+    .form-section-title {
+        font-size: 1.3em;
+        font-weight: bold;
+        color: #1A1A1A;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #E63946;
+        display: inline-block;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="number"],
+    .form-group input[type="datetime-local"],
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 0.95em;
+        font-family: inherit;
+        transition: border-color 0.3s;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #E63946;
+        box-shadow: 0 0 5px rgba(230, 57, 70, 0.2);
+    }
+    
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .form-help {
+        font-size: 0.85em;
+        color: #999;
+        margin-top: 5px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row, .form-row-3 {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .radio-group {
+        display: flex;
+        gap: 30px;
+        margin: 15px 0;
+    }
+    
+    .radio-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .radio-item input[type="radio"],
+    .checkbox-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #E63946;
+    }
+    
+    .radio-item label,
+    .checkbox-item label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: 400;
+    }
+    
+    .checkbox-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 5px;
+        background: #fafafa;
+    }
+    
+    .checkbox-item input[type="checkbox"]:checked + label {
+        color: #E63946;
+        font-weight: 600;
+    }
+    
+    .discount-preview {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 15px;
+        border-left: 4px solid #E63946;
+    }
+    
+    .discount-preview h4 {
+        margin: 0 0 10px 0;
+        color: #E63946;
+    }
+    
+    .discount-preview p {
+        margin: 5px 0;
+        color: #666;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: flex-end;
+    }
+    
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: 600;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-primary {
+        background-color: #E63946;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #B1242F;
+        box-shadow: 0 4px 12px rgba(230, 57, 70, 0.3);
+    }
+    
+    .btn-secondary {
+        background-color: #ccc;
+        color: #333;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #bbb;
+    }
+    
+    .error {
+        background-color: #ffe6e6;
+        border: 1px solid #e74c3c;
+        color: #c0392b;
+        padding: 12px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .success {
+        background-color: #e6ffe6;
+        border: 1px solid #2ecc71;
+        color: #27ae60;
+        padding: 12px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="form-header">
+        <h1>{{ title }}</h1>
+        <p>Créez ou modifiez une promotion programmable</p>
+    </div>
+    
+    <div class="form-container">
+        {% if form.non_field_errors %}
+        <div class="error">
+            <strong>Erreur:</strong>
+            <ul>
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Section 1: Informations Générales -->
+            <div class="form-section">
+                <h2 class="form-section-title">📌 Informations Générales</h2>
+                
+                <div class="form-group">
+                    {{ form.name.label_tag }}
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <div class="error">{{ form.name.errors }}</div>
+                    {% endif %}
+                    <div class="form-help">{{ form.name.help_text }}</div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.description.label_tag }}
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="error">{{ form.description.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Section 2: Réduction -->
+            <div class="form-section">
+                <h2 class="form-section-title">💰 Réduction</h2>
+                
+                <div class="form-group">
+                    {{ form.discount_type.label_tag }}
+                    <div class="radio-group">
+                        {% for value, label in form.discount_type.field.choices %}
+                        <div class="radio-item">
+                            <input type="radio" id="id_discount_type_{{ forloop.counter0 }}" name="discount_type" value="{{ value }}" {% if form.discount_type.value == value %}checked{% endif %}>
+                            <label for="id_discount_type_{{ forloop.counter0 }}">{{ label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.discount_value.label_tag }}
+                    {{ form.discount_value }}
+                    {% if form.discount_value.errors %}
+                    <div class="error">{{ form.discount_value.errors }}</div>
+                    {% endif %}
+                    <div class="form-help">{{ form.discount_value.help_text }}</div>
+                </div>
+                
+                <div class="discount-preview">
+                    <h4>Exemple de calcul:</h4>
+                    <p>Si le prix est 100€ et vous appliquez -20%:</p>
+                    <p><strong>Nouveau prix = 100€ × (1 - 20/100) = 80€</strong></p>
+                </div>
+            </div>
+            
+            <!-- Section 3: Portée -->
+            <div class="form-section">
+                <h2 class="form-section-title">🎯 Portée de la Promotion</h2>
+                
+                <div class="form-group">
+                    {{ form.scope.label_tag }}
+                    {{ form.scope }}
+                    {% if form.scope.errors %}
+                    <div class="error">{{ form.scope.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.products.label_tag }}
+                    <div class="checkbox-list">
+                        {% for product in form.products %}
+                            {{ product.tag }}
+                        {% endfor %}
+                    </div>
+                    {% if form.products.errors %}
+                    <div class="error">{{ form.products.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.categories.label_tag }}
+                    <div class="checkbox-list">
+                        {% for category in form.categories %}
+                            {{ category.tag }}
+                        {% endfor %}
+                    </div>
+                    {% if form.categories.errors %}
+                    <div class="error">{{ form.categories.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Section 4: Programmation -->
+            <div class="form-section">
+                <h2 class="form-section-title">⏰ Programmation Temporelle</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        {{ form.start_date.label_tag }}
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                        <div class="error">{{ form.start_date.errors }}</div>
+                        {% endif %}
+                        <div class="form-help">Date et heure de démarrage</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ form.end_date.label_tag }}
+                        {{ form.end_date }}
+                        {% if form.end_date.errors %}
+                        <div class="error">{{ form.end_date.errors }}</div>
+                        {% endif %}
+                        <div class="form-help">Date et heure de fin</div>
+                    </div>
+                </div>
+                
+                <div class="form-group checkbox-item">
+                    {{ form.is_active }}
+                    {{ form.is_active.label_tag }}
+                    <div class="form-help" style="margin-left: 28px; margin-top: -25px;">
+                        {{ form.is_active.help_text }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Section 5: Marketing Visuel -->
+            <div class="form-section">
+                <h2 class="form-section-title">👁️ Marketing Visuel</h2>
+                
+                <div class="form-group">
+                    {{ form.banner_image.label_tag }}
+                    {{ form.banner_image }}
+                    {% if form.banner_image.errors %}
+                    <div class="error">{{ form.banner_image.errors }}</div>
+                    {% endif %}
+                    <div class="form-help">{{ form.banner_image.help_text }}</div>
+                </div>
+                
+                <div class="form-group">
+                    {{ form.banner_message.label_tag }}
+                    {{ form.banner_message }}
+                    {% if form.banner_message.errors %}
+                    <div class="error">{{ form.banner_message.errors }}</div>
+                    {% endif %}
+                    <div class="form-help">{{ form.banner_message.help_text }}</div>
+                </div>
+                
+                <div class="form-group checkbox-item">
+                    {{ form.display_badge }}
+                    {{ form.display_badge.label_tag }}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.badge_custom_text.label_tag }}
+                    {{ form.badge_custom_text }}
+                    {% if form.badge_custom_text.errors %}
+                    <div class="error">{{ form.badge_custom_text.errors }}</div>
+                    {% endif %}
+                    <div class="form-help">{{ form.badge_custom_text.help_text }}</div>
+                </div>
+            </div>
+            
+            <!-- Section 6: Notes -->
+            <div class="form-section">
+                <h2 class="form-section-title">📝 Notes Internes</h2>
+                
+                <div class="form-group">
+                    {{ form.note_business.label_tag }}
+                    {{ form.note_business }}
+                    {% if form.note_business.errors %}
+                    <div class="error">{{ form.note_business.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="form-actions">
+                <a href="{% url 'promotions:promotion_list' %}" class="btn btn-secondary">❌ Annuler</a>
+                <button type="submit" class="btn btn-primary">✅ {% if form.instance.pk %}Modifier{% else %}Créer{% endif %} Promotion</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
