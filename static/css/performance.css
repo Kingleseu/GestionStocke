@@ -1,0 +1,63 @@
+/**
+ * Performance Optimizations
+ * Réduit les animations lourdes et optimise les transitions
+ */
+
+/* GPU Acceleration */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduce repaints and reflows */
+.navbar-top,
+#sidebar,
+.main-content {
+    will-change: auto;
+}
+
+/* Fast transitions */
+a,
+button {
+    transition: color 0.15s ease, 
+                background-color 0.15s ease,
+                border-color 0.15s ease;
+}
+
+/* Remove animations on reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Improve scrolling performance */
+.main-content {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* Debounce heavy CSS selectors */
+.sidebar-menu ul,
+.card {
+    contain: content;
+}
+
+/* Loading state - minimal animation */
+.ajax-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Smooth fade */
+@keyframes smoothFade {
+    from { opacity: 0; transform: translateY(-2px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.transition-fade {
+    animation: smoothFade 0.2s ease-out;
+}

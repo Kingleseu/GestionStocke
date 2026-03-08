@@ -1,210 +1,167 @@
 /**
- * Admin Navigation AJAX System
- * Permet la navigation entre les onglets sans rechargement de page
+ * Admin Navigation AJAX System - SIMPLIFIÉ ET OPTIMISÉ
+ * Navigation fluide sans rechargement pour l'admin store
  */
 
-class AdminNavigation {
-    constructor() {
-        this.contentContainer = document.getElementById('admin-content-container');
-        this.currentUrl = window.location.href;
-        this.isLoading = false;
-        this.init();
-    }
+(function() {
+    'use strict';
 
-    init() {
-        if (!this.contentContainer) {
-            console.warn('Admin content container not found');
-            return;
-        }
+    const ADMIN_AJAX = {
+        // Configuration
+        container: null,
+        isLoading: false,
+        currentUrl: window.location.href,
 
-        // Détecter et récupérer le contenu initial
-        this.setupAjaxLinks();
-        this.handlePopState();
-    }
-
-    setupAjaxLinks() {
-        // Sélectionner tous les liens du store admin qui doivent charger en AJAX
-        const adminLinks = document.querySelectorAll(
-            'a[href*="/store/admin/"], .admin-nav a, .sidebar-menu a[href*="/admin/"]'
-        );
-
-        adminLinks.forEach(link => {
-            // Ignorer les liens vers l'extérieur (target="_blank")
-            if (link.getAttribute('target') === '_blank') {
+        // Initialisation
+        init() {
+            this.container = document.getElementById('admin-content-container');
+            
+            // Si pas de container, AJAX disabled
+            if (!this.container) {
                 return;
             }
 
-            // Ignorer si le lien a déjà un listener AJAX
-            if (link.dataset.ajaxBound === 'true') {
-                return;
-            }
+            // Configurer les liens AJAX
+            this.setupLinks();
+            
+            // Gérer le bouton retour/avant
+            window.addEventListener('popstate', (e) => this.handlePopState(e));
+        },
 
-            link.dataset.ajaxBound = 'true';
+        // Setup les écouteurs de clics sur les liens admin
+        setupLinks() {
+            // Tous les liens /store/admin/
+            document.addEventListener('click', (e) => {
+                const link = e.target.closest('a');
+                if (!link) return;
 
-            link.addEventListener('click', (e) => {
                 const href = link.getAttribute('href');
                 
-                // Si c'est une URL admin interne, charger en AJAX
-                if (href && (href.includes('/store/admin/') || href.includes('/admin/')) && !href.includes('delete')) {
+                // Conditions pour charger en AJAX:
+                // 1. URL contient /store/admin/
+                // 2. Pas de target="_blank"
+                // 3. Pas de data-no-ajax
+                if (href && 
+                    href.includes('/store/admin/') && 
+                    link.getAttribute('target') !== '_blank' &&
+                    !link.hasAttribute('data-no-ajax')) {
+                    
                     e.preventDefault();
                     e.stopPropagation();
-                    this.loadContent(href, link);
+                    this.loadPage(href, link);
                 }
             });
-        });
-    }
+        },
 
-    loadContent(url, clickedElement) {
-        if (this.isLoading) {
-            console.warn('Chargement en cours, veuillez attendre');
-            return;
-        }
+        // Charger la page en AJAX
+        loadPage(url, linkElement) {
+            if (this.isLoading) return;
 
-        this.isLoading = true;
-        this.showLoadingState();
-        this.removeActiveStates();
-        this.setActive(clickedElement);
+            this.isLoading = true;
+            this.showLoading();
+            this.setActiveLink(linkElement);
 
-        fetch(url, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'text/html'
+            // Fermer le sidebar en mobile
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth < 992 && sidebar && sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
             }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Erreur réseau: ' + response.status);
-            return response.text();
-        })
-        .then(html => {
-            this.updateContent(html, url);
-            window.history.pushState({ url }, document.title, url);
-            this.currentUrl = url;
-        })
-        .catch(error => {
-            console.error('Erreur lors du chargement:', error);
-            this.showError('Erreur lors du chargement du contenu');
-            // Fallback: charger normalement
-            window.location.href = url;
-        })
-        .finally(() => {
-            this.isLoading = false;
-            this.hideLoadingState();
-        });
-    }
 
-    updateContent(html, url) {
-        // Parser le HTML pour extraire le contenu principal
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // Chercher le contenu principal
-        const mainContent = doc.querySelector('.main-content') || 
-                           doc.querySelector('[role="main"]') ||
-                           doc.querySelector('body');
-
-        if (mainContent && this.contentContainer) {
-            // Animation fade out
-            this.contentContainer.style.opacity = '0';
-            
-            setTimeout(() => {
-                this.contentContainer.innerHTML = mainContent.innerHTML;
-                this.contentContainer.style.opacity = '1';
-                
-                // Réinitialiser les écouteurs pour les nouveaux liens
-                this.setupAjaxLinks();
-                
-                // Scroller vers le haut
-                this.contentContainer.scrollTop = 0;
-                
-                // Exécuter les scripts inline si présents
-                this.executeScripts(mainContent);
-            }, 150);
-        }
-
-        // Mettre à jour le titre
-        const titleTag = doc.querySelector('title');
-        if (titleTag) {
-            document.title = titleTag.textContent;
-        }
-    }
-
-    executeScripts(element) {
-        const scripts = element.querySelectorAll('script');
-        scripts.forEach(script => {
-            if (script.textContent) {
-                try {
-                    // eslint-disable-next-line no-eval
-                    eval(script.textContent);
-                } catch (e) {
-                    console.warn('Script execution error:', e);
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-            }
-        });
-    }
+            })
+            .then(res => res.text())
+            .then(html => {
+                this.updateContent(html);
+                window.history.pushState({url}, '', url);
+                this.currentUrl = url;
+            })
+            .catch(err => {
+                console.error('Erreur AJAX:', err);
+                window.location.href = url; // Fallback
+            })
+            .finally(() => {
+                this.isLoading = false;
+                this.hideLoading();
+            });
+        },
 
-    removeActiveStates() {
-        document.querySelectorAll('.sidebar-menu a, .admin-nav a').forEach(link => {
-            link.classList.remove('active');
-        });
-    }
+        // Remplacer le contenu
+        updateContent(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Récupérer le contenu (chercher dans plusieurs endroits)
+            const content = doc.querySelector('.main-content') ||
+                          doc.querySelector('#admin-content-container') ||
+                          doc.querySelector('[role="main"]');
 
-    setActive(element) {
-        if (element) {
-            element.classList.add('active');
-        }
-    }
-
-    showLoadingState() {
-        if (this.contentContainer) {
-            this.contentContainer.style.opacity = '0.5';
-            this.contentContainer.style.pointerEvents = 'none';
-        }
-    }
-
-    hideLoadingState() {
-        if (this.contentContainer) {
-            this.contentContainer.style.opacity = '1';
-            this.contentContainer.style.pointerEvents = 'auto';
-        }
-    }
-
-    showError(message) {
-        const alert = document.createElement('div');
-        alert.className = 'alert alert-danger alert-dismissible fade show';
-        alert.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        if (this.contentContainer) {
-            this.contentContainer.insertBefore(alert, this.contentContainer.firstChild);
-        }
-    }
-
-    handlePopState() {
-        window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.url) {
-                // Recharger le contenu sans l'ajouter à l'historique
-                fetch(event.state.url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'text/html'
+            if (content && this.container) {
+                // Fade out
+                this.container.style.opacity = '0';
+                
+                setTimeout(() => {
+                    this.container.innerHTML = content.innerHTML;
+                    this.container.style.opacity = '1';
+                    this.container.scrollTop = 0;
+                    
+                    // Réappliquer les écouteurs si besoin
+                    if (typeof Turbo !== 'undefined') {
+                        Turbo.visit(this.currentUrl);
                     }
-                })
-                .then(response => response.text())
-                .then(html => {
-                    this.updateContent(html, event.state.url);
-                })
-                .catch(error => {
-                    console.error('Erreur navigation:', error);
-                    window.location.href = event.state.url;
-                });
+                }, 150);
             }
-        });
-    }
-}
 
-// Initialiser au chargement du document
-document.addEventListener('DOMContentLoaded', () => {
-    new AdminNavigation();
-});
+            // Mettre à jour le titre
+            const newTitle = doc.querySelector('title');
+            if (newTitle) {
+                document.title = newTitle.textContent;
+            }
+        },
+
+        // Gérer le popstate (bouton retour)
+        handlePopState(e) {
+            if (e.state && e.state.url) {
+                fetch(e.state.url)
+                    .then(r => r.text())
+                    .then(html => this.updateContent(html))
+                    .catch(_ => window.location.reload());
+            }
+        },
+
+        // UI helpers
+        setActiveLink(link) {
+            if (!link) return;
+            document.querySelectorAll('.sidebar-menu a, .admin-nav a').forEach(a => {
+                a.classList.remove('active');
+            });
+            link.classList.add('active');
+        },
+
+        showLoading() {
+            if (this.container) {
+                this.container.style.opacity = '0.5';
+                this.container.style.pointerEvents = 'none';
+            }
+        },
+
+        hideLoading() {
+            if (this.container) {
+                this.container.style.opacity = '1';
+                this.container.style.pointerEvents = 'auto';
+            }
+        }
+    };
+
+    // Démarrer quand le DOM est prêt
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => ADMIN_AJAX.init());
+    } else {
+        ADMIN_AJAX.init();
+    }
+
+    // Expose globally si besoin
+    window.ADMIN_AJAX = ADMIN_AJAX;
+})();

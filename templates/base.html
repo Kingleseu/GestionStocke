@@ -23,6 +23,8 @@
     <link href="{% static 'css/modern.css' %}" rel="stylesheet">
     <!-- Admin Responsive CSS -->
     <link href="{% static 'css/admin_responsive.css' %}" rel="stylesheet">
+    <!-- Performance Optimizations -->
+    <link href="{% static 'css/performance.css' %}" rel="stylesheet">
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -247,73 +249,89 @@
     <!-- Admin Navigation AJAX -->
     <script src="{% static 'js/admin_navigation.js' %}"></script>
 
-    <!-- Sidebar & Navigation Script -->
+    <!-- Sidebar Management Script -->
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const sidebarCollapse = document.getElementById('sidebarCollapse');
-            const sidebar = document.getElementById('sidebar');
-            const wrapper = document.querySelector('.wrapper');
-            const body = document.body;
+        (function() {
+            'use strict';
+            
+            // Attendre que le DOM soit prêt
+            function initSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const sidebarCollapse = document.getElementById('sidebarCollapse');
+                const body = document.body;
 
-            // IMPORTANT: Ensure mobile sidebar is CLOSED by default
-            const isMobile = window.innerWidth < 992;
-            if (isMobile && sidebar) {
-                sidebar.classList.remove('active');
-                if (wrapper) wrapper.classList.remove('sidebar-active');
-                body.classList.remove('sidebar-open');
-            }
+                if (!sidebar || !sidebarCollapse) {
+                    console.warn('Sidebar elements not found');
+                    return;
+                }
 
-            if (sidebarCollapse && sidebar) {
-                sidebarCollapse.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    sidebar.classList.toggle('active');
-                    if (wrapper) wrapper.classList.toggle('sidebar-active');
-                    body.classList.toggle('sidebar-open');
-                });
-            }
-
-            // Close sidebar when clicking outside on mobile
-            document.addEventListener('click', function (event) {
-                if (!sidebar) return;
+                // 1. IMPORTANT: Sidebar FERMÉ au démarrage en mobile
+                const isMobile = () => window.innerWidth < 992;
                 
-                const isClickInsideSidebar = sidebar.contains(event.target);
-                const isClickInsideToggle = sidebarCollapse && sidebarCollapse.contains(event.target);
-
-                if (!isClickInsideSidebar && !isClickInsideToggle && sidebar.classList.contains('active') && window.innerWidth < 992) {
+                if (isMobile()) {
                     sidebar.classList.remove('active');
-                    if (wrapper) wrapper.classList.remove('sidebar-active');
                     body.classList.remove('sidebar-open');
                 }
-            });
 
-            // Close sidebar on link click (mobile)
-            const sidebarLinks = sidebar ? sidebar.querySelectorAll('a') : [];
-            sidebarLinks.forEach(link => {
-                link.addEventListener('click', function () {
-                    if (window.innerWidth < 992 && sidebar.classList.contains('active')) {
-                        sidebar.classList.remove('active');
-                        if (wrapper) wrapper.classList.remove('sidebar-active');
-                        body.classList.remove('sidebar-open');
+                // 2. Toggle sidebar au clic du bouton hamburger
+                sidebarCollapse.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (isMobile()) {
+                        sidebar.classList.toggle('active');
+                        body.classList.toggle('sidebar-open');
                     }
                 });
-            });
 
-            // Handle window resize
-            let resizeTimer;
-            window.addEventListener('resize', function () {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(function () {
-                    if (window.innerWidth >= 992) {
-                        // Desktop: ensure sidebar is visible
-                        if (sidebar) {
+                // 3. Fermer sidebar au clic en dehors (mobile)
+                document.addEventListener('click', function(e) {
+                    if (isMobile() && sidebar.classList.contains('active')) {
+                        const isClickInSidebar = sidebar.contains(e.target);
+                        const isClickOnToggle = sidebarCollapse.contains(e.target);
+                        
+                        if (!isClickInSidebar && !isClickOnToggle) {
                             sidebar.classList.remove('active');
                             body.classList.remove('sidebar-open');
                         }
                     }
-                }, 250);
-            });
-        });
+                });
+
+                // 4. Fermer sidebar quand on clique sur un lien (mobile)
+                const sidebarLinks = sidebar.querySelectorAll('a');
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (isMobile() && sidebar.classList.contains('active')) {
+                            // Petit délai pour que le lien se chargeen AJAX
+                            setTimeout(() => {
+                                sidebar.classList.remove('active');
+                                body.classList.remove('sidebar-open');
+                            }, 50);
+                        }
+                    });
+                });
+
+                // 5. Gérer le resize window
+                let resizeTimeout;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(function() {
+                        // Sur desktop, s'assurer que sidebar est visible
+                        if (!isMobile()) {
+                            sidebar.classList.remove('active');
+                            body.classList.remove('sidebar-open');
+                        }
+                    }, 250);
+                });
+            }
+
+            // Démarrer
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initSidebar);
+            } else {
+                initSidebar();
+            }
+        })();
     </script>
 
     {% block extra_js %}{% endblock %}

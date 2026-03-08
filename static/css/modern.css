@@ -40,6 +40,7 @@ body {
     background-color: var(--bg-body);
     color: var(--text-main);
     overflow-x: hidden;
+    will-change: auto;
 }
 
 a {
@@ -63,13 +64,13 @@ a:hover {
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
     background: var(--secondary);
-    /* Fond Bleu foncé / Navy */
     color: #FFFFFF;
-    /* Slate-50 */
     display: flex;
     flex-direction: column;
     z-index: 1050;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
 @media (max-width: 991.98px) {
@@ -79,26 +80,28 @@ a:hover {
         height: 100vh;
         top: 0;
         bottom: 0;
+        box-shadow: none;
     }
 
     #sidebar.active {
         left: 0;
-        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
     }
 
-    /* Overlay when sidebar is open */
-    body #sidebar.active::before {
+    /* Overlay quand sidebar est ouvert */
+    body.sidebar-open::before {
         content: '';
         position: fixed;
         top: 0;
-        left: var(--sidebar-width);
+        left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.3);
+        background: rgba(0, 0, 0, 0.4);
         z-index: 1040;
+        animation: fadeIn 0.2s ease-in;
     }
 
-    /* Prevent body scroll when sidebar is open */
+    /* Empêcher scroll quand sidebar est ouvert */
     body.sidebar-open {
         overflow: hidden;
     }
@@ -167,16 +170,56 @@ a:hover {
     justify-content: space-between;
     position: relative;
     z-index: 1000;
+    gap: 1rem;
+}
+
+/* Hamburger Button - Always visible on mobile */
+#sidebarCollapse {
+    min-width: 40px;
+    padding: 0.5rem 0.75rem !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#sidebarCollapse:hover {
+    background: rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+#sidebarCollapse i {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+@media (max-width: 991.98px) {
+    #sidebarCollapse {
+        display: flex;
+    }
+
+    .navbar-top {
+        padding: 0 1rem;
+    }
 }
 
 @media (max-width: 768px) {
     .navbar-top {
-        padding: 0 1rem;
-        height: 60px;
+        padding: 0 0.75rem;
+        height: 56px;
     }
 
     .navbar-top .input-group {
         display: none !important;
+    }
+
+    #sidebarCollapse {
+        min-width: 36px;
     }
 }
 
@@ -187,15 +230,15 @@ a:hover {
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
-    /* Scroll handled inside main if needed */
 }
 
 .main-content {
     flex-grow: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 1rem;
-    /* Reduced padding on mobile by default */
-    transition: opacity 0.15s ease-in-out;
+    transition: opacity 0.2s ease-out;
+    -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 768px) {
@@ -206,10 +249,10 @@ a:hover {
 
 /* AJAX Loading transition */
 .main-content {
-    animation: fadeIn 0.3s ease-in-out;
+    animation: fadeInContent 0.25s ease-out;
 }
 
-@keyframes fadeIn {
+@keyframes fadeInContent {
     from {
         opacity: 0;
     }

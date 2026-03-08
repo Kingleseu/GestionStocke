@@ -7,7 +7,8 @@ import dj_database_url
 # Load environment variables from .env file (for local development)
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    ENV_DIR = Path(__file__).resolve().parent.parent  # Project root
+    load_dotenv(ENV_DIR / '.env')
 except ImportError:
     pass
 
@@ -204,9 +205,9 @@ CURRENCIES = {
 }
 DEFAULT_CURRENCY = 'CDF'  # Devise par défaut
 
-# Security settings for production
+# Security settings for production ONLY
 if not DEBUG:
-    # HTTPS settings
+    # HTTPS settings (PRODUCTION ONLY)
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
@@ -218,6 +219,14 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+else:
+    # DEVELOPMENT: Force HTTP ONLY
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_BROWSER_XSS_FILTER = False
+    SECURE_CONTENT_TYPE_NOSNIFF = False
+    X_FRAME_OPTIONS = 'ALLOW'
 
 # CSRF Trusted Origins for Railway
 CSRF_TRUSTED_ORIGINS = os.environ.get(
