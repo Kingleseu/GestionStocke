@@ -21,6 +21,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Custom Modern CSS -->
     <link href="{% static 'css/modern.css' %}" rel="stylesheet">
+    <!-- Admin Responsive CSS -->
+    <link href="{% static 'css/admin_responsive.css' %}" rel="stylesheet">
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -230,7 +232,7 @@
             {% endif %}
 
             <!-- Main Content Container -->
-            <div class="main-content">
+            <div class="main-content" id="admin-content-container">
                 {% block content %}{% endblock %}
             </div>
         </div>
@@ -242,29 +244,74 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Sidebar Script -->
+    <!-- Admin Navigation AJAX -->
+    <script src="{% static 'js/admin_navigation.js' %}"></script>
+
+    <!-- Sidebar & Navigation Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const sidebarCollapse = document.getElementById('sidebarCollapse');
             const sidebar = document.getElementById('sidebar');
             const wrapper = document.querySelector('.wrapper');
+            const body = document.body;
 
-            if (sidebarCollapse) {
-                sidebarCollapse.addEventListener('click', function () {
+            // IMPORTANT: Ensure mobile sidebar is CLOSED by default
+            const isMobile = window.innerWidth < 992;
+            if (isMobile && sidebar) {
+                sidebar.classList.remove('active');
+                if (wrapper) wrapper.classList.remove('sidebar-active');
+                body.classList.remove('sidebar-open');
+            }
+
+            if (sidebarCollapse && sidebar) {
+                sidebarCollapse.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     sidebar.classList.toggle('active');
                     if (wrapper) wrapper.classList.toggle('sidebar-active');
+                    body.classList.toggle('sidebar-open');
                 });
             }
 
             // Close sidebar when clicking outside on mobile
             document.addEventListener('click', function (event) {
+                if (!sidebar) return;
+                
                 const isClickInsideSidebar = sidebar.contains(event.target);
-                const isClickInsideToggle = sidebarCollapse.contains(event.target);
+                const isClickInsideToggle = sidebarCollapse && sidebarCollapse.contains(event.target);
 
                 if (!isClickInsideSidebar && !isClickInsideToggle && sidebar.classList.contains('active') && window.innerWidth < 992) {
                     sidebar.classList.remove('active');
                     if (wrapper) wrapper.classList.remove('sidebar-active');
+                    body.classList.remove('sidebar-open');
                 }
+            });
+
+            // Close sidebar on link click (mobile)
+            const sidebarLinks = sidebar ? sidebar.querySelectorAll('a') : [];
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function () {
+                    if (window.innerWidth < 992 && sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                        if (wrapper) wrapper.classList.remove('sidebar-active');
+                        body.classList.remove('sidebar-open');
+                    }
+                });
+            });
+
+            // Handle window resize
+            let resizeTimer;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function () {
+                    if (window.innerWidth >= 992) {
+                        // Desktop: ensure sidebar is visible
+                        if (sidebar) {
+                            sidebar.classList.remove('active');
+                            body.classList.remove('sidebar-open');
+                        }
+                    }
+                }, 250);
             });
         });
     </script>
