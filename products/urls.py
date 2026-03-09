@@ -13,6 +13,7 @@ urlpatterns = [
     
     # Modifier un produit
     path('<int:pk>/edit/', views.ProductUpdateView.as_view(), name='product_update'),
+    path('<int:pk>/details-ajax/', views.product_details_ajax, name='product_details_ajax'),
     
     # Supprimer (désactiver) un produit
     path('<int:pk>/delete/', views.ProductDeleteView.as_view(), name='product_delete'),

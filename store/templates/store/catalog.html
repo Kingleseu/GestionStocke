@@ -17,7 +17,7 @@
     <!-- Core CSS (Layout & Base) -->
     <link rel="stylesheet" href="{% static 'css/des_store.css' %}?v=3.8">
     <!-- Premium Styles (Loaded LAST to override) -->
-    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.1">
+    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.2">
 
     <style>
         /* Force scroll layout */
@@ -62,6 +62,44 @@
                 padding: 2rem;
                 grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
                 gap: 2.5rem;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .products-list {
+                padding: 0.85rem;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.85rem;
+                padding-bottom: 200px;
+            }
+
+            .products-list .product-name {
+                font-size: 13px;
+            }
+
+            .products-list .product-price {
+                font-size: 12px;
+            }
+        }
+
+        @media (min-width: 576px) and (max-width: 1023.98px) {
+            .products-list {
+                padding: 1rem;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 1rem;
+                padding-bottom: 200px;
+            }
+
+            .products-list .product-name {
+                font-size: 13px;
+            }
+
+            .products-list .product-category-label {
+                font-size: 10px;
+            }
+
+            .products-list .product-price {
+                font-size: 12px;
             }
         }
 
@@ -133,8 +171,6 @@
 
             <!-- PRODUCT GRID (PREMIUM) -->
             <div class="products-list" id="productsList">
-                <!-- DEBUG MARKER TEMPORARY -->
-                <div style="grid-column: 1/-1; display:none;">DEBUG: PREMIUM GRID LOADED</div>
 
                 {% for product in products %}
                 <div class="product-card animate-entry delay-{% cycle '0' '1' '2' '3' '4' %}" data-id="{{ product.id }}"
@@ -329,7 +365,7 @@
     </script>
 
     <!-- Scripts -->
-    <script src="{% static 'js/des_store.js' %}?v=4.2"></script>
+    <script src="{% static 'js/des_store.js' %}?v=4.4"></script>
 </body>
 
 </html>

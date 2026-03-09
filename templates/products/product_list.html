@@ -22,6 +22,42 @@
     .product-image:hover .secondary-img {
         opacity: 1 !important;
     }
+
+    @media (max-width: 575.98px) {
+        .product-grid-mobile .col-mobile-product {
+            width: 50%;
+        }
+
+        .product-card-hover .card-body {
+            padding: 0.65rem !important;
+        }
+
+        .product-card-hover .fs-5 {
+            font-size: 1.05rem !important;
+        }
+
+        .product-card-hover .badge {
+            font-size: 0.65rem !important;
+        }
+    }
+
+    @media (min-width: 576px) and (max-width: 767.98px) {
+        .product-grid-mobile .col-mobile-product {
+            width: 25%;
+        }
+
+        .product-card-hover .card-body {
+            padding: 0.5rem !important;
+        }
+
+        .product-card-hover .fs-5 {
+            font-size: 0.95rem !important;
+        }
+
+        .product-card-hover .badge {
+            font-size: 0.6rem !important;
+        }
+    }
 </style>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -129,9 +165,9 @@
     </div>
 
     <!-- Product Grid -->
-    <div class="row g-4">
+    <div class="row g-4 product-grid-mobile">
         {% for product in products %}
-        <div class="col-xl-3 col-lg-4 col-md-6" data-product-id="{{ product.id }}">
+        <div class="col-mobile-product col-6 col-sm-3 col-md-6 col-lg-4 col-xl-3" data-product-id="{{ product.id }}">
             <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden product-card-hover">
                 <!-- Checkbox (Absolute) -->
                 <div class="position-absolute top-0 start-0 p-3 z-10">
@@ -196,7 +232,9 @@
                                 <i class="bi bi-three-dots-vertical"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-                                <li><a class="dropdown-item" href="{% url 'products:product_update' product.pk %}"><i class="bi bi-pencil me-2"></i> Modifier</a></li>
+                                <li><a class="dropdown-item js-edit-product" href="#" data-product-id="{{ product.pk }}"
+                                        data-product-name="{{ product.name }}"><i class="bi bi-pencil me-2"></i>
+                                        Modifier</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
@@ -307,6 +345,147 @@
 
 <script>
     // JS for Modal actions
+    let editProductId = null;
+    const addProductModalEl = document.getElementById('addProductModal');
+    const addProductModal = (addProductModalEl && window.bootstrap && window.bootstrap.Modal)
+        ? new window.bootstrap.Modal(addProductModalEl)
+        : null;
+
+    function resetProductModalToCreateMode() {
+        const form = document.getElementById('addProductForm');
+        const title = document.getElementById('addProductModalTitle');
+        const saveBtn = document.getElementById('saveProductBtn');
+        const errorDiv = document.getElementById('formErrors');
+        const customizableCheck = document.getElementById('isCustomizable');
+        const config = document.getElementById('customizationConfig');
+
+        editProductId = null;
+        if (form) {
+            form.reset();
+            form.action = "{% url 'products:product_create' %}";
+        }
+        if (title) {
+            title.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Nouveau Produit';
+        }
+        if (saveBtn) {
+            saveBtn.textContent = 'Enregistrer';
+        }
+        if (errorDiv) {
+            errorDiv.classList.add('d-none');
+            errorDiv.innerHTML = '';
+        }
+        if (customizableCheck) customizableCheck.checked = false;
+        if (config) config.classList.add('d-none');
+
+        // Reset selected components/fonts
+        document.querySelectorAll('#addProductModal .component-visual-card.selected').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('#addProductModal .font-pill.selected').forEach(el => el.classList.remove('selected'));
+        document.querySelectorAll('#addProductModal input[name="allowed_components"], #addProductModal input[name="allowed_fonts"]').forEach(inp => {
+            inp.checked = false;
+        });
+
+        // Defaults
+        const isActive = document.getElementById('isActive');
+        if (isActive) isActive.checked = true;
+        const colorChoice = document.getElementById('colorChoice');
+        if (colorChoice) colorChoice.value = 'argent';
+        toggleCustomColorField();
+    }
+
+    async function openEditProductModal(productId, productName) {
+        const form = document.getElementById('addProductForm');
+        const title = document.getElementById('addProductModalTitle');
+        const saveBtn = document.getElementById('saveProductBtn');
+        const errorDiv = document.getElementById('formErrors');
+        if (!form || !addProductModal) return;
+
+        resetProductModalToCreateMode();
+        editProductId = productId;
+        form.action = `/products/${productId}/edit/`;
+        if (title) {
+            title.innerHTML = `<i class="bi bi-pencil-square me-2"></i>Modifier : ${productName || 'Produit'}`;
+        }
+        if (saveBtn) saveBtn.textContent = 'Mettre à jour';
+
+        addProductModal.show();
+
+        try {
+            const response = await fetch(`/products/${productId}/details-ajax/`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Chargement impossible');
+            }
+            const p = data.product;
+
+            const setValue = (name, value) => {
+                const el = form.querySelector(`[name="${name}"]`);
+                if (el) el.value = value ?? '';
+            };
+            const setChecked = (name, value) => {
+                const el = form.querySelector(`[name="${name}"]`);
+                if (el) el.checked = !!value;
+            };
+
+            setValue('name', p.name);
+            setValue('barcode', p.barcode);
+            setValue('purchase_price', p.purchase_price);
+            setValue('selling_price', p.selling_price);
+            setValue('engraving_price', p.engraving_price);
+            setValue('current_stock', p.current_stock);
+            setValue('minimum_stock', p.minimum_stock);
+            setValue('category', p.category);
+            setValue('color_choice', p.color_choice);
+            setValue('custom_color', p.custom_color);
+            setValue('engraving_mode', p.engraving_mode);
+            setChecked('is_active', p.is_active);
+            setChecked('is_customizable', p.is_customizable);
+
+            const templateSelect = form.querySelector('[name="customization_template"]');
+            if (templateSelect) {
+                templateSelect.value = p.customization_template_id || '';
+            }
+
+            toggleCustomColorField();
+            const customColorInput = document.getElementById('customColorInput');
+            if (customColorInput && p.custom_color) {
+                customColorInput.value = p.custom_color;
+                document.querySelectorAll('#customColorPaletteModal .color-swatch').forEach(btn => {
+                    btn.classList.toggle('selected', btn.dataset.color === p.custom_color);
+                });
+            }
+
+            // Components: single selection behavior
+            const allowedComponentIds = new Set((p.allowed_component_ids || []).map(String));
+            document.querySelectorAll('#addProductModal .component-visual-card[data-component-id]').forEach(card => {
+                const compId = String(card.dataset.componentId || '');
+                const selected = allowedComponentIds.has(compId);
+                card.classList.toggle('selected', selected);
+                const input = card.querySelector('input[name="allowed_components"]');
+                if (input) input.checked = selected;
+            });
+
+            // Fonts: multi selection
+            const allowedFontIds = new Set((p.allowed_font_ids || []).map(String));
+            document.querySelectorAll('#addProductModal .font-pill').forEach(pill => {
+                const input = pill.querySelector('input[name="allowed_fonts"]');
+                if (!input) return;
+                const selected = allowedFontIds.has(String(input.value));
+                input.checked = selected;
+                pill.classList.toggle('selected', selected);
+            });
+
+            toggleCustomizationConfig();
+        } catch (err) {
+            console.error(err);
+            if (errorDiv) {
+                errorDiv.classList.remove('d-none');
+                errorDiv.textContent = "Impossible de charger les informations du produit.";
+            }
+        }
+    }
+
     function generateBarcode() {
         fetch('{% url "products:generate_barcode_ajax" %}')
             .then(r => r.json())
@@ -326,6 +505,7 @@
             .then(r => r.json().then(data => ({ status: r.status, body: data })))
             .then(res => {
                 if (res.body.success) {
+                    if (addProductModal) addProductModal.hide();
                     location.reload();
                 } else {
                     errorDiv.classList.remove('d-none');
@@ -347,6 +527,20 @@
                 errorDiv.textContent = "Erreur de connexion au serveur.";
             });
     }
+
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.js-edit-product');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openEditProductModal(btn.getAttribute('data-product-id'), btn.getAttribute('data-product-name'));
+    });
+
+    if (addProductModalEl) {
+        addProductModalEl.addEventListener('hidden.bs.modal', function () {
+            resetProductModalToCreateMode();
+        });
+    }
 </script>
 
 <script>
@@ -355,7 +549,9 @@
     let pendingDeleteId = null;
     const deleteModalEl = document.getElementById('deleteProductModal');
     const confirmDeleteBtn = document.getElementById('confirmDeleteProduct');
-    const deleteModal = deleteModalEl ? new bootstrap.Modal(deleteModalEl) : null;
+    const deleteModal = (deleteModalEl && window.bootstrap && window.bootstrap.Modal)
+        ? new window.bootstrap.Modal(deleteModalEl)
+        : null;
 
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('.js-delete-product');

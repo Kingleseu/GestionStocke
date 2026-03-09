@@ -862,3 +862,74 @@ body.sidebar-open #main-content-wrapper {
     transform: translateZ(0);
     /* Hardware accel */
 }
+
+/* Mobile product density overrides (storefront)
+   0-575px: 2 columns
+   576-1023px: 4 columns */
+@media (max-width: 575.98px) {
+    #featuredProducts.products-grid,
+    #catalogueProducts.products-grid,
+    .products-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+    }
+
+    #featuredProducts .product-image-wrapper,
+    #catalogueProducts .product-image-wrapper,
+    .products-list .product-image-wrapper {
+        margin-bottom: 0.55rem !important;
+    }
+
+    #featuredProducts .product-name,
+    #catalogueProducts .product-name,
+    .products-list .product-name {
+        font-size: 13px !important;
+        line-height: 1.25 !important;
+    }
+
+    #featuredProducts .product-category-label,
+    #catalogueProducts .product-category-label,
+    .products-list .product-category-label {
+        font-size: 10px !important;
+    }
+
+    #featuredProducts .product-price,
+    #catalogueProducts .product-price,
+    .products-list .product-price {
+        font-size: 12px !important;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 1023.98px) {
+    #featuredProducts.products-grid,
+    #catalogueProducts.products-grid,
+    .products-list {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 1rem !important;
+    }
+
+    #featuredProducts .product-image-wrapper,
+    #catalogueProducts .product-image-wrapper,
+    .products-list .product-image-wrapper {
+        margin-bottom: 0.6rem !important;
+    }
+
+    #featuredProducts .product-name,
+    #catalogueProducts .product-name,
+    .products-list .product-name {
+        font-size: 13px !important;
+        line-height: 1.25 !important;
+    }
+
+    #featuredProducts .product-category-label,
+    #catalogueProducts .product-category-label,
+    .products-list .product-category-label {
+        font-size: 10px !important;
+    }
+
+    #featuredProducts .product-price,
+    #catalogueProducts .product-price,
+    .products-list .product-price {
+        font-size: 12px !important;
+    }
+}

@@ -5,13 +5,18 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.contrib import messages
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from accounts.decorators import manager_required
 from django.utils.decorators import method_decorator
 from .models import Product, Category, CustomizableComponent, CustomizationFont, ProductCustomizationConfig, CustomizationTemplate
+from .utils.barcode_utils import generate_barcode_image
 import zipfile
 import io
 import json
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(manager_required, name='dispatch')
@@ -135,7 +140,7 @@ class ProductListView(ListView):
                 Q(category__name__icontains=search)
             )
         
-        # Filtre par catégorie
+        # Filtre par catÃ©gorie
         category_id = self.request.GET.get('category', '')
         if category_id:
             queryset = queryset.filter(category_id=category_id)
@@ -180,7 +185,7 @@ class ProductListView(ListView):
 
 @method_decorator(manager_required, name='dispatch')
 class ProductCreateView(CreateView):
-    """Créer un nouveau produit"""
+    """CrÃ©er un nouveau produit"""
     model = Product
     template_name = 'products/product_form.html'
     fields = [
@@ -194,11 +199,13 @@ class ProductCreateView(CreateView):
         context = super().get_context_data(**kwargs)
         user_shop = self.request.user.profile.shop
         context['title'] = 'Nouveau Produit'
-        context['button_text'] = 'Créer le produit'
+        context['button_text'] = 'CrÃ©er le produit'
         context['categories'] = Category.objects.filter(shop=user_shop)
         context['components'] = CustomizableComponent.objects.filter(is_active=True)
         context['fonts'] = CustomizationFont.objects.filter(is_active=True)
         context['customization_templates'] = CustomizationTemplate.objects.filter(is_active=True)
+        context['allowed_component_ids'] = []
+        context['allowed_font_ids'] = []
         return context
     
     def form_valid(self, form):
@@ -210,7 +217,7 @@ class ProductCreateView(CreateView):
             form.instance.is_customizable = True
 
         self.object = form.save()
-        messages.success(self.request, f'Produit "{form.instance.name}" créé avec succès !')
+        messages.success(self.request, f'Produit "{form.instance.name}" crÃ©Ã© avec succÃ¨s !')
         
         # Handle Customization Config
         if self.object.is_customizable:
@@ -260,7 +267,7 @@ class ProductCreateView(CreateView):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
-                'message': f'Produit "{self.object.name}" créé avec succès !',
+                'message': f'Produit "{self.object.name}" crÃ©Ã© avec succÃ¨s !',
                 'product': {
                     'id': self.object.id,
                     'name': self.object.name,
@@ -285,11 +292,6 @@ class ProductCreateView(CreateView):
             }, status=400)
         return super().form_invalid(form)
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Nouveau produit'
-        context['button_text'] = 'Créer le produit'
-        return context
 
 
 # ... (skipping Update/Delete as they use get_object which uses default manager, but we should probably restrict queryset too for security)
@@ -312,7 +314,7 @@ class ProductUpdateView(UpdateView):
         return Product.objects.filter(shop=self.request.user.profile.shop)
 
     def form_valid(self, form):
-        messages.success(self.request, f'Produit "{form.instance.name}" modifié avec succès !')
+        messages.success(self.request, f'Produit "{form.instance.name}" modifiÃ© avec succÃ¨s !')
         new_comp_name = (self.request.POST.get('new_component_name') or '').strip()
         new_comp_image = self.request.FILES.get('new_component_image')
         if new_comp_name and new_comp_image:
@@ -364,7 +366,33 @@ class ProductUpdateView(UpdateView):
             except Exception as e:
                 print(f"Error saving customization config: {e}")
 
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'Produit "{self.object.name}" modifiÃ© avec succÃ¨s !',
+                'product': {
+                    'id': self.object.id,
+                    'name': self.object.name,
+                    'barcode': self.object.barcode,
+                    'category': self.object.category.name if self.object.category else '-',
+                    'selling_price': float(self.object.selling_price),
+                    'current_stock': self.object.current_stock,
+                    'stock_status': self.object.stock_status,
+                    'is_active': self.object.is_active,
+                    'image_url': self.object.image.url if self.object.image else None,
+                    'secondary_image_url': self.object.secondary_image.url if self.object.secondary_image else None,
+                }
+            })
+
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            }, status=400)
+        return super().form_invalid(form)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -389,10 +417,52 @@ class ProductUpdateView(UpdateView):
         return context
 
 
+@manager_required
+def product_details_ajax(request, pk):
+    """Return product details for edit modal prefill."""
+    product = get_object_or_404(Product, pk=pk, shop=request.user.profile.shop)
+
+    allowed_component_ids = []
+    allowed_font_ids = []
+    customization_template_id = None
+    try:
+        config = ProductCustomizationConfig.objects.get(product=product)
+        allowed_component_ids = list(config.allowed_components.values_list('id', flat=True))
+        allowed_font_ids = list(config.allowed_fonts.values_list('id', flat=True))
+    except ProductCustomizationConfig.DoesNotExist:
+        pass
+
+    if product.customization_template_id:
+        customization_template_id = product.customization_template_id
+
+    return JsonResponse({
+        'success': True,
+        'product': {
+            'id': product.id,
+            'name': product.name or '',
+            'barcode': product.barcode or '',
+            'category': product.category_id,
+            'purchase_price': str(product.purchase_price or '0'),
+            'selling_price': str(product.selling_price or '0'),
+            'engraving_price': str(product.engraving_price or '0'),
+            'current_stock': product.current_stock,
+            'minimum_stock': product.minimum_stock,
+            'color_choice': product.color_choice or 'argent',
+            'custom_color': product.custom_color or '',
+            'is_active': bool(product.is_active),
+            'is_customizable': bool(product.is_customizable),
+            'engraving_mode': product.engraving_mode or 'text',
+            'allowed_component_ids': allowed_component_ids,
+            'allowed_font_ids': allowed_font_ids,
+            'customization_template_id': customization_template_id,
+        }
+    })
+
+
 
 @method_decorator(manager_required, name='dispatch')
 class ProductDeleteView(DeleteView):
-    """Supprimer un produit (soft delete - désactivation)"""
+    """Supprimer un produit (soft delete - dÃ©sactivation)"""
     model = Product
     success_url = reverse_lazy('products:product_list')
 
@@ -417,13 +487,13 @@ class ProductDeleteView(DeleteView):
 
 @manager_required
 def product_toggle_active(request, pk):
-    """Activer/désactiver un produit"""
+    """Activer/dÃ©sactiver un produit"""
     # Security: filter by shop
     product = get_object_or_404(Product, pk=pk, shop=request.user.profile.shop)
     product.is_active = not product.is_active
     product.save()
     
-    status = "activé" if product.is_active else "désactivé"
+    status = "activÃ©" if product.is_active else "dÃ©sactivÃ©"
     messages.success(request, f'Produit "{product.name}" {status}.')
     
     return redirect('products:product_list')
@@ -435,7 +505,7 @@ def product_toggle_active(request, pk):
 
 @method_decorator(manager_required, name='dispatch')
 class CategoryListView(ListView):
-    """Liste de toutes les catégories"""
+    """Liste de toutes les catÃ©gories"""
     model = Category
     template_name = 'products/category_list.html'
     context_object_name = 'categories'
@@ -453,7 +523,7 @@ class CategoryListView(ListView):
 
 @method_decorator(manager_required, name='dispatch')
 class CategoryCreateView(CreateView):
-    """Créer une nouvelle catégorie"""
+    """CrÃ©er une nouvelle catÃ©gorie"""
     model = Category
     template_name = 'products/category_form.html'
     fields = ['name', 'description']
@@ -461,26 +531,26 @@ class CategoryCreateView(CreateView):
     
     def form_valid(self, form):
         form.instance.shop = self.request.user.profile.shop
-        messages.success(self.request, f'Catégorie "{form.instance.name}" créée avec succès !')
+        messages.success(self.request, f'CatÃ©gorie "{form.instance.name}" crÃ©Ã©e avec succÃ¨s !')
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Nouvelle catégorie'
-        context['button_text'] = 'Créer la catégorie'
+        context['title'] = 'Nouvelle catÃ©gorie'
+        context['button_text'] = 'CrÃ©er la catÃ©gorie'
         return context
 
 
 @method_decorator(manager_required, name='dispatch')
 class CategoryUpdateView(UpdateView):
-    """Modifier une catégorie existante"""
+    """Modifier une catÃ©gorie existante"""
     model = Category
     template_name = 'products/category_form.html'
     fields = ['name', 'description', 'image', 'is_active', 'order']
     success_url = reverse_lazy('products:category_list')
     
     def form_valid(self, form):
-        messages.success(self.request, f'Catégorie "{form.instance.name}" modifiée avec succès !')
+        messages.success(self.request, f'CatÃ©gorie "{form.instance.name}" modifiÃ©e avec succÃ¨s !')
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):
@@ -492,7 +562,7 @@ class CategoryUpdateView(UpdateView):
 
 @method_decorator(manager_required, name='dispatch')
 class CategoryDeleteView(DeleteView):
-    """Supprimer une catégorie"""
+    """Supprimer une catÃ©gorie"""
     model = Category
     success_url = reverse_lazy('products:category_list')
     
@@ -505,11 +575,11 @@ class CategoryDeleteView(DeleteView):
         return redirect(self.success_url)
 def barcode_image_view(request, barcode_number):
     """
-    Sert l'image du code-barres générée à la volée
+    Sert l'image du code-barres gÃ©nÃ©rÃ©e Ã  la volÃ©e
     """
     try:
         buffer = generate_barcode_image(barcode_number)
-        return HttpResponse(buffer, content_type='image/png')
+        return HttpResponse(buffer.getvalue(), content_type='image/png')
     except Exception as e:
         return HttpResponse(str(e), status=500)
 
@@ -518,10 +588,10 @@ def barcode_image_view(request, barcode_number):
 @manager_required
 def generate_barcode_ajax(request):
     """
-    Endpoint AJAX pour générer un nouveau code-barres unique
+    Endpoint AJAX pour gÃ©nÃ©rer un nouveau code-barres unique
     """
     try:
-        # Créer une instance temporaire pour utiliser la méthode generate_barcode
+        # CrÃ©er une instance temporaire pour utiliser la mÃ©thode generate_barcode
         temp_product = Product()
         code = temp_product.generate_barcode()
         return JsonResponse({'barcode': code})
@@ -531,9 +601,9 @@ def generate_barcode_ajax(request):
 
 @manager_required
 def create_component_ajax(request):
-    """Endpoint AJAX pour créer un CustomizableComponent depuis le modal produit"""
+    """Endpoint AJAX pour crÃ©er un CustomizableComponent depuis le modal produit"""
     if request.method != 'POST':
-        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+        return JsonResponse({'error': 'MÃ©thode non autorisÃ©e'}, status=405)
 
     name = (request.POST.get('new_component_name') or '').strip()
     comp_type = request.POST.get('new_component_type') or 'medallion'
@@ -567,7 +637,7 @@ def create_component_ajax(request):
 def delete_component_ajax(request):
     """AJAX endpoint to delete (soft-delete) a component by id"""
     if request.method != 'POST':
-        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+        return JsonResponse({'error': 'MÃ©thode non autorisÃ©e'}, status=405)
 
     comp_id = request.POST.get('component_id')
     if not comp_id:
@@ -590,7 +660,7 @@ def delete_component_ajax(request):
 def bulk_delete_components_ajax(request):
     """AJAX endpoint to bulk-delete components (soft-delete)"""
     if request.method != 'POST':
-        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+        return JsonResponse({'error': 'MÃ©thode non autorisÃ©e'}, status=405)
 
     ids = request.POST.getlist('component_ids[]') or request.POST.getlist('component_ids')
     if not ids:
@@ -607,14 +677,14 @@ def bulk_delete_components_ajax(request):
 @manager_required
 def product_bulk_action(request):
     """
-    Gère les actions groupées sur les produits
+    GÃ¨re les actions groupÃ©es sur les produits
     """
     if request.method == 'POST':
         selected_ids = request.POST.getlist('selected_products')
         action = request.POST.get('action')
         
         if not selected_ids:
-            messages.warning(request, "Aucun produit sélectionné.")
+            messages.warning(request, "Aucun produit sÃ©lectionnÃ©.")
             return redirect('products:product_list')
         
         products = Product.objects.filter(id__in=selected_ids)
@@ -623,19 +693,19 @@ def product_bulk_action(request):
             # Soft delete
             count = products.count()
             products.update(is_active=False)
-            messages.success(request, f"{count} produits ont été désactivés.")
+            messages.success(request, f"{count} produits ont Ã©tÃ© dÃ©sactivÃ©s.")
             
         elif action == 'download_barcodes':
-            # Créer un fichier ZIP en mémoire
+            # CrÃ©er un fichier ZIP en mÃ©moire
             buffer = io.BytesIO()
             with zipfile.ZipFile(buffer, 'w') as zip_file:
                 for product in products:
                     if product.barcode:
-                        # Générer l'image du code-barres
+                        # GÃ©nÃ©rer l'image du code-barres
                         try:
                             image_buffer = generate_barcode_image(product.barcode)
                             # Nom du fichier : NomProduit_CodeBarre.png
-                            # Nettoyer le nom du produit pour éviter les fcaractères invalides
+                            # Nettoyer le nom du produit pour Ã©viter les fcaractÃ¨res invalides
                             safe_name = "".join([c for c in product.name if c.isalnum() or c in (' ', '-', '_')]).strip()
                             filename = f"{safe_name}_{product.barcode}.png"
                             
@@ -645,7 +715,7 @@ def product_bulk_action(request):
                             continue
             
             buffer.seek(0)
-            response = HttpResponse(buffer, content_type='application/zip')
+            response = HttpResponse(buffer.getvalue(), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="codes_barres_produits.zip"'
             return response
             
@@ -659,44 +729,55 @@ def get_product_customization_data(request, product_id):
     Returns JSON with components and fonts data.
     Manager endpoint - for admin panel
     """
+    def _safe_media_url(file_field):
+        if not file_field:
+            return None
+        try:
+            return file_field.url
+        except Exception:
+            return None
+
     try:
         product = Product.objects.get(id=product_id, shop=request.user.profile.shop)
         config = ProductCustomizationConfig.objects.filter(product=product).first()
-        
+
         components_data = []
         fonts_data = []
-        
+
         if config:
-            # Get allowed components
             for comp in config.allowed_components.filter(is_active=True):
                 components_data.append({
                     'id': comp.id,
                     'name': comp.name,
-                    'image_url': comp.image.url if comp.image else None,
+                    'image_url': _safe_media_url(comp.image),
                     'shape_identifier': comp.shape_identifier or ''
                 })
-            
-            # Get allowed fonts
+
             for font in config.allowed_fonts.filter(is_active=True):
                 fonts_data.append({
                     'id': font.id,
                     'name': font.name,
                     'font_family': font.font_family
                 })
-        
+
         return JsonResponse({
             'success': True,
             'product_id': product_id,
             'product_name': product.name,
-            'product_image': product.image.url if product.image else None,
+            'product_image': _safe_media_url(product.image),
             'engraving_mode': getattr(product, 'engraving_mode', 'text'),
             'engraving_price': float(product.engraving_price),
             'components': components_data,
             'fonts': fonts_data
         })
     except Product.DoesNotExist:
-        return JsonResponse({'error': 'Produit non trouvé'}, status=404)
-
+        return JsonResponse({'success': False, 'error': 'Produit non trouve'}, status=404)
+    except Exception:
+        logger.exception('Admin customization-data failed for product_id=%s', product_id)
+        return JsonResponse(
+            {'success': False, 'error': 'Erreur serveur lors du chargement de la personnalisation'},
+            status=500,
+        )
 
 
 def get_product_customization_data_public(request, product_id):
@@ -705,44 +786,52 @@ def get_product_customization_data_public(request, product_id):
     Returns JSON with components and fonts data.
     PUBLIC endpoint - accessible without authentication
     """
+    def _safe_media_url(file_field):
+        if not file_field:
+            return None
+        try:
+            return file_field.url
+        except Exception:
+            return None
+
     try:
-        # Get product - no shop filter for public access
         product = Product.objects.get(id=product_id, is_active=True)
         config = ProductCustomizationConfig.objects.filter(product=product).first()
-        
+
         components_data = []
         fonts_data = []
-        
+
         if config:
-            # Get allowed components
             for comp in config.allowed_components.filter(is_active=True):
                 components_data.append({
                     'id': comp.id,
                     'name': comp.name,
-                    'image_url': comp.image.url if comp.image else None,
+                    'image_url': _safe_media_url(comp.image),
                     'shape_identifier': comp.shape_identifier or ''
                 })
-            
-            # Get allowed fonts
+
             for font in config.allowed_fonts.filter(is_active=True):
                 fonts_data.append({
                     'id': font.id,
                     'name': font.name,
                     'font_family': font.font_family
                 })
-        
+
         return JsonResponse({
             'success': True,
             'product_id': product_id,
             'product_name': product.name,
-            'product_image': product.image.url if product.image else None,
+            'product_image': _safe_media_url(product.image),
+            'engraving_mode': getattr(product, 'engraving_mode', 'text'),
             'engraving_price': float(product.engraving_price),
             'components': components_data,
             'fonts': fonts_data
         })
     except Product.DoesNotExist:
-        return JsonResponse({'error': 'Produit non trouvé'}, status=404)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'success': False, 'error': 'Produit non trouve'}, status=404)
+    except Exception:
+        logger.exception('Public customization-data failed for product_id=%s', product_id)
+        return JsonResponse(
+            {'success': False, 'error': 'Erreur serveur lors du chargement de la personnalisation'},
+            status=500,
+        )

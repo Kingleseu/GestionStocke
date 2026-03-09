@@ -185,61 +185,77 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    let myChart = null;
+    (function () {
+        window.InventoryBrainState = window.InventoryBrainState || { chart: null };
 
-    function openChart(productId) {
-        const modal = new bootstrap.Modal(document.getElementById('chartModal'));
-        modal.show();
-        document.getElementById('productName').innerText = "Chargement...";
-
-        if (myChart) myChart.destroy();
-
-        fetch(`/inventory/api/history/${productId}/`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('productName').innerText = data.product_name;
-                renderChart(data.dates, data.quantities);
-            })
-            .catch(error => {
-                console.error(error);
-                document.getElementById('productName').innerText = "Erreur";
-            });
-    }
-
-    function renderChart(dates, quantities) {
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(225, 29, 72, 0.5)'); // Red-600 with opacity
-        gradient.addColorStop(1, 'rgba(225, 29, 72, 0.0)');
-
-        myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Ventes',
-                    data: quantities,
-                    borderColor: '#E11D48',
-                    backgroundColor: gradient,
-                    borderWidth: 3,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#E11D48',
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    fill: true,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
-                    x: { grid: { display: false } }
-                }
+        function renderChart(dates, quantities) {
+            const canvas = document.getElementById('salesChart');
+            if (!canvas) {
+                return;
             }
-        });
-    }
+
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(225, 29, 72, 0.5)');
+            gradient.addColorStop(1, 'rgba(225, 29, 72, 0.0)');
+
+            window.InventoryBrainState.chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Ventes',
+                        data: quantities,
+                        borderColor: '#E11D48',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#E11D48',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        window.openChart = function (productId) {
+            const modalElement = document.getElementById('chartModal');
+            const productName = document.getElementById('productName');
+            if (!modalElement || !productName) {
+                return;
+            }
+
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+            productName.innerText = "Chargement...";
+
+            if (window.InventoryBrainState.chart) {
+                window.InventoryBrainState.chart.destroy();
+                window.InventoryBrainState.chart = null;
+            }
+
+            fetch(`/inventory/api/history/${productId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    productName.innerText = data.product_name;
+                    renderChart(data.dates, data.quantities);
+                })
+                .catch(error => {
+                    console.error(error);
+                    productName.innerText = "Erreur";
+                });
+        };
+    })();
 </script>
 {% endblock %}

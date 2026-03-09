@@ -314,11 +314,11 @@
                                             class="badge bg-secondary">{{ components.count }}</span></label>
                                     <div class="component-selector-grid">
                                         {% for comp in components %}
-                                        {% with is_selected=comp.id|stringformat:"s" in allowed_component_ids %}
-                                        <div class="component-visual-card {% if is_selected %}selected{% endif %}"
+                                        
+                                        <div class="component-visual-card {% if comp.id|stringformat:'s' in allowed_component_ids %}selected{% endif %}"
                                             onclick="toggleComponentSelection(this)">
                                             <input type="checkbox" name="allowed_components" value="{{ comp.id }}"
-                                                class="d-none" {% if is_selected %}checked{% endif %}>
+                                                class="d-none" {% if comp.id|stringformat:'s' in allowed_component_ids %}checked{% endif %}>
                                             <div class="card-image-wrapper">
                                                 {% if comp.image %}
                                                 <img src="{{ comp.image.url }}" alt="{{ comp.name }}">
@@ -333,7 +333,7 @@
                                             <div class="selection-indicator"><i class="bi bi-check-circle-fill"></i>
                                             </div>
                                         </div>
-                                        {% endwith %}
+                                        
                                         {% endfor %}
                                         <div class="component-visual-card add-component-card" onclick="toggleAddComponentForm()">
                                             <div class="card-image-wrapper add-component-icon">
@@ -368,15 +368,15 @@
                                     <label class="form-label small fw-bold mb-2">Polices autorisées</label>
                                     <div class="font-selector-pills">
                                         {% for font in fonts %}
-                                        {% with is_selected=font.id|stringformat:"s" in allowed_font_ids %}
-                                        <div class="font-pill {% if is_selected %}selected{% endif %}"
+                                        
+                                        <div class="font-pill {% if font.id|stringformat:'s' in allowed_font_ids %}selected{% endif %}"
                                             onclick="toggleFontSelection(this)">
                                             <input type="checkbox" name="allowed_fonts" value="{{ font.id }}"
-                                                class="d-none" {% if is_selected %}checked{% endif %}>
+                                                class="d-none" {% if font.id|stringformat:'s' in allowed_font_ids %}checked{% endif %}>
                                             <span style="font-family: '{{ font.name }}', cursive;">{{ font.name
                                                 }}</span>
                                         </div>
-                                        {% endwith %}
+                                        
                                         {% endfor %}
                                     </div>
                                 </div>

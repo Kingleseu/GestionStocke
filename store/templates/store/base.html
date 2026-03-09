@@ -16,8 +16,8 @@
     <!-- Custom Modern CSS -->
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/des_store.css' %}?v=3.1">
-    <link rel="stylesheet" href="{% static 'css/des_store_part2.css' %}?v=1.4">
-    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.1">
+    <link rel="stylesheet" href="{% static 'css/des_store_part2.css' %}?v=1.5">
+    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.2">
     <style>
         /* CRITICAL: Inline Hover Effect for Storefront */
         .product-image {
@@ -58,7 +58,8 @@
         window.csrfToken = "{{ csrf_token }}";
         window.urls = {
             checkout: "{% url 'store:checkout' %}",
-            syncCart: "{% url 'store:sync_cart' %}"
+            syncCart: "{% url 'store:sync_cart' %}",
+            productDetail: "{% url 'store:product_detail' 0 %}"
         };
 
         // Countdown Timer for Promotions
@@ -689,7 +690,7 @@
 
 
     <!-- Scripts -->
-    <script src="{% static 'js/des_store.js' %}?v=4.3"></script>
+    <script src="{% static 'js/des_store.js' %}?v=4.4"></script>
 </body>
 
 </html>

@@ -68,24 +68,56 @@ a:hover {
     display: flex;
     flex-direction: column;
     z-index: 1050;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     backface-visibility: hidden;
     perspective: 1000px;
 }
 
-@media (max-width: 991.98px) {
+@media (max-width: 767.98px) {
     #sidebar {
         position: fixed;
-        left: -var(--sidebar-width);
+        left: calc(-1 * var(--sidebar-width) + 56px);
         height: 100vh;
         top: 0;
         bottom: 0;
         box-shadow: none;
     }
 
+    #sidebar:not(.active) {
+        background: transparent;
+        box-shadow: none;
+        pointer-events: none;
+    }
+
+    #sidebar:not(.active) .sidebar-header {
+        background: transparent;
+    }
+
     #sidebar.active {
         left: 0;
+        background: var(--secondary);
+        pointer-events: auto;
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Garder uniquement la "poignée" visible quand fermé */
+    #sidebar:not(.active) .sidebar-logo,
+    #sidebar:not(.active) .sidebar-menu {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    #sidebar.active .sidebar-logo,
+    #sidebar.active .sidebar-menu {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    #sidebar:not(.active) #sidebarCollapse {
+        pointer-events: auto;
     }
 
     /* Overlay quand sidebar est ouvert */
@@ -111,11 +143,19 @@ a:hover {
     height: var(--header-height);
     display: flex;
     align-items: center;
-    padding: 0 1.5rem;
+    justify-content: center;
+    position: relative;
+    padding: 0 1rem;
     font-weight: 700;
     font-size: 1.25rem;
     color: white;
     background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-logo {
+    height: 44px;
+    width: auto;
+    max-width: 100%;
 }
 
 .sidebar-menu {
@@ -172,25 +212,29 @@ a:hover {
     z-index: 1000;
     gap: 1rem;
 }
-
-/* Hamburger Button - Always visible on mobile */
+/* Sidebar toggle button */
 #sidebarCollapse {
     min-width: 40px;
-    padding: 0.5rem 0.75rem !important;
-    display: none;
-    align-items: center;
-    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0.5rem !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
     border-radius: 0.25rem;
-    background: rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    color: #333;
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    color: #fff !important;
     cursor: pointer;
     transition: all 0.2s ease;
+    opacity: 1 !important;
+    position: relative;
+    z-index: 2;
 }
 
 #sidebarCollapse:hover {
-    background: rgba(0, 0, 0, 0.1);
-    border-color: rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 #sidebarCollapse i {
@@ -198,9 +242,18 @@ a:hover {
     margin: 0;
 }
 
-@media (max-width: 991.98px) {
+@media (max-width: 767.98px) {
     #sidebarCollapse {
-        display: flex;
+        display: flex !important;
+        position: absolute;
+        top: 14px;
+        right: 8px;
+        left: auto;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--secondary) !important;
+        box-shadow: var(--shadow-md);
+        z-index: 1060;
     }
 
     .navbar-top {
@@ -208,7 +261,7 @@ a:hover {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .navbar-top {
         padding: 0 0.75rem;
         height: 56px;
@@ -220,6 +273,11 @@ a:hover {
 
     #sidebarCollapse {
         min-width: 36px;
+        width: 36px;
+        height: 36px;
+        top: 10px;
+        right: 10px;
+        left: auto;
     }
 }
 
@@ -229,6 +287,7 @@ a:hover {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    min-width: 0;
     overflow: hidden;
 }
 

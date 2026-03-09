@@ -2082,7 +2082,6 @@ function initPremiumAnimations() {
 // Sidebar Logic
 // Sidebar Logic
 function openSidebar(productId) {
-    console.log("Opening Sidebar for Product:", productId);
     const product = products.find(p => String(p.id) === String(productId));
     if (!product) return;
 
@@ -2152,13 +2151,24 @@ function renderEngravingUI(product) {
 
     // Fetch authorized components and fonts for this product
     fetch(`/store/api/product/${product.id}/customization-data/`)
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                content.innerHTML = `<div class="alert alert-danger">Erreur: Impossible de charger les composants</div>`;
-                return;
+        .then(async (response) => {
+            const contentType = response.headers.get('content-type') || '';
+            let data = {};
+
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const body = await response.text();
+                throw new Error(`HTTP ${response.status} non-JSON: ${body.slice(0, 120)}`);
             }
 
+            if (!response.ok || data.success === false) {
+                throw new Error(data.error || `HTTP ${response.status}`);
+            }
+
+            return data;
+        })
+        .then(data => {
             // Save the engraving price to the product object for calculations
             product.engraving_price = data.engraving_price;
 
@@ -2403,7 +2413,13 @@ function renderEngravingUI(product) {
         })
         .catch(error => {
             console.error('Erreur lors du chargement des composants:', error);
-            content.innerHTML = `<div class="alert alert-danger">Erreur: Impossible de charger les composants</div>`;
+            const detailUrl = window.urls && window.urls.productDetail
+                ? window.urls.productDetail.replace('0', product.id)
+                : `/store/product/${product.id}/`;
+            content.innerHTML = `
+                <div class="alert alert-danger mb-3">Erreur: Impossible de charger les composants</div>
+                <a href="${detailUrl}" class="btn btn-outline-secondary btn-sm">Ouvrir la fiche produit</a>
+            `;
         });
 }
 

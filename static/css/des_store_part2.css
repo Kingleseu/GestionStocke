@@ -1159,3 +1159,40 @@ input:checked+.toggle-slider:before {
         font-size: 1.8rem;
     }
 }
+
+/* Store mobile product density:
+   - very small screens: 2 columns
+   - larger mobiles/tablets: 4 columns */
+@media (max-width: 575.98px) {
+    .products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.85rem;
+    }
+
+    .products-grid .product-name {
+        font-size: 13px;
+    }
+
+    .products-grid .product-price {
+        font-size: 12px;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 1023.98px) {
+    .products-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .products-grid .product-name {
+        font-size: 13px;
+    }
+
+    .products-grid .product-category-label {
+        font-size: 10px;
+    }
+
+    .products-grid .product-price {
+        font-size: 12px;
+    }
+}
