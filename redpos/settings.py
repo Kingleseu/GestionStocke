@@ -20,8 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-CHANGE-THIS-IN-PRODUCTION')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Force DEBUG off (production-safe).
-DEBUG = False
+# Temporary: force debug ON to inspect 500 errors in detail.
+DEBUG = True
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver,.railway.app,.up.railway.app,.onrender.com').split(',')
 
