@@ -146,7 +146,56 @@
                 </div>
             </div>
         </div>
+    <!-- Section Opérations Boutique -->
+    <div class="card border-0 shadow-sm mb-5" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 5px solid #6366f1 !important;">
+        <div class="card-header bg-transparent py-4">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-gear-wide-connected me-2" style="color: #6366f1;"></i>Opérations & Gestion du Magasin</h5>
+        </div>
+        <div class="card-body px-4 pb-5">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <a href="{% url 'inventory:stock_list' %}" class="btn btn-white w-100 p-4 shadow-sm border rounded-4 text-start h-100 transition-hover">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-3 p-2 me-3">
+                                <i class="bi bi-box-seam fs-4"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold">Gestion des Stocks</h6>
+                        </div>
+                        <p class="text-muted small mb-0">Inventaire en temps réel, alertes de rupture et mise à jour des quantités.</p>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'inventory:brain' %}" class="btn btn-white w-100 p-4 shadow-sm border rounded-4 text-start h-100 transition-hover">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-info bg-opacity-10 text-info rounded-3 p-2 me-3">
+                                <i class="bi bi-cpu fs-4"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold">Le Cerveau (IA)</h6>
+                        </div>
+                        <p class="text-muted small mb-0">Prédictions de ventes et optimisations suggérées par l'intelligence artificielle.</p>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{% url 'sales:pos' %}" class="btn btn-white w-100 p-4 shadow-sm border rounded-4 text-start h-100 transition-hover">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-box bg-success bg-opacity-10 text-success rounded-3 p-2 me-3">
+                                <i class="bi bi-display fs-4"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold">Point de Vente (POS)</h6>
+                        </div>
+                        <p class="text-muted small mb-0">Accéder à l'interface de caisse pour réaliser des ventes directes.</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <style>
+        .transition-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #e2e8f0 !important; background: white; text-decoration: none; display: block; }
+        .transition-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important; border-color: #6366f1 !important; color: inherit; }
+    </style>
+
+    <div class="row">
         <!-- Web Orders Management -->
         <div class="col-md-6 mb-4">
             <div class="card border-0 shadow-sm h-100" style="border-left: 5px solid #28a745 !important;">
@@ -248,6 +297,26 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- Zones de Livraison -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-left: 5px solid #0dcaf0 !important;">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bi bi-geo-alt me-2 text-info"></i>Zones de Livraison</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Gérez les zones de livraison et leurs tarifs pour vos clients.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'store:admin_delivery_zones' %}" class="btn border-info text-info">
+                            <i class="bi bi-list-ul me-2"></i> Gérer les Zones
+                        </a>
+                        <a href="{% url 'store:admin_delivery_zone_add' %}" class="btn btn-sm btn-light text-info">
+                            <i class="bi bi-plus-lg me-2"></i> Ajouter une zone
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Footer Section -->

@@ -143,8 +143,15 @@ class Promotion(models.Model):
             models.Index(fields=['is_active']),
         ]
     
+    def _format_discount_value(self):
+        text = format(self.discount_value.normalize(), 'f')
+        if '.' in text:
+            text = text.rstrip('0').rstrip('.')
+        return text
+
     def __str__(self):
-        return f"{self.name} ({self.discount_value}{'%' if self.discount_type == 'percentage' else '€'})"
+        symbol = '%' if self.discount_type == 'percentage' else '€'
+        return f"{self.name} (-{self._format_discount_value()}{symbol})"
     
     @property
     def is_running(self):

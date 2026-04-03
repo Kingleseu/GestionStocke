@@ -131,7 +131,7 @@
             <!-- Top Navbar -->
             {% block navbar %}
             <nav class="navbar-top">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center justify-content-between w-100">
                     <div class="d-flex align-items-center">
                         <!-- Global Search -->
                         <div class="input-group d-none d-md-flex align-items-center" style="width: 320px;">
@@ -145,25 +145,65 @@
                     <div class="d-flex align-items-center gap-3">
                         {% if user.is_authenticated %}
 
-                        {% if user.is_superuser or user.groups.all.0.name == 'Manager' %}
-                        <a class="btn btn-outline-secondary btn-sm d-none d-md-inline-flex align-items-center gap-2"
-                            href="{% url 'admin:index' %}" target="_blank" rel="noopener"
-                            title="Ouvrir l'admin du site">
-                            <i class="bi bi-shield-lock"></i>
-                            Admin
-                            <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
-                        <div class="vr h-50 mx-2 text-muted opacity-25 d-none d-md-block"></div>
+                        <!-- Utilities -->
+                        {% if notifications_enabled %}
+                        <div class="dropdown me-2" id="orderNotifications"
+                            data-feed-url="{% url 'store:admin_notifications_feed' %}"
+                            data-mark-all-url="{% url 'store:admin_notifications_mark_all_read' %}">
+                            <button class="btn btn-link text-muted position-relative p-0 border-0 bg-transparent"
+                                type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                <i class="bi bi-bell fs-5"></i>
+                                <span id="notificationBadge"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if not notification_unread_count %}d-none{% endif %}">
+                                    {{ notification_unread_count }}
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-3 p-0 mt-2"
+                                style="width: 360px; overflow: hidden;">
+                                <div class="d-flex align-items-center justify-content-between px-3 py-3 border-bottom">
+                                    <div>
+                                        <div class="fw-bold text-dark small">Notifications commandes</div>
+                                        <div id="notificationSummary" class="text-muted" style="font-size: 0.72rem;">
+                                            {{ notification_unread_count }} non lue{{ notification_unread_count|pluralize }}
+                                        </div>
+                                    </div>
+                                    <button id="notificationMarkAll" type="button"
+                                        class="btn btn-sm btn-light border text-muted"
+                                        {% if not notification_unread_count %}disabled{% endif %}>
+                                        Tout lire
+                                    </button>
+                                </div>
+                                <div id="notificationList" class="list-group list-group-flush"
+                                    style="max-height: 420px; overflow-y: auto;">
+                                    {% for notification in notification_items %}
+                                    <a href="{{ notification.open_url }}" data-no-ajax
+                                        data-notification-id="{{ notification.id }}"
+                                        class="list-group-item list-group-item-action px-3 py-3 {% if not notification.is_read %}bg-light{% endif %}">
+                                        <div class="d-flex align-items-start justify-content-between gap-2">
+                                            <div class="fw-semibold text-dark small">{{ notification.title }}</div>
+                                            {% if not notification.is_read %}
+                                            <span class="badge text-bg-primary">Nouveau</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-muted mt-1" style="font-size: 0.8rem;">{{ notification.message }}</div>
+                                        <div class="text-muted mt-2" style="font-size: 0.72rem;">
+                                            Commande #{{ notification.order_id }} · {{ notification.created_at|date:"d/m H:i" }}
+                                        </div>
+                                    </a>
+                                    {% empty %}
+                                    <div id="notificationEmptyState" class="px-4 py-4 text-center text-muted"
+                                        style="font-size: 0.82rem;">
+                                        Aucune notification pour le moment.
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                         {% endif %}
 
-                        <!-- Utilities -->
-                        <button class="btn btn-link text-muted position-relative p-0 me-2" title="Notifications">
-                            <i class="bi bi-bell fs-5"></i>
-                            <span
-                                class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-                        </button>
-
+                        {% if notifications_enabled %}
                         <div class="vr h-50 mx-2 text-muted opacity-25"></div>
+                        {% endif %}
 
                         <!-- Profile -->
                         <div class="dropdown">
@@ -193,15 +233,14 @@
                                 <li>
                                     <h6 class="dropdown-header text-uppercase small fw-bold">Compte</h6>
                                 </li>
-                                <li><a class="dropdown-item rounded-2 small py-2" href="#"><i
+                                <li><a class="dropdown-item rounded-2 small py-2" href="{% url 'accounts:profile' %}" data-no-ajax><i
                                             class="bi bi-person me-2"></i> Profil</a></li>
-                                <li><a class="dropdown-item rounded-2 small py-2" href="#"><i
+                                <li><a class="dropdown-item rounded-2 small py-2" href="{% url 'accounts:profile' %}#profile-settings" data-no-ajax><i
                                             class="bi bi-gear me-2"></i> Paramètres</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item rounded-2 small py-2 text-danger"
-                                        href="{% url 'accounts:logout' %}" data-no-ajax><i class="bi bi-box-arrow-right me-2"></i>
+                                <li><a class="dropdown-item rounded-2 small py-2 text-danger" href="{% url 'accounts:logout' %}" data-no-ajax><i class="bi bi-box-arrow-right me-2"></i>
                                         Déconnexion</a></li>
                             </ul>
                         </div>
@@ -210,6 +249,7 @@
                             href="{% url 'accounts:login' %}">Connexion</a>
                         {% endif %}
                     </div>
+                </div>
             </nav>
             {% endblock %}
 
@@ -245,6 +285,198 @@
 
     <!-- Toast System -->
     {% include 'includes/toast_system.html' %}
+
+    <script>
+        (function () {
+            const root = document.getElementById('orderNotifications');
+            if (!root) {
+                return;
+            }
+
+            const badge = document.getElementById('notificationBadge');
+            const list = document.getElementById('notificationList');
+            const summary = document.getElementById('notificationSummary');
+            const markAllButton = document.getElementById('notificationMarkAll');
+            const feedUrl = root.dataset.feedUrl;
+            const markAllUrl = root.dataset.markAllUrl;
+            let latestNotificationId = getLatestRenderedId();
+
+            function getLatestRenderedId() {
+                const ids = Array.from(root.querySelectorAll('[data-notification-id]'))
+                    .map((node) => Number(node.dataset.notificationId))
+                    .filter((id) => !Number.isNaN(id));
+                return ids.length ? Math.max(...ids) : 0;
+            }
+
+            function getCookie(name) {
+                const cookieValue = document.cookie
+                    .split('; ')
+                    .find((row) => row.startsWith(name + '='));
+                return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : '';
+            }
+
+            function escapeHtml(value) {
+                return String(value || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function updateSummary(unreadCount) {
+                if (!summary) {
+                    return;
+                }
+
+                if (!unreadCount) {
+                    summary.textContent = 'Aucune non lue';
+                    return;
+                }
+
+                summary.textContent = unreadCount + ' non lue' + (unreadCount > 1 ? 's' : '');
+            }
+
+            function updateBadge(unreadCount) {
+                if (!badge) {
+                    return;
+                }
+
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+                    badge.classList.remove('d-none');
+                } else {
+                    badge.textContent = '0';
+                    badge.classList.add('d-none');
+                }
+
+                if (markAllButton) {
+                    markAllButton.disabled = unreadCount === 0;
+                }
+            }
+
+            function renderNotifications(notifications) {
+                if (!list) {
+                    return;
+                }
+
+                if (!notifications.length) {
+                    list.innerHTML = `
+                        <div class="px-4 py-4 text-center text-muted" style="font-size: 0.82rem;">
+                            Aucune notification pour le moment.
+                        </div>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = notifications.map((notification) => {
+                    const unreadClass = notification.is_read ? '' : 'bg-light';
+                    const badgeHtml = notification.is_read
+                        ? ''
+                        : '<span class="badge text-bg-primary">Nouveau</span>';
+
+                    return `
+                        <a href="${escapeHtml(notification.open_url)}" data-no-ajax
+                            data-notification-id="${notification.id}"
+                            class="list-group-item list-group-item-action px-3 py-3 ${unreadClass}">
+                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                <div class="fw-semibold text-dark small">${escapeHtml(notification.title)}</div>
+                                ${badgeHtml}
+                            </div>
+                            <div class="text-muted mt-1" style="font-size: 0.8rem;">${escapeHtml(notification.message)}</div>
+                            <div class="text-muted mt-2" style="font-size: 0.72rem;">
+                                Commande #${notification.order_id} · ${escapeHtml(notification.created_at)}
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+            }
+
+            async function refreshNotifications() {
+                try {
+                    const response = await fetch(feedUrl, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const data = await response.json();
+                    const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+                    const unreadCount = Number(data.unread_count || 0);
+                    const newNotifications = notifications.filter((notification) => notification.id > latestNotificationId);
+
+                    if (newNotifications.length && typeof showToast === 'function') {
+                        newNotifications
+                            .slice()
+                            .reverse()
+                            .forEach((notification) => {
+                                showToast('info', 'Nouvelle commande', notification.message);
+                            });
+                    }
+
+                    if (notifications.length) {
+                        latestNotificationId = Math.max(
+                            latestNotificationId,
+                            ...notifications.map((notification) => notification.id)
+                        );
+                    }
+
+                    updateBadge(unreadCount);
+                    updateSummary(unreadCount);
+                    renderNotifications(notifications);
+                } catch (error) {
+                    console.error('Notifications refresh failed:', error);
+                }
+            }
+
+            async function markAllAsRead() {
+                try {
+                    const response = await fetch(markAllUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken'),
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({}),
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    await refreshNotifications();
+                } catch (error) {
+                    console.error('Notifications mark-all failed:', error);
+                }
+            }
+
+            if (markAllButton) {
+                markAllButton.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    markAllAsRead();
+                });
+            }
+
+            window.ORDER_NOTIFICATIONS = {
+                refresh: refreshNotifications,
+            };
+
+            refreshNotifications();
+            window.setInterval(refreshNotifications, 20000);
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden) {
+                    refreshNotifications();
+                }
+            });
+        })();
+    </script>
 
     <!-- Admin Navigation AJAX -->
     <script src="{% static 'js/admin_navigation.js' %}"></script>

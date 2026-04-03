@@ -213,8 +213,7 @@
 <div class="status-nav">
     <a href="?status=" class="status-link {% if not current_status %}is-active{% endif %}">Tous</a>
     <a href="?status=submitted" class="status-link {% if current_status == 'submitted' %}is-active{% endif %}">En attente ({{ pending_count }})</a>
-    <a href="?status=approved"
-        class="status-link {% if current_status == 'approved' %}is-active{% endif %}">Approuvés</a>
+    <a href="?status=approved"class="status-link {% if current_status == 'approved' %}is-active{% endif %}">Approuvés</a>
     <a href="?status=rejected" class="status-link {% if current_status == 'rejected' %}is-active{% endif %}">Rejetés</a>
 </div>
 
@@ -261,8 +260,7 @@
         </div>
         <div style="display:flex; gap:8px;">
             {% if payment.proof_file %}
-            <button onclick="openProofLightbox('{{ payment.proof_file.url }}')" class="proof-mini-preview"
-                title="Voir la preuve" style="cursor:pointer;">
+            <button onclick="openProofLightbox('{{ payment.proof_file.url }}')" class="proof-mini-preview" title="Voir la preuve" style="cursor:pointer;">
                 <i class="bi bi-file-earmark-text"></i>
             </button>
             {% endif %}

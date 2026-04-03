@@ -1,81 +1,209 @@
 {% extends 'base.html' %}
 
-{% block title %}Mon profil - MKARIBU{% endblock %}
+{% block title %}Profil vendeur - MKARIBU{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card border-0 shadow-sm">
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
                 <div class="card-body p-4">
-                    <h3 class="mb-4">
-                        <i class="bi bi-person-circle"></i> Mon profil
-                    </h3>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4 text-muted">Nom d'utilisateur</div>
-                        <div class="col-md-8"><strong>{{ user.username }}</strong></div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4 text-muted">Nom complet</div>
-                        <div class="col-md-8">{{ user.get_full_name|default:"Non renseigné" }}</div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4 text-muted">Email</div>
-                        <div class="col-md-8">{{ user.email|default:"Non renseigné" }}</div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4 text-muted">Rôle(s)</div>
-                        <div class="col-md-8">
-                            {% if user.is_superuser %}
-                            <span class="badge bg-warning text-dark">Superuser</span>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold fs-3"
+                            style="width: 72px; height: 72px; background: linear-gradient(135deg, #0d6efd 0%, #1d3557 100%);">
+                            {{ user.username|make_list|first|upper }}
+                        </div>
+                        <div>
+                            <h3 class="mb-1">{{ user.get_full_name|default:user.username }}</h3>
+                            <div class="text-muted">{{ role_label }}</div>
+                            {% if profile.shop %}
+                            <div class="small text-primary fw-semibold">{{ profile.shop.name }}</div>
                             {% endif %}
-                            {% for group in groups %}
-                            {% if group.name == 'Manager' %}
-                            <span class="badge bg-danger">{{ group.name }}</span>
-                            {% elif group.name == 'Cashier' %}
-                            <span class="badge bg-primary">{{ group.name }}</span>
-                            {% else %}
-                            <span class="badge bg-secondary">{{ group.name }}</span>
-                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="rounded-4 border bg-light p-3 h-100">
+                                <div class="text-muted small text-uppercase mb-1">Statut</div>
+                                <div class="fw-semibold">{% if user.is_active %}Actif{% else %}En attente{% endif %}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="rounded-4 border bg-light p-3 h-100">
+                                <div class="text-muted small text-uppercase mb-1">Matricule</div>
+                                <div class="fw-semibold">{{ profile.employee_code|default:"Non renseigne" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="rounded-4 border bg-light p-3 h-100">
+                                <div class="text-muted small text-uppercase mb-1">Telephone</div>
+                                <div class="fw-semibold">{{ profile.phone|default:"Non renseigne" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="rounded-4 border bg-light p-3 h-100">
+                                <div class="text-muted small text-uppercase mb-1">Embauche</div>
+                                <div class="fw-semibold">{{ profile.hire_date|date:"d/m/Y"|default:"Non renseigne" }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="border-top pt-4">
+                        <h5 class="fw-bold mb-3">Informations du compte</h5>
+                        <div class="small text-muted mb-2">Email</div>
+                        <div class="fw-semibold mb-3">{{ user.email|default:"Non renseigne" }}</div>
+
+                        <div class="small text-muted mb-2">Roles</div>
+                        <div class="mb-3">
+                            {% for role in roles %}
+                            <span class="badge rounded-pill text-bg-primary me-1">{{ role }}</span>
                             {% empty %}
-                            {% if not user.is_superuser %}
-                            <span class="text-muted">Aucun rôle assigné</span>
-                            {% endif %}
+                            <span class="text-muted">Aucun role</span>
                             {% endfor %}
                         </div>
+
+                        <div class="small text-muted mb-2">Inscription</div>
+                        <div class="mb-3">{{ user.date_joined|date:"d/m/Y H:i" }}</div>
+
+                        <div class="small text-muted mb-2">Derniere connexion</div>
+                        <div>{% if user.last_login %}{{ user.last_login|date:"d/m/Y H:i" }}{% else %}Jamais{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                        <div>
+                            <h4 class="fw-bold mb-1">Fiche vendeur</h4>
+                            <p class="text-muted mb-0">Mettez a jour les informations utiles pour la gestion de l'equipe.</p>
+                        </div>
+                        <a href="{% url 'accounts:password_reset' %}" class="btn btn-outline-secondary rounded-3" data-no-ajax>
+                            <i class="bi bi-key me-2"></i>Mot de passe oublie
+                        </a>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-4 text-muted">Date d'inscription</div>
-                        <div class="col-md-8">{{ user.date_joined|date:"d/m/Y à H:i" }}</div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4 text-muted">Dernière connexion</div>
-                        <div class="col-md-8">
-                            {% if user.last_login %}
-                            {{ user.last_login|date:"d/m/Y à H:i" }}
-                            {% else %}
-                            Jamais
-                            {% endif %}
+                    {% if staff_metrics %}
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <div class="rounded-4 bg-primary bg-opacity-10 p-3 h-100">
+                                <div class="small text-uppercase text-muted mb-1">Ventes enregistrees</div>
+                                <div class="fs-4 fw-bold text-primary">{{ staff_metrics.sales_count }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="rounded-4 bg-success bg-opacity-10 p-3 h-100">
+                                <div class="small text-uppercase text-muted mb-1">Total vendu</div>
+                                <div class="fs-4 fw-bold text-success">{{ staff_metrics.sales_total }} FC</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="rounded-4 bg-warning bg-opacity-10 p-3 h-100">
+                                <div class="small text-uppercase text-muted mb-1">Derniere vente</div>
+                                <div class="fw-bold text-dark">
+                                    {% if staff_metrics.last_sale %}
+                                    {{ staff_metrics.last_sale.sale_date|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                    Aucune
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    {% endif %}
 
-                    <hr class="my-4">
+                    <form method="post" id="profile-settings" novalidate>
+                        {% csrf_token %}
 
-                    <div class="d-flex gap-2">
-                        <a href="/admin/auth/user/{{ user.id }}/password/" class="btn btn-outline-primary"
-                            target="_blank">
-                            <i class="bi bi-key"></i> Changer mon mot de passe
-                        </a>
-                        <a href="{% url 'sales:pos' %}" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left"></i> Retour
-                        </a>
-                    </div>
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger rounded-4">
+                            {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                                {{ form.first_name }}
+                                {% for error in form.first_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                                {{ form.last_name }}
+                                {% for error in form.last_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                                {{ form.email }}
+                                {% for error in form.email.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+                                {{ form.phone }}
+                                {% for error in form.phone.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.employee_code.id_for_label }}">{{ form.employee_code.label }}</label>
+                                {{ form.employee_code }}
+                                {% for error in form.employee_code.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.position_title.id_for_label }}">{{ form.position_title.label }}</label>
+                                {{ form.position_title }}
+                                {% for error in form.position_title.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.hire_date.id_for_label }}">{{ form.hire_date.label }}</label>
+                                {{ form.hire_date }}
+                                {% for error in form.hire_date.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Boutique assignee</label>
+                                <input type="text" class="form-control" value="{{ profile.shop.name|default:'Aucune boutique' }}" disabled>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.emergency_contact_name.id_for_label }}">{{ form.emergency_contact_name.label }}</label>
+                                {{ form.emergency_contact_name }}
+                                {% for error in form.emergency_contact_name.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="{{ form.emergency_contact_phone.id_for_label }}">{{ form.emergency_contact_phone.label }}</label>
+                                {{ form.emergency_contact_phone }}
+                                {% for error in form.emergency_contact_phone.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold" for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+                                {{ form.address }}
+                                {% for error in form.address.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                                {{ form.notes }}
+                                <div class="small text-muted mt-1">Exemple: horaires preferes, remarque interne, secteur de vente, observations utiles.</div>
+                                {% for error in form.notes.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary rounded-3 px-4">
+                                <i class="bi bi-save me-2"></i>Enregistrer
+                            </button>
+                            <a href="{% url 'sales:pos' %}" class="btn btn-outline-secondary rounded-3" data-no-ajax>
+                                Retour caisse
+                            </a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

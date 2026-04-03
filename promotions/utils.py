@@ -65,9 +65,9 @@ def calculate_product_price(product, base_price=None, at_datetime=None):
     base_price = Decimal(str(base_price))
     
     # Récupérer les promotions actives pour ce produit
-    promotions = get_active_promotions(product_id=product.id, at_datetime=at_datetime)
-    
-    if not promotions.exists():
+    promotion = get_active_promotions(product_id=product.id, at_datetime=at_datetime).first()
+
+    if promotion is None:
         return {
             'original_price': base_price,
             'discounted_price': base_price,
@@ -79,7 +79,6 @@ def calculate_product_price(product, base_price=None, at_datetime=None):
         }
     
     # Utiliser la première (meilleure) promotion
-    promotion = promotions.first()
     discounted_price = promotion.calculate_discounted_price(base_price)
     discount_amount = base_price - discounted_price
     

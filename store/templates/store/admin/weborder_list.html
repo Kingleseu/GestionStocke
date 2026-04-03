@@ -702,17 +702,14 @@
     <!-- TOP BAR -->
     <div class="orders-topbar">
         <div class="orders-topbar__title">
-            <div class="title-dot"></div>
-            Réception des Commandes
+            <div class="title-dot"></div> Réception des Commandes
         </div>
         <div class="topbar-actions">
             <a href="{% url 'store:admin_payments' %}" class="btn-outline-sm">
                 <i class="bi bi-shield-check"></i>
                 Preuves de paiement
                 {% if pending_payment_count %}
-                <span
-                    style="background:#ef4444;color:white;border-radius:99px;padding:1px 7px;font-size:0.65rem;font-weight:800;">{{
-                    pending_payment_count }}</span>
+                <span style="background:#ef4444;color:white;border-radius:99px;padding:1px 7px;font-size:0.65rem;font-weight:800;">{{pending_payment_count }}</span>
                 {% endif %}
             </a>
             <a href="{% url 'store:admin_dashboard' %}" class="btn-outline-sm">
@@ -817,6 +814,9 @@
                     <!-- NumÃ©ro et date -->
                     <div>
                         <div class="order-num">#{{ order.id }}</div>
+                        {% if order.order_number %}
+                        <div class="order-date">{{ order.order_number }}</div>
+                        {% endif %}
                         <div class="order-date">{{ order.created_at|date:"d/m/Y" }}</div>
                         <div class="order-date">{{ order.created_at|date:"H:i" }}</div>
                     </div>
@@ -832,7 +832,7 @@
                     <div class="items-preview">
                         {% for item in order.items.all|slice:":3" %}
                         {% if item.product.image %}
-                        <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}" class="item-thumb">
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}" class="item-thumb" loading="lazy" decoding="async">
                         {% else %}
                         <div class="item-thumb-placeholder"><i class="bi bi-image"></i></div>
                         {% endif %}

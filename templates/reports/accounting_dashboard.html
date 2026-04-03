@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Comptabilité - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- En-tête avec sélecteur de période -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1"><i class="bi bi-calculator text-primary"></i> Comptabilité de la Boutique</h2>
+            <p class="text-muted mb-0">Analyse financière pour la période : <strong>{{ start_date|date:"d M Y" }} au {{ end_date|date:"d M Y" }}</strong></p>
+        </div>
+        
+        <div class="btn-group shadow-sm">
+            <a href="?period=day" class="btn btn-outline-primary {% if period == 'day' %}active{% endif %}">Jour</a>
+            <a href="?period=month" class="btn btn-outline-primary {% if period == 'month' %}active{% endif %}">Mois</a>
+            <a href="?period=year" class="btn btn-outline-primary {% if period == 'year' %}active{% endif %}">Année</a>
+            <a href="?period=all" class="btn btn-outline-primary {% if period == 'all' %}active{% endif %}">Total</a>
+        </div>
+        
+        <div class="dropdown">
+            <button class="btn btn-dark dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-download"></i> Exporter
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li><a class="dropdown-item" href="{% url 'reports:export' 'pdf' %}?period={{ period }}"><i class="bi bi-file-pdf text-danger"></i> Format PDF</a></li>
+                <li><a class="dropdown-item" href="{% url 'reports:export' 'excel' %}?period={{ period }}"><i class="bi bi-file-earmark-excel text-success"></i> Format Excel (Stylisé)</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- KPIs Financiers -->
+    <div class="row g-4 mb-4">
+        <!-- Revenus (Ventes) -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-success-light rounded-circle p-3 text-success me-3">
+                            <i class="bi bi-graph-up-arrow fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted text-uppercase fw-bold ls-1 mb-1" style="font-size: 0.75rem;">Revenus (Entrées)</h6>
+                            <h3 class="fw-bold mb-0">{{ summary.revenue|floatformat:2|intcomma }} FC</h3>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-muted small">
+                        <i class="bi bi-receipt"></i> <strong>{{ summary.sales_count }}</strong> ventes effectuées
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dépenses Stock (Achats) -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-warning-light rounded-circle p-3 text-warning me-3">
+                            <i class="bi bi-box-seam fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted text-uppercase fw-bold ls-1 mb-1" style="font-size: 0.75rem;">Coût Stock (Achats)</h6>
+                            <h3 class="fw-bold mb-0 text-warning">{{ summary.stock_costs|floatformat:2|intcomma }} FC</h3>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-muted small">
+                        <i class="bi bi-truck"></i> <strong>{{ summary.purchases_count }}</strong> achats fournisseurs
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charges Opérationnelles -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-danger-light rounded-circle p-3 text-danger me-3">
+                            <i class="bi bi-wallet2 fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted text-uppercase fw-bold ls-1 mb-1" style="font-size: 0.75rem;">Charges (Loyer, etc.)</h6>
+                            <h3 class="fw-bold mb-0 text-danger">{{ summary.operating_expenses|floatformat:2|intcomma }} FC</h3>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <span class="text-muted small"><i class="bi bi-card-list"></i> {{ summary.expenses_count }} frais fixes</span>
+                        <a href="{% url 'reports:expense_list' %}" class="btn btn-link p-0 text-danger text-decoration-none small fw-bold">Gérer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bénéfice Net -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-lg h-100 overflow-hidden bg-primary text-white">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0 bg-white rounded-circle p-3 text-primary me-3">
+                            <i class="bi bi-piggy-bank fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-white-50 text-uppercase fw-bold ls-1 mb-1" style="font-size: 0.75rem;">Bénéfice Net</h6>
+                            <h3 class="fw-bold mb-0">{{ summary.net_profit|floatformat:2|intcomma }} FC</h3>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-white-50 small">
+                        Taux de marge : <strong>{{ margin_percent|floatformat:1 }}%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques & Détails -->
+    <div class="row g-4">
+        <!-- Répartition des dépenses -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 border-0">
+                    <h5 class="fw-bold mb-0">Répartition des Charges</h5>
+                </div>
+                <div class="card-body">
+                    {% for item in breakdown %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small fw-bold"><i class="bi {{ item.category__icon }} me-1"></i> {{ item.category__name }}</span>
+                            <span class="small text-muted">{{ item.total|floatformat:0|intcomma }} FC</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ item.percentage }}%"></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-clipboard-x fs-1 text-muted d-block mb-2"></i>
+                        <p class="text-muted">Aucune dépense enregistrée</p>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="mt-4 pt-3 border-top d-grid">
+                        <a href="{% url 'reports:expense_create' %}" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-plus-circle"></i> Ajouter une dépense
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dernières Transactions -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Détails des Dépenses de la période</h5>
+                    <a href="{% url 'reports:expense_list' %}" class="btn btn-sm btn-light">Voir tout</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Date</th>
+                                    <th>Catégorie</th>
+                                    <th>Intitulé</th>
+                                    <th class="text-end pe-4">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for exp in summary.expenses %}
+                                <tr>
+                                    <td class="ps-4 small">{{ exp.date|date:"d/m/Y" }}</td>
+                                    <td><span class="badge bg-light text-dark border"><i class="bi {{ exp.category.icon }}"></i> {{ exp.category.name }}</span></td>
+                                    <td class="small">{{ exp.title }}</td>
+                                    <td class="text-end pe-4 fw-bold text-danger">-{{ exp.amount|floatformat:0|intcomma }} FC</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">Aucune charge pour cette période.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .ls-1 { letter-spacing: 1px; }
+    .bg-primary { background-color: #1F4E78 !important; }
+    .bg-success-light { background-color: rgba(25, 135, 84, 0.1); }
+    .bg-warning-light { background-color: rgba(255, 193, 7, 0.1); }
+    .bg-danger-light { background-color: rgba(220, 53, 69, 0.1); }
+    .flex-shrink-0 { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
+</style>
+{% endblock %}

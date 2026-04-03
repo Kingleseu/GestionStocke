@@ -14,6 +14,10 @@ urlpatterns = [
     path('checkout/', views.StoreCheckoutView.as_view(), name='checkout'),
     path('payment-instructions/<int:order_id>/', views.ManualPaymentInstructionsView.as_view(), name='payment_instructions'),
     path('payment-submit/<int:order_id>/', views.ManualPaymentSubmissionView.as_view(), name='payment_submit'),
+    path('account/profile/', views.StoreCustomerProfileView.as_view(), name='account_profile'),
+    path('account/orders/', views.CustomerOrderListView.as_view(), name='account_orders'),
+    path('account/orders/<str:order_number>/', views.CustomerOrderDetailView.as_view(), name='account_order_detail'),
+    path('account/orders/<str:order_number>/invoice/', views.CustomerOrderInvoiceView.as_view(), name='account_order_invoice'),
     path('api/sync-cart/', views.sync_cart, name='sync_cart'),
     
     # API endpoints
@@ -72,6 +76,11 @@ urlpatterns = [
     path('admin/collections/<int:pk>/update/', views.CollectionUpdateView.as_view(), name='admin_collection_update'),
     path('admin/collections/<int:pk>/delete/', views.CollectionDeleteView.as_view(), name='admin_collection_delete'),
     path('admin/collections/sync/', views.sync_collections, name='admin_collections_sync'),
+
+    # Notifications
+    path('admin/notifications/feed/', views.notifications_feed, name='admin_notifications_feed'),
+    path('admin/notifications/mark-all-read/', views.mark_all_notifications_read, name='admin_notifications_mark_all_read'),
+    path('admin/notifications/<int:pk>/open/', views.open_notification, name='admin_notification_open'),
     
     # Web Orders Management
     path('admin/orders/', views.WebOrderListView.as_view(), name='admin_weborders'),
@@ -83,6 +92,11 @@ urlpatterns = [
     path('admin/payments/', views.AdminPaymentListView.as_view(), name='admin_payments'),
     path('admin/payments/<int:pk>/approve/', views.approve_payment, name='admin_payment_approve'),
     path('admin/payments/<int:pk>/reject/', views.reject_payment, name='admin_payment_reject'),
+    # Delivery Zones
+    path('admin/delivery-zones/', views.DeliveryZoneListView.as_view(), name='admin_delivery_zones'),
+    path('admin/delivery-zones/add/', views.DeliveryZoneCreateView.as_view(), name='admin_delivery_zone_add'),
+    path('admin/delivery-zones/<int:pk>/update/', views.DeliveryZoneUpdateView.as_view(), name='admin_delivery_zone_update'),
+    path('admin/delivery-zones/<int:pk>/delete/', views.DeliveryZoneDeleteView.as_view(), name='admin_delivery_zone_delete'),
 ]
 
 # Add Promotions URLs if the app is available

@@ -1,0 +1,170 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Commande {{ order.tracking_reference }}{% endblock %}
+
+{% block content %}
+<section class="container py-5" style="max-width: 1120px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted small mb-1">Suivi de commande</p>
+            <h1 class="h3 mb-1">{{ order.tracking_reference }}</h1>
+            <p class="text-muted mb-0">Commande du {{ order.created_at|date:"d/m/Y à H:i" }} · {{ order.get_status_display }}</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'store:account_orders' %}" class="btn btn-outline-dark">Retour</a>
+            <a href="{{ invoice_url }}?print=1" target="_blank" class="btn btn-dark">Imprimer la facture</a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3">
+                {% for step in timeline_steps %}
+                    <div class="col-md">
+                        <div class="rounded-3 p-3 h-100 {% if step.done %}bg-dark text-white{% elif step.active %}bg-light border{% else %}bg-white border{% endif %}">
+                            <div class="small text-uppercase opacity-75 mb-1">Etape</div>
+                            <div class="fw-semibold">{{ step.label }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 mb-0">Facture detaillee</h2>
+                        <span class="badge text-bg-secondary">{{ order.get_payment_method_display }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th class="text-center">Quantite</th>
+                                    <th class="text-end">Prix</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ item.product_name|default:item.product.name }}</div>
+                                            {% if item.customization_data %}
+                                                <div class="small text-muted">Produit personnalise</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">{{ item.quantity }}</td>
+                                        <td class="text-end">{{ item.price|floatformat:0 }} FC</td>
+                                        <td class="text-end">{{ item.line_total|floatformat:0 }} FC</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="border-top pt-3 d-flex flex-column gap-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Sous-total</span>
+                            <strong>{{ order.items_subtotal|floatformat:0 }} FC</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Livraison</span>
+                            <strong>{{ order.delivery_fee|floatformat:0 }} FC</strong>
+                        </div>
+                        <div class="d-flex justify-content-between fs-5">
+                            <span>Total</span>
+                            <strong>{{ order.total_amount|floatformat:0 }} FC</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Articles commandes</h2>
+                    <div class="row g-3">
+                        {% for item in order.items.all %}
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3 h-100">
+                                    <div class="fw-semibold">{{ item.product_name|default:item.product.name }}</div>
+                                    <div class="text-muted small mb-2">Quantite: {{ item.quantity }}</div>
+                                    {% if item.preview_image %}
+                                        <img src="{{ item.preview_image.url }}" alt="{{ item.product_name|default:item.product.name }}" class="img-fluid rounded-3 mb-2" loading="lazy" decoding="async">
+                                    {% elif item.product and item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product_name|default:item.product.name }}" class="img-fluid rounded-3 mb-2" loading="lazy" decoding="async">
+                                    {% endif %}
+                                    {% if item.customization_data %}
+                                        <div class="small text-muted">Cet article contient des options de personnalisation enregistrees avec la commande.</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Client et livraison</h2>
+                    <div class="small text-muted mb-1">Nom</div>
+                    <div class="mb-3">{{ order.full_name }}</div>
+                    <div class="small text-muted mb-1">Telephone</div>
+                    <div class="mb-3">{{ order.phone }}</div>
+                    <div class="small text-muted mb-1">Adresse</div>
+                    <div>{{ order.address }}</div>
+                    <div>{{ order.city }}</div>
+                    {% if order.delivery_zone %}
+                        <div class="mt-2 small text-muted">Zone: {{ order.delivery_zone }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Paiement</h2>
+                    <div class="small text-muted mb-1">Mode choisi</div>
+                    <div class="mb-3">{{ selected_payment_details.label }}</div>
+                    <div class="small text-muted mb-1">Statut</div>
+                    <div class="mb-3">{{ order.get_status_display }}</div>
+
+                    {% if manual_payment %}
+                        <div class="small text-muted mb-1">Reference transmise</div>
+                        <div class="mb-3">{{ manual_payment.transaction_ref }}</div>
+                        {% if manual_payment.status == 'rejected' and manual_payment.rejection_reason %}
+                            <div class="alert alert-warning small mb-0">{{ manual_payment.rejection_reason }}</div>
+                        {% endif %}
+                    {% elif order.requires_manual_payment_proof %}
+                        <p class="small text-muted">Aucune preuve de paiement n'a encore ete jointe a cette commande.</p>
+                    {% endif %}
+
+                    {% if order.requires_manual_payment_proof and order.status == 'pending_payment' %}
+                        <div class="d-grid gap-2">
+                            <a href="{{ payment_instructions_url }}?payment_method={{ order.payment_method }}" class="btn btn-outline-dark">Voir les instructions</a>
+                            <a href="{{ payment_submit_url }}?payment_method={{ order.payment_method }}" class="btn btn-dark">Envoyer ma preuve</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if order.is_cash_on_delivery %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Bon de remise</h2>
+                        <div class="small text-muted mb-1">Reference a communiquer</div>
+                        <div class="fw-semibold fs-5 mb-3">{{ order.tracking_reference }}</div>
+                        <div class="small text-muted mb-1">Code de remise</div>
+                        <div class="fw-semibold fs-4 mb-3">{{ order.delivery_confirmation_code }}</div>
+                        <p class="small text-muted mb-0">Le livreur pourra verifier cette reference et ce code au moment de la remise du colis. Cela te permet de suivre proprement les commandes payees a la livraison sans changer ton cycle de validation.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

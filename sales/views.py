@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db import transaction
+from django.db.models import Q, Sum
 from django.contrib import messages
 from django.utils import timezone
 from accounts.decorators import cashier_required
@@ -54,12 +55,10 @@ def search_products(request):
     else:
         # Recherche standard (Nom ou Code-barres partiel)
         products = Product.objects.filter(
-            shop=user_shop, is_active=True
+            shop=user_shop,
+            is_active=True,
         ).filter(
-            name__icontains=query
-        ) | Product.objects.filter(
-            shop=user_shop, is_active=True,
-            barcode__icontains=query
+            Q(name__icontains=query) | Q(barcode__icontains=query)
         )
     
     # Limiter à 10 résultats
@@ -223,7 +222,7 @@ def sales_history_view(request):
     
     sales = sales.order_by('-sale_date')
     total_sales = sales.count()
-    total_amount = sum(sale.total for sale in sales)
+    total_amount = sales.aggregate(total=Sum('total'))['total'] or 0
     
     # Filter cashiers by shop
     cashiers = User.objects.filter(profile__shop=user_shop)

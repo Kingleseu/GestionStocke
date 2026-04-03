@@ -4,11 +4,20 @@ import os
 from pathlib import Path
 import dj_database_url
 
+def _env_bool(key, default=False):
+    value = os.environ.get(key)
+    if value is None:
+        return default
+    return value.lower() in ('1', 'true', 'yes', 'on')
+
+CLOUD_ENV_KEYS = ('RAILWAY_ENVIRONMENT', 'RAILWAY_PROJECT_ID', 'RENDER')
+IS_CLOUD_ENV = any(os.environ.get(k) for k in CLOUD_ENV_KEYS)
+
 # Load environment variables from .env file (for local development)
 try:
     from dotenv import load_dotenv
     ENV_DIR = Path(__file__).resolve().parent.parent  # Project root
-    load_dotenv(ENV_DIR / '.env')
+    load_dotenv(ENV_DIR / '.env', override=not IS_CLOUD_ENV)
 except ImportError:
     pass
 
@@ -20,10 +29,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-CHANGE-THIS-IN-PRODUCTION')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# Temporary: force debug ON to inspect 500 errors in detail.
-DEBUG = True
+DEBUG = _env_bool('DEBUG', False)
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver,.railway.app,.up.railway.app,.onrender.com').split(',')
+PUBLIC_APP_URL = os.environ.get('PUBLIC_APP_URL', '').strip().rstrip('/')
 
 
 # Application definition
@@ -53,6 +62,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Add WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -76,6 +86,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'store.context_processors.order_notifications',
             ],
         },
     },
@@ -161,10 +172,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Environment helpers
-IS_CLOUD_ENV = any(
-    os.environ.get(k)
-    for k in ('RAILWAY_ENVIRONMENT', 'RAILWAY_PROJECT_ID', 'RENDER')
-)
 STATICFILES_BACKEND = (
     "whitenoise.storage.CompressedManifestStaticFilesStorage"
     if (not DEBUG and IS_CLOUD_ENV)
@@ -198,6 +205,11 @@ else:
     if not DEBUG:
         print("[STORAGE] WARNING: CLOUDINARY_URL is missing or invalid. Media files won't persist!")
 
+SERVE_MEDIA_LOCALLY = (
+    STORAGES["default"]["BACKEND"] == "django.core.files.storage.FileSystemStorage"
+    and not IS_CLOUD_ENV
+)
+
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -210,6 +222,27 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'sales:pos'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# OTP / Email authentication
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'no-reply@mkaribu.local')
+OTP_CODE_EXPIRATION_MINUTES = int(os.environ.get('OTP_CODE_EXPIRATION_MINUTES', '10'))
+OTP_CODE_RESEND_COOLDOWN_SECONDS = int(os.environ.get('OTP_CODE_RESEND_COOLDOWN_SECONDS', '60'))
+OTP_CODE_MAX_ATTEMPTS = int(os.environ.get('OTP_CODE_MAX_ATTEMPTS', '5'))
+
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.smtp.EmailBackend',
+)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'ebenndombi99@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'kree pfxs hayb hdtj')
+EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', True)
+EMAIL_USE_SSL = _env_bool('EMAIL_USE_SSL', False)
+
 # Currency settings
 CURRENCIES = {
     'USD': {'symbol': '$', 'name': 'Dollar Américain', 'code': 'USD'},
@@ -217,16 +250,13 @@ CURRENCIES = {
 }
 DEFAULT_CURRENCY = 'CDF'  # Devise par défaut
 
-# Security settings
-def _env_bool(key, default):
-    value = os.environ.get(key)
-    if value is None:
-        return default
-    return value.lower() in ('1', 'true', 'yes', 'on')
-
 SECURE_SSL_REDIRECT = _env_bool('SECURE_SSL_REDIRECT', (not DEBUG and IS_CLOUD_ENV))
 SESSION_COOKIE_SECURE = _env_bool('SESSION_COOKIE_SECURE', (not DEBUG and IS_CLOUD_ENV))
 CSRF_COOKIE_SECURE = _env_bool('CSRF_COOKIE_SECURE', (not DEBUG and IS_CLOUD_ENV))
+
+if IS_CLOUD_ENV:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
 
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True

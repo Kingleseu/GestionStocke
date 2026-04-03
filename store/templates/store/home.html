@@ -3,6 +3,101 @@
 
 {% block content %}
 <style>
+    /* ── Checkout Payment Method Cards ── */
+    .checkout-payment-cards { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+    .chk-method-card { border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; overflow: hidden; transition: all 0.3s ease; }
+    .chk-method-card--selected { border-color: #C01414; box-shadow: 0 4px 12px rgba(192, 20, 20, 0.1); }
+    .chk-method-header { display: flex; align-items: center; padding: 16px; cursor: pointer; user-select: none; }
+    .chk-method-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 16px; background: #f3f4f6; }
+    .chk-icon--orange { background: rgba(255, 107, 26, 0.1); }
+    .chk-icon--red { background: rgba(224, 0, 0, 0.1); }
+    .chk-icon--green { background: rgba(22, 163, 74, 0.1); }
+    .chk-method-info { flex: 1; }
+    .chk-method-info strong { display: block; font-size: 1.05rem; color: #111827; }
+    .chk-method-info span { display: block; font-size: 0.85rem; color: #6b7280; margin-top: 2px; }
+    .chk-method-radio { width: 20px; height: 20px; accent-color: #C01414; margin: 0 16px; pointer-events: none; }
+    .chk-chevron { color: #9ca3af; transition: transform 0.3s ease; }
+    .chk-method-body { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.4s ease, opacity 0.4s ease; }
+    .chk-method-card--selected .chk-method-body { border-top: 1px solid #f3f4f6; }
+    .chk-merchant-box { background: rgba(255, 107, 26, 0.05); border: 1px dashed rgba(255, 107, 26, 0.3); border-radius: 8px; padding: 16px; margin: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .chk-merchant-box--red { background: rgba(224, 0, 0, 0.05); border-color: rgba(224, 0, 0, 0.3); }
+    .chk-merchant-label { font-size: 0.85rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+    .chk-merchant-num { font-size: 1.5rem; font-weight: 700; color: #111827; font-family: monospace; margin: 4px 0; }
+    .chk-merchant-name { font-size: 0.9rem; color: #4b5563; font-weight: 500; }
+    .chk-copy-btn { padding: 8px 16px; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #374151; cursor: pointer; transition: all 0.2s; }
+    .chk-copy-btn:hover { background: #f9fafb; border-color: #d1d5db; }
+    .chk-steps { padding: 0 16px 16px; }
+    .chk-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; font-size: 0.95rem; color: #374151; }
+    .chk-step-num { width: 24px; height: 24px; border-radius: 50%; background: #f3f4f6; color: #6b7280; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .chk-select-btn { width: calc(100% - 32px); margin: 0 16px 16px; padding: 12px; background: #ff6b1a; color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+    .chk-select-btn:hover { background: #e65c10; }
+    .chk-select-btn--red { background: #e00000; }
+    .chk-select-btn--red:hover { background: #cc0000; }
+    .chk-select-btn--green { background: #16a34a; }
+    .chk-select-btn--green:hover { background: #15803d; }
+    .chk-address-card { background: #f9fafb; border-radius: 8px; padding: 16px; margin: 0 16px 16px; display: flex; gap: 16px; font-size: 0.9rem; color: #4b5563; }
+    .chk-address-icon { font-size: 1.5rem; color: #6b7280; }
+    .chk-address-title { font-weight: 600; color: #111827; margin-bottom: 4px; }
+    .chk-address-phone { display: inline-block; margin-top: 8px; color: #C01414; font-weight: 500; text-decoration: none; }
+    .chk-important-note { margin: 0 16px 16px; padding: 12px; background: #fffbeb; color: #b45309; border-radius: 6px; font-size: 0.85rem; font-weight: 500; }
+
+    /* ── Info Icon Button & Method Hint ── */
+    .method-hint { display: flex; align-items: center; gap: 12px; background: #fff8f0; border: 1px solid #fed7aa; border-radius: 12px; padding: 10px 14px; margin: 12px 16px 0; font-size: 0.82rem; color: #92400e; cursor: default; }
+    .method-hint span { flex: 1; }
+    .info-icon-btn { position: relative; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #ff6b1a, #f97316); border: none; color: white; font-size: 1.15rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.45); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .info-icon-btn:hover { transform: scale(1.12); box-shadow: 0 6px 20px rgba(249, 115, 22, 0.6); }
+    .info-icon-btn:active { transform: scale(0.96); }
+    .info-icon-ring { position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(249, 115, 22, 0.5); animation: icon-ring-pulse 1.8s ease-in-out infinite; pointer-events: none; }
+    @keyframes icon-ring-pulse { 0%, 100% { opacity: 0.9; transform: scale(1); } 60% { opacity: 0; transform: scale(1.3); } }
+    .info-icon-btn--red { background: linear-gradient(135deg, #e00000, #dc2626); box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45); }
+    .info-icon-btn--red:hover { box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6); }
+    .info-icon-btn--red .info-icon-ring { border-color: rgba(220, 38, 38, 0.5); }
+
+    /* ── Instruction Popup Overlay ── */
+    .instr-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 9000; display: flex; align-items: flex-end; justify-content: center; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.3s ease, visibility 0.3s ease; padding: 0; }
+    .instr-overlay.is-open { opacity: 1; visibility: visible; pointer-events: all; }
+    .instr-popup { width: 100%; max-width: 540px; max-height: 90vh; background: #ffffff; border-radius: 28px 28px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.38s cubic-bezier(0.34, 1.2, 0.64, 1); overflow: hidden; box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.25); }
+    .instr-overlay.is-open .instr-popup { transform: translateY(0); }
+    @media (min-width: 600px) {
+        .instr-overlay { align-items: center; }
+        .instr-popup { border-radius: 28px; max-height: 85vh; }
+        .instr-overlay.is-open .instr-popup { transform: scale(1); animation: popup-in 0.35s cubic-bezier(0.34, 1.2, 0.64, 1); }
+        @keyframes popup-in { 0% { transform: scale(0.88); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    }
+    .instr-popup__header { display: flex; align-items: center; gap: 14px; padding: 20px 24px 18px; position: relative; flex-shrink: 0; }
+    .instr-header--orange { background: linear-gradient(135deg, #ff6b1a, #ea580c); }
+    .instr-header--red { background: linear-gradient(135deg, #e00000, #b91c1c); }
+    .instr-popup__logo { width: 48px; height: 48px; border-radius: 14px; background: rgba(255, 255, 255, 0.18); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .instr-popup__title { font-size: 1.05rem; font-weight: 800; color: white; letter-spacing: -0.01em; }
+    .instr-popup__sub { font-size: 0.75rem; color: rgba(255, 255, 255, 0.7); margin-top: 2px; }
+    .instr-close { margin-left: auto; background: rgba(255, 255, 255, 0.2); border: none; color: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 0.85rem; transition: background 0.2s; }
+    .instr-close:hover { background: rgba(255, 255, 255, 0.35); }
+    .instr-popup__body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .instr-merchant { display: flex; align-items: center; gap: 12px; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 14px; padding: 12px 16px; margin-bottom: 20px; }
+    .instr-merchant--red { background: #fff1f2; border-color: #fecaca; }
+    .instr-merchant__icon { width: 38px; height: 38px; border-radius: 10px; background: #16a34a; color: white; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .instr-merchant__icon--red { background: #dc2626; }
+    .instr-merchant__label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #16a34a; }
+    .instr-merchant--red .instr-merchant__label { color: #dc2626; }
+    .instr-merchant__num { font-size: 1.25rem; font-weight: 800; color: #111827; font-family: 'Courier New', monospace; letter-spacing: 0.03em; }
+    .instr-steps-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 12px; }
+    .instr-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .instr-step { display: flex; align-items: flex-start; gap: 12px; font-size: 0.88rem; color: #374151; line-height: 1.4; }
+    .instr-step__num { width: 28px; height: 28px; border-radius: 50%; background: #e5e7eb; color: #374151; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 800; flex-shrink: 0; margin-top: 1px; }
+    .instr-step__num.is-featured { background: linear-gradient(135deg, #ff6b1a, #f97316); color: white; box-shadow: 0 4px 10px rgba(249, 115, 22, 0.4); }
+    .instr-step__num.is-success { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+    .instr-step--success { background: #f0fdf4; border-radius: 10px; padding: 8px 10px; }
+    .instr-step__label { color: #6b7280; font-size: 0.8rem; }
+    .instr-code { display: inline-block; background: #1a1a2e; color: #f97316; padding: 2px 8px; border-radius: 6px; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.05em; }
+    .copy-btn { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none; border-radius: 8px; padding: 6px 14px; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease; display: flex; align-items: center; gap: 5px; }
+    .copy-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
+    .copy-btn.copied { background: linear-gradient(135deg, #22c55e, #16a34a); }
+    .instr-popup__footer { padding: 16px 24px 24px; flex-shrink: 0; background: #ffffff; border-top: 1px solid #f3f4f6; }
+    .instr-close-btn { width: 100%; background: linear-gradient(135deg, #ff6b1a, #ea580c); color: white; border: none; border-radius: 14px; padding: 14px 20px; font-size: 0.92rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s ease; box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35); }
+    .instr-close-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5); }
+    .instr-close-btn--red { background: linear-gradient(135deg, #e00000, #dc2626); box-shadow: 0 4px 16px rgba(220, 38, 38, 0.35); }
+    .instr-close-btn--red:hover { box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5); }
+
     /* Categories Showcase Section */
     .categories-showcase {
         background: #ffffff;
@@ -294,6 +389,150 @@
             height: 100px;
         }
     }
+
+    .hero-auth-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .hero-auth-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 13px 20px;
+        font-size: 14px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .hero-auth-btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .hero-auth-btn--ghost {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(10px);
+    }
+
+    .hero-auth-btn--primary {
+        background: linear-gradient(135deg, #ffffff, #fef2f2);
+        color: #7f1d1d;
+        box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16);
+    }
+
+    .hero-auth-note {
+        margin-top: 16px;
+        max-width: 560px;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .auth-cta-strip {
+        position: relative;
+        margin: -42px auto 0;
+        width: min(1180px, calc(100% - 30px));
+        padding: 24px 26px;
+        border-radius: 28px;
+        background:
+            linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9)),
+            linear-gradient(145deg, rgba(220, 38, 38, 0.06), rgba(17, 24, 39, 0.04));
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        z-index: 4;
+    }
+
+    .auth-cta-strip__content h3 {
+        margin: 0 0 8px;
+        font-family: 'Playfair Display', serif;
+        font-size: 30px;
+        color: #111827;
+    }
+
+    .auth-cta-strip__content p {
+        margin: 0;
+        color: #4b5563;
+        font-size: 15px;
+        line-height: 1.75;
+        max-width: 650px;
+    }
+
+    .auth-cta-strip__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .auth-cta-strip__btn {
+        border: none;
+        border-radius: 999px;
+        padding: 14px 20px;
+        font-size: 14px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .auth-cta-strip__btn--light {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .auth-cta-strip__btn--primary {
+        background: linear-gradient(135deg, #111827, #b91c1c);
+        color: #ffffff;
+        box-shadow: 0 18px 30px rgba(127, 29, 29, 0.18);
+    }
+
+    @media (max-width: 900px) {
+        .auth-cta-strip {
+            margin-top: -30px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .auth-cta-strip__actions {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .auth-cta-strip__btn {
+            justify-content: center;
+            flex: 1 1 220px;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .hero-auth-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .hero-auth-btn {
+            justify-content: center;
+        }
+
+        .auth-cta-strip {
+            width: calc(100% - 22px);
+            padding: 20px 18px;
+            border-radius: 24px;
+        }
+
+        .auth-cta-strip__content h3 {
+            font-size: 24px;
+        }
+    }
 </style>
 
 <!-- Django Content View (Backward Compatibility) -->
@@ -328,7 +567,39 @@
                         </svg>
                     </button>
                 </div>
+                <div class="hero-auth-actions reveal delay-3" data-store-auth-guest {% if request.user.is_authenticated %}hidden{% endif %}>
+                    <button type="button" class="hero-auth-btn hero-auth-btn--ghost" onclick="window.openAuthModal('login')">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Se connecter
+                    </button>
+                    <button type="button" class="hero-auth-btn hero-auth-btn--primary" onclick="window.openAuthModal('signup')">
+                        <i class="bi bi-person-plus-fill"></i>
+                        Créer un compte client
+                    </button>
+                </div>
+                <div class="hero-auth-note reveal delay-3" data-store-auth-guest {% if request.user.is_authenticated %}hidden{% endif %}>
+                    La visite reste libre, mais un compte client est désormais requis pour ajouter au panier, payer et suivre clairement chaque commande.
+                </div>
             </div>
+        </div>
+    </section>
+
+    <section class="auth-cta-strip reveal" data-store-auth-guest {% if request.user.is_authenticated %}hidden{% endif %}>
+        <div class="auth-cta-strip__content">
+            <h3>Un compte pour des commandes traçables.</h3>
+            <p>
+                Créez votre profil client une seule fois, gardez vos coordonnées prêtes pour le checkout et suivez ensuite vos paiements avec une identité claire.
+            </p>
+        </div>
+        <div class="auth-cta-strip__actions">
+            <button type="button" class="auth-cta-strip__btn auth-cta-strip__btn--light" onclick="window.openAuthModal('login')">
+                <i class="bi bi-box-arrow-in-right"></i>
+                J'ai déjà un compte
+            </button>
+            <button type="button" class="auth-cta-strip__btn auth-cta-strip__btn--primary" onclick="window.openAuthModal('signup')">
+                <i class="bi bi-shield-check"></i>
+                Je crée mon compte
+            </button>
         </div>
     </section>
 
@@ -341,7 +612,7 @@
             <div class="universe-card reveal" onclick="selectUniverse('{{ universe.identifier }}')">
                 <div class="universe-image">
                     {% if universe.image %}
-                    <img src="{{ universe.image.url }}" alt="{{ universe.title }}">
+                    <img src="{{ universe.image.url }}" alt="{{ universe.title }}" loading="lazy" decoding="async">
                     {% else %}
                     <img src="{% static 'images/categories/bijoux_simples.svg' %}" alt="{{ universe.title }}">
                     {% endif %}
@@ -426,7 +697,7 @@
                 <div class="zag-card reveal" onclick="selectUniverse('{{ collection.category.name|escapejs }}')">
                     <div class="zag-image-wrapper">
                         {% if collection.image %}
-                        <img src="{{ collection.image.url }}" alt="{{ collection.title }}">
+                        <img src="{{ collection.image.url }}" alt="{{ collection.title }}" loading="lazy" decoding="async">
                         {% else %}
                         {# mapping for default images based on category name #}
                         {% with cat_name=collection.category.name|upper %}
@@ -518,7 +789,7 @@
         {% for card in hero_cards %}
         <div class="hero-card" data-hero-card="{{ forloop.counter0 }}">
             {% if card.image %}
-            <img id="heroCard{{ forloop.counter0 }}Image" src="{{ card.image.url }}" alt="{{ card.title }}">
+            <img id="heroCard{{ forloop.counter0 }}Image" src="{{ card.image.url }}" alt="{{ card.title }}" loading="lazy" decoding="async">
             {% endif %}
             <div class="hero-card-overlay"></div>
             <div class="hero-card-content">
@@ -724,7 +995,7 @@
             </div>
             <div class="about-image">
                 {% if about.image %}
-                <img id="aboutImage" src="{{ about.image.url }}" alt="Notre Atelier">
+                <img id="aboutImage" src="{{ about.image.url }}" alt="Notre Atelier" loading="lazy" decoding="async">
                 {% else %}
                 <img id="aboutImage"
                     src="https://images.unsplash.com/photo-1761207300250-a71b2ff68b99?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxqZXdlbHJ5JTIwc3RvcmUlMjBkaXNwbGF5fGVufDF8fHx8MTc2NTg5MTA3Nnww&ixlib=rb-4.1.0&q=80&w=1080"
@@ -910,7 +1181,7 @@
 
         <div class="checkout-layout">
             <div class="checkout-main">
-                <form method="post" action="{% url 'store:checkout' %}" id="checkoutForm">
+                <form method="post" action="{% url 'store:checkout' %}" id="checkoutForm" enctype="multipart/form-data">
                     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
                     <section class="checkout-step active" data-step="1">
@@ -927,21 +1198,21 @@
                             <div class="form-row">
                                 <div class="form-field">
                                     <label for="firstName">Prénom</label>
-                                    <input type="text" id="firstName" name="first_name" required>
+                                    <input type="text" id="firstName" name="first_name" value="{{ checkout_customer.first_name }}" required>
                                 </div>
                                 <div class="form-field">
                                     <label for="lastName">Nom</label>
-                                    <input type="text" id="lastName" name="last_name" required>
+                                    <input type="text" id="lastName" name="last_name" value="{{ checkout_customer.last_name }}" required>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-field">
                                     <label for="email">Email</label>
-                                    <input type="email" id="email" name="email" required>
+                                    <input type="email" id="email" name="email" value="{{ checkout_customer.email }}" required>
                                 </div>
                                 <div class="form-field">
                                     <label for="phone">Téléphone</label>
-                                    <input type="tel" id="phone" name="phone" required>
+                                    <input type="tel" id="phone" name="phone" value="{{ checkout_customer.phone }}" required>
                                 </div>
                             </div>
                         </div>
@@ -958,16 +1229,16 @@
                             </div>
                             <div class="form-field">
                                 <label for="address">Adresse</label>
-                                <input type="text" id="address" name="address" required>
+                                <input type="text" id="address" name="address" value="{{ checkout_customer.address }}" required>
                             </div>
                             <div class="form-row">
                                 <div class="form-field">
                                     <label for="city">Ville</label>
-                                    <input type="text" id="city" name="city" required>
+                                    <input type="text" id="city" name="city" value="{{ checkout_customer.city }}" required>
                                 </div>
                                 <div class="form-field">
                                     <label for="postalCode">Code postal</label>
-                                    <input type="text" id="postalCode" name="postal_code" required>
+                                    <input type="text" id="postalCode" name="postal_code" value="{{ checkout_customer.zip_code }}" required>
                                 </div>
                             </div>
                         </div>
@@ -988,26 +1259,57 @@
                                     <p>Choisissez l’option qui vous convient.</p>
                                 </div>
                             </div>
-                            <div class="shipping-options">
-                                <label class="shipping-option">
-                                    <input type="radio" name="shipping_method" value="standard" checked>
-                                    <span class="radio-custom"></span>
-                                    <div>
-                                        <span class="option-title">Standard</span>
-                                        <span class="option-desc">2 à 4 jours ouvrés</span>
+                            <!-- RETRAIT EN BOUTIQUE -->
+                            <div class="shipping-option-group" style="margin-bottom: 1.5rem;">
+                                <label class="shipping-option-label">
+                                    <input type="radio" name="delivery_type" value="pickup" form="checkoutForm" onchange="updateDeliveryUI()">
+                                    <div class="shipping-option-content">
+                                        <div class="shipping-option-title">
+                                            <i class="bi bi-shop" style="color: #16a34a; margin-right: 0.5rem;"></i>
+                                            Retrait en boutique
+                                        </div>
+                                        <div class="shipping-option-subtitle">Récupérez votre commande immédiatement en boutique</div>
                                     </div>
-                                    <span class="option-price">Gratuit</span>
-                                </label>
-                                <label class="shipping-option">
-                                    <input type="radio" name="shipping_method" value="express">
-                                    <span class="radio-custom"></span>
-                                    <div>
-                                        <span class="option-title">Express</span>
-                                        <span class="option-desc">Livraison prioritaire</span>
-                                    </div>
-                                    <span class="option-price">+{{ delivery_fee|default:0 }} FC</span>
                                 </label>
                             </div>
+
+                            <!-- LIVRAISON À DOMICILE -->
+                            <div class="shipping-option-group" style="margin-bottom: 1.5rem;">
+                                <label class="shipping-option-label">
+                                    <input type="radio" name="delivery_type" value="delivery" form="checkoutForm" onchange="updateDeliveryUI()" checked>
+                                    <div class="shipping-option-content">
+                                        <div class="shipping-option-title">
+                                            <i class="bi bi-truck" style="color: #2563eb; margin-right: 0.5rem;"></i>
+                                            Livraison à domicile
+                                        </div>
+                                        <div class="shipping-option-subtitle">Livraison à votre adresse</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- ZONES DE LIVRAISON (visible selon delivery_type) -->
+                            <div id="deliveryZonesSection" class="shipping-options" style="display: none;">
+                                <div id="deliveryZonesContainer">
+                                    <!-- Le JS va injecter les zones ici -->
+                                    <p class="text-muted small"><i class="spinner-border spinner-border-sm"></i> Chargement des zones...</p>
+                                </div>
+                            </div>
+
+                            <!-- INFOS BOUTIQUE (visible si retrait sélectionné) -->
+                            <div id="pickupInfoSection" class="checkout-card" style="display: none; background: #f0fdf4; border: 1px solid #86efac; margin-bottom: 1.5rem;">
+                                <h3 style="margin-bottom: 1rem; color: #16a34a;">📍 Adresse de retrait</h3>
+                                <div style="line-height: 1.8;">
+                                    <strong>ETS MKARIBU — Boutique officielle</strong><br>
+                                    Route des huileries, N° 160<br>
+                                    Usoke, C/Kinshasa<br>
+                                    Immeuble Nathalie, 2ème étage<br><br>
+                                    <i class="bi bi-telephone-fill" style="color: #16a34a;"></i> 
+                                    <a href="tel:+243976797748" style="color: #16a34a;">+243 97 67 977 48</a><br>
+                                    <i class="bi bi-clock-fill" style="color: #16a34a;"></i> 
+                                    Lun-Sam: 9:00-18:00 | Dim: 10:00-17:00
+                                </div>
+                            </div>
+
                             <div class="form-field">
                                 <label for="notes">Notes (optionnel)</label>
                                 <textarea id="notes" name="notes" rows="3"
@@ -1017,7 +1319,10 @@
 
                         <div class="step-actions">
                             <button type="button" class="btn-ghost" data-step-prev="1">Retour</button>
-                            <button type="button" class="btn-outline" data-step-next="3">Continuer</button>
+                            <!-- Bouton pour livraison -->
+                            <button type="button" class="btn-outline" id="btn-continue-payment" data-step-next="3" style="display: block;">Continuer vers le paiement</button>
+                            <!-- Bouton pour retrait en boutique -->
+                            <button type="button" class="btn-primary" id="btn-confirm-pickup" onclick="confirmPickupOrder()" style="display: none; background-color: #16a34a;">Confirmer la commande</button>
                         </div>
                     </section>
 
@@ -1028,19 +1333,152 @@
                                     <i class="bi bi-credit-card"></i>
                                 </div>
                                 <div>
-                                    <h2>Paiement</h2>
-                                    <p>Choisissez votre méthode de paiement.</p>
+                                    <h2>Choisissez votre paiement</h2>
+                                    <p>Sélectionnez le mode qui vous convient le mieux.</p>
                                 </div>
                             </div>
-                            <div class="payment-options">
-                                <label class="payment-option selected">
-                                    <input type="radio" name="paymentMethod" value="cash" checked form="checkoutForm">
-                                    <span class="radio-custom"></span>
-                                    <div class="payment-details">
-                                        <span class="payment-title">Paiement à la livraison</span>
-                                        <span class="payment-desc">Payer en espèces à la réception</span>
+
+                            <div class="checkout-payment-cards" id="checkoutPaymentCards">
+
+                                <!-- M-PESA -->
+                                <div class="chk-method-card" id="chk-pane-mpesa" data-chk-method="m-pesa">
+                                    <div class="chk-method-header" onclick="chkToggleMethod('mpesa', 'm-pesa')">
+                                        <div class="chk-method-icon chk-icon--orange">
+                                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/240px-M-PESA_LOGO-01.svg.png" alt="M-Pesa" style="height:24px;width:auto;" onerror="this.outerHTML='<i class=\'bi bi-phone-fill\' style=\'color:#ff6b1a;\'></i>'">
+                                        </div>
+                                        <div class="chk-method-info">
+                                            <strong>M-Pesa</strong>
+                                            <span>Via *1122# · Marchand 8000443262</span>
+                                        </div>
+                                        <input type="radio" name="payment_method" value="m-pesa" form="checkoutForm" class="chk-method-radio">
+                                        <i class="bi bi-chevron-down chk-chevron" id="chk-icon-mpesa"></i>
                                     </div>
-                                </label>
+                                    <div class="chk-method-body" id="chk-body-mpesa">
+                                        <div class="chk-merchant-box">
+                                            <div>
+                                                <div class="chk-merchant-label">Numéro Marchand (M-Pesa)</div>
+                                                <div class="chk-merchant-num">8000443262</div>
+                                                <div class="chk-merchant-name"><i class="bi bi-shop me-1"></i>ETS MKARIBU</div>
+                                            </div>
+                                            <button type="button" class="chk-copy-btn" onclick="chkCopyText('8000443262', this)"><i class="bi bi-copy"></i> Copier</button>
+                                        </div>
+                                        <div class="method-hint">
+                                            <button type="button" class="info-icon-btn" onclick="chkOpenPopup('mpesa')" title="Instructions détaillées">
+                                                <span class="info-icon-ring"></span>
+                                                <i class="bi bi-info-circle-fill"></i>
+                                            </button>
+                                            <span>Voir les instructions de paiement détaillées</span>
+                                        </div>
+                                        <button type="button" class="chk-select-btn" onclick="chkSelectMethod('m-pesa', 'mpesa')">Utiliser M-Pesa pour cette commande</button>
+                                    </div>
+                                </div>
+
+                                <!-- AIRTEL MONEY -->
+                                <div class="chk-method-card" id="chk-pane-airtel" data-chk-method="airtel">
+                                    <div class="chk-method-header" onclick="chkToggleMethod('airtel', 'airtel')">
+                                        <div class="chk-method-icon chk-icon--red">
+                                            <i class="bi bi-phone-fill" style="font-size:1.3rem;color:#e00000;"></i>
+                                        </div>
+                                        <div class="chk-method-info">
+                                            <strong>Airtel Money</strong>
+                                            <span>Envoi direct · Ligne Airtel</span>
+                                        </div>
+                                        <input type="radio" name="payment_method" value="airtel" form="checkoutForm" class="chk-method-radio">
+                                        <i class="bi bi-chevron-down chk-chevron" id="chk-icon-airtel"></i>
+                                    </div>
+                                    <div class="chk-method-body" id="chk-body-airtel">
+                                        <div class="chk-merchant-box chk-merchant-box--red">
+                                            <div>
+                                                <div class="chk-merchant-label">Numéro Airtel Money</div>
+                                                <div class="chk-merchant-num">+243 97 67 97 748</div>
+                                                <div class="chk-merchant-name"><i class="bi bi-person-fill me-1"></i>MUSEBA FRANCK</div>
+                                            </div>
+                                            <button type="button" class="chk-copy-btn" onclick="chkCopyText('243976797748', this)"><i class="bi bi-copy"></i> Copier</button>
+                                        </div>
+                                        <div class="method-hint">
+                                            <button type="button" class="info-icon-btn info-icon-btn--red" onclick="chkOpenPopup('airtel')" title="Instructions détaillées">
+                                                <span class="info-icon-ring"></span>
+                                                <i class="bi bi-info-circle-fill"></i>
+                                            </button>
+                                            <span>Voir les instructions de paiement détaillées</span>
+                                        </div>
+                                        <button type="button" class="chk-select-btn chk-select-btn--red" onclick="chkSelectMethod('airtel', 'airtel')">Utiliser Airtel Money pour cette commande</button>
+                                    </div>
+                                </div>
+
+                                <!-- PAIEMENT À LA LIVRAISON (CASH) -->
+                                <div class="chk-method-card" id="chk-pane-delivery-cash" data-chk-method="delivery-cash" style="display:none;">
+                                    <div class="chk-method-header" onclick="chkToggleMethod('delivery-cash', 'delivery-cash')">
+                                        <div class="chk-method-icon chk-icon--blue">
+                                            <i class="bi bi-truck" style="font-size:1.3rem;color:#2563eb;"></i>
+                                        </div>
+                                        <div class="chk-method-info">
+                                            <strong>Paiement à la livraison</strong>
+                                            <span>Payez en espèces lors de la réception</span>
+                                        </div>
+                                        <input type="radio" name="payment_method" value="delivery-cash" form="checkoutForm" class="chk-method-radio">
+                                        <i class="bi bi-chevron-down chk-chevron" id="chk-icon-delivery-cash"></i>
+                                    </div>
+                                    <div class="chk-method-body" id="chk-body-delivery-cash">
+                                        <div class="chk-steps">
+                                            <div class="chk-step"><div class="chk-step-num">1</div><div>Validez votre commande maintenant</div></div>
+                                            <div class="chk-step"><div class="chk-step-num">2</div><div>Préparez le montant exact (Produits + Livraison)</div></div>
+                                            <div class="chk-step"><div class="chk-step-num">3</div><div>Payez le livreur une fois le colis en main</div></div>
+                                        </div>
+                                        <div class="chk-important-note"><i class="bi bi-exclamation-circle-fill me-1"></i>Veuillez prévoir l'appoint si possible.</div>
+                                        <button type="button" class="chk-select-btn chk-select-btn--blue" onclick="chkSelectMethod('delivery-cash', 'delivery-cash')">Payer à la livraison</button>
+                                    </div>
+                                </div>
+
+                                <!-- PAIEMENT EN BOUTIQUE -->
+                                <div class="chk-method-card" id="chk-pane-cash" data-chk-method="cash" style="display:none;">
+                                    <div class="chk-method-header" onclick="chkToggleMethod('cash', 'cash')">
+                                        <div class="chk-method-icon chk-icon--green">
+                                            <i class="bi bi-shop" style="font-size:1.3rem;color:#16a34a;"></i>
+                                        </div>
+                                        <div class="chk-method-info">
+                                            <strong>Paiement en boutique</strong>
+                                            <span>Retrait sur place · Simple et rapide</span>
+                                        </div>
+                                        <input type="radio" name="payment_method" value="cash" form="checkoutForm" class="chk-method-radio">
+                                        <i class="bi bi-chevron-down chk-chevron" id="chk-icon-cash"></i>
+                                    </div>
+                                    <div class="chk-method-body" id="chk-body-cash">
+                                        <div class="chk-steps">
+                                            <div class="chk-step"><div class="chk-step-num">1</div><div>Préparez votre montant en espèces ou via mobile money</div></div>
+                                            <div class="chk-step"><div class="chk-step-num">2</div><div>Présentez-vous en boutique avec votre numéro de commande</div></div>
+                                            <div class="chk-step"><div class="chk-step-num">3</div><div>Récupérez votre commande immédiatement</div></div>
+                                        </div>
+                                        <div class="chk-address-card">
+                                            <div class="chk-address-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                                            <div>
+                                                <div class="chk-address-title">ETS MKARIBU — Boutique officielle</div>
+                                                <div>Route des huileries, N°&nbsp;160</div>
+                                                <div>Usoke, C/Kinshasa · Immeuble Nathalie, 2ème étage</div>
+                                                <a href="tel:+243976797748" class="chk-address-phone"><i class="bi bi-telephone-fill me-1"></i>+243 97 67 977 48</a>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="chk-select-btn chk-select-btn--green" onclick="chkSelectMethod('cash', 'cash')">Payer en boutique</button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- PREUVE DE PAIEMENT INLINE -->
+                        <div class="checkout-card chk-proof-section" id="chkProofSection" style="display:none;">
+                            <h3 style="border-bottom: 2px solid #f3f4f6; padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.1rem;"><i class="bi bi-receipt me-2" style="color:var(--primary-color);"></i>Soumettre la preuve de paiement</h3>
+                            <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.25rem;">Fournissez la référence SMS ou une capture d'écran de votre paiement pour accélérer la validation.</p>
+                            
+                            <div class="mb-3">
+                                <label for="transaction_ref" class="form-label chk-proof-label">Référence ou ID de transaction <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control chk-proof-input" id="transaction_ref" name="transaction_ref" placeholder="Ex: MP1234ABCD" required>
+                                <div class="invalid-feedback">La référence est requise pour ce mode de paiement.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="proof_file" class="form-label chk-proof-label">Capture d'écran (Recommandé)</label>
+                                <input type="file" class="form-control chk-proof-input" id="proof_file" name="proof_file" accept="image/*">
                             </div>
                         </div>
 
@@ -1057,6 +1495,97 @@
                         </div>
                     </section>
                 </form>
+
+                <!-- ==========================================
+                     POPUP OVERLAY — M-PESA INSTRUCTIONS
+                     (Outside form to prevent accidental submission)
+                ========================================== -->
+                <div class="instr-overlay" id="chk-overlay-mpesa" onclick="chkClosePopup('mpesa')">
+                    <div class="instr-popup" onclick="event.stopPropagation()">
+                        <div class="instr-popup__header instr-header--orange">
+                            <div class="instr-popup__logo">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/240px-M-PESA_LOGO-01.svg.png"
+                                    alt="M-Pesa" style="height:30px;width:auto;filter:brightness(10);"
+                                    onerror="this.outerHTML='<i class=\'bi bi-phone-fill\' style=\'color:white;font-size:1.5rem;\'></i>'">
+                            </div>
+                            <div>
+                                <div class="instr-popup__title">Payer par M-Pesa</div>
+                                <div class="instr-popup__sub">ETS MKARIBU · 8000443262</div>
+                            </div>
+                            <button type="button" class="instr-close" onclick="chkClosePopup('mpesa')"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                        <div class="instr-popup__body">
+                            <div class="instr-merchant">
+                                <div class="instr-merchant__icon"><i class="bi bi-shop-window"></i></div>
+                                <div>
+                                    <div class="instr-merchant__label">Numéro Marchand</div>
+                                    <div class="instr-merchant__num">8000443262</div>
+                                </div>
+                                <button type="button" class="copy-btn ms-auto" onclick="chkCopyText('8000443262', this)"><i class="bi bi-copy"></i> Copier</button>
+                            </div>
+                            <div class="instr-steps-title"><i class="bi bi-list-ol me-2"></i>Étapes à suivre</div>
+                            <div class="instr-steps">
+                                <div class="instr-step"><div class="instr-step__num is-featured">1</div><div><span class="instr-step__label">Composez</span> <code class="instr-code">*1122#</code></div></div>
+                                <div class="instr-step"><div class="instr-step__num">2</div><div>Sélectionnez <strong>votre devise</strong></div></div>
+                                <div class="instr-step"><div class="instr-step__num">3</div><div>Sélectionnez <strong>5. Mes paiements</strong></div></div>
+                                <div class="instr-step"><div class="instr-step__num">4</div><div>Sélectionnez <strong>2. Achat Produits</strong></div></div>
+                                <div class="instr-step"><div class="instr-step__num">5</div><div>Insérez le numéro marchand : <strong>8000443262</strong></div></div>
+                                <div class="instr-step"><div class="instr-step__num">6</div><div>Insérez le montant exact de votre commande</div></div>
+                                <div class="instr-step"><div class="instr-step__num">7</div><div>Raison : <strong>CMD #[numéro commande]</strong></div></div>
+                                <div class="instr-step"><div class="instr-step__num">8</div><div>Insérez votre <strong>PIN M-PESA</strong></div></div>
+                                <div class="instr-step instr-step--success"><div class="instr-step__num is-success">✓</div><div>Vous recevrez un <strong>message de confirmation</strong></div></div>
+                            </div>
+                        </div>
+                        <div class="instr-popup__footer">
+                            <button type="button" class="instr-close-btn" onclick="chkClosePopup('mpesa')">
+                                <i class="bi bi-check2-circle me-2"></i>Compris, j'ai payé
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==========================================
+                     POPUP OVERLAY — AIRTEL INSTRUCTIONS
+                ========================================== -->
+                <div class="instr-overlay" id="chk-overlay-airtel" onclick="chkClosePopup('airtel')">
+                    <div class="instr-popup" onclick="event.stopPropagation()">
+                        <div class="instr-popup__header instr-header--red">
+                            <div class="instr-popup__logo">
+                                <i class="bi bi-phone-fill" style="color:white;font-size:1.8rem;"></i>
+                            </div>
+                            <div>
+                                <div class="instr-popup__title">Payer par Airtel Money</div>
+                                <div class="instr-popup__sub">MUSEBA FRANCK · +243 97 67 97 748</div>
+                            </div>
+                            <button type="button" class="instr-close" onclick="chkClosePopup('airtel')"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                        <div class="instr-popup__body">
+                            <div class="instr-merchant instr-merchant--red">
+                                <div class="instr-merchant__icon instr-merchant__icon--red"><i class="bi bi-person-fill"></i></div>
+                                <div>
+                                    <div class="instr-merchant__label">Numéro Airtel Money</div>
+                                    <div class="instr-merchant__num">+243 97 67 97 748</div>
+                                </div>
+                                <button type="button" class="copy-btn ms-auto" onclick="chkCopyText('243976797748', this)"><i class="bi bi-copy"></i> Copier</button>
+                            </div>
+                            <div class="instr-steps-title"><i class="bi bi-list-ol me-2"></i>Étapes à suivre</div>
+                            <div class="instr-steps">
+                                <div class="instr-step"><div class="instr-step__num">1</div><div>Ouvrez votre application <strong>Airtel Money</strong></div></div>
+                                <div class="instr-step"><div class="instr-step__num">2</div><div>Sélectionnez <strong>«&nbsp;Envoyer de l'argent&nbsp;»</strong></div></div>
+                                <div class="instr-step"><div class="instr-step__num">3</div><div>Entrez le numéro : <strong>+243 97 67 97 748</strong> (MUSEBA FRANCK)</div></div>
+                                <div class="instr-step"><div class="instr-step__num">4</div><div>Entrez le montant exact de votre commande</div></div>
+                                <div class="instr-step"><div class="instr-step__num">5</div><div>Référence : <strong>CMD #[numéro commande]</strong></div></div>
+                                <div class="instr-step instr-step--success"><div class="instr-step__num is-success">✓</div><div>Confirmez avec votre <strong>PIN</strong> et conservez le SMS</div></div>
+                            </div>
+                        </div>
+                        <div class="instr-popup__footer">
+                            <button type="button" class="instr-close-btn instr-close-btn--red" onclick="chkClosePopup('airtel')">
+                                <i class="bi bi-check2-circle me-2"></i>Compris, j'ai payé
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <aside class="checkout-sidebar">
@@ -1068,7 +1597,6 @@
                     <div class="order-totals">
                         <div class="total-row"><span>Sous-total</span><span id="checkoutSubtotal">0.00 FC</span></div>
                         <div class="total-row"><span>Livraison</span><span id="checkoutDelivery">0.00 FC</span></div>
-                        <div class="total-row"><span>TVA (16%)</span><span id="checkoutTax">0.00 FC</span></div>
                         <div class="total-row final-total"><span>Total</span><span id="checkoutTotal">0.00 FC</span>
                         </div>
                     </div>
@@ -1088,6 +1616,56 @@
     // NAVIGATION LOGIC - Unified View
     // ========================================
 
+    function normalizeCheckoutPaymentOptions() {
+        const shippingOptions = document.querySelector('.shipping-options');
+        const paymentOptions = document.querySelector('.checkout-step[data-step="3"] .payment-options');
+        if (!shippingOptions || !paymentOptions) return;
+
+        shippingOptions.querySelectorAll('.payment-option').forEach(option => {
+            paymentOptions.appendChild(option);
+        });
+
+        const paymentConfig = {
+            'm-pesa': {
+                title: 'M-Pesa',
+                description: 'Paiement marchand rapide via numero de caisse'
+            },
+            'airtel': {
+                title: 'Airtel Money',
+                description: 'Transfert direct depuis votre compte Airtel Money'
+            },
+            'delivery-cash': {
+                title: 'Paiement a la livraison',
+                description: 'Payer en especes lors de la remise du colis'
+            },
+            'cash': {
+                title: 'Paiement en boutique',
+                description: 'Regler et retirer directement sur place'
+            }
+        };
+
+        paymentOptions.querySelectorAll('.payment-option').forEach(option => {
+            const input = option.querySelector('input[name=\"payment_method\"]');
+            if (!input) return;
+
+            const config = paymentConfig[input.value];
+            if (config) {
+                const title = option.querySelector('.payment-title');
+                const desc = option.querySelector('.payment-desc');
+                if (title) title.textContent = config.title;
+                if (desc) desc.textContent = config.description;
+            }
+
+            option.classList.toggle('selected', input.checked);
+            input.addEventListener('change', () => {
+                paymentOptions.querySelectorAll('.payment-option').forEach(label => {
+                    const radio = label.querySelector('input[name=\"payment_method\"]');
+                    label.classList.toggle('selected', !!radio && radio.checked);
+                });
+            });
+        });
+    }
+
     // Universe to Category Mapping
     const universeMapping = {
         'IDÉES CADEAUX': ['IDÉES CADEAUX'],
@@ -1099,6 +1677,109 @@
         'COMPLETS': ['COMPLETS']
     };
 
+
+    // ==========================================
+    // FUNCTIONS FOR DELIVERY TYPE MANAGEMENT
+    // ==========================================
+    function updateDeliveryUI() {
+        const deliveryType = document.querySelector('input[name="delivery_type"]:checked')?.value;
+        const deliveryZonesSection = document.getElementById('deliveryZonesSection');
+        const pickupInfoSection = document.getElementById('pickupInfoSection');
+        const addressField = document.getElementById('address');
+        const cityField = document.getElementById('city');
+        const postalCodeField = document.getElementById('postalCode');
+        const btnContinuePayment = document.getElementById('btn-continue-payment');
+        const btnConfirmPickup = document.getElementById('btn-confirm-pickup');
+        
+        if (deliveryType === 'pickup') {
+            // Retrait en boutique
+            if (deliveryZonesSection) deliveryZonesSection.style.display = 'none';
+            if (pickupInfoSection) pickupInfoSection.style.display = 'block';
+            // Address fields not required for pickup
+            if (addressField) addressField.removeAttribute('required');
+            if (cityField) cityField.removeAttribute('required');
+            if (postalCodeField) postalCodeField.removeAttribute('required');
+            // Show pickup button, hide payment button
+            if (btnContinuePayment) btnContinuePayment.style.display = 'none';
+            if (btnConfirmPickup) btnConfirmPickup.style.display = 'block';
+        } else {
+            // Livraison à domicile
+            if (deliveryZonesSection) deliveryZonesSection.style.display = 'block';
+            if (pickupInfoSection) pickupInfoSection.style.display = 'none';
+            // Address fields required for delivery
+            if (addressField) addressField.setAttribute('required', 'required');
+            if (cityField) cityField.setAttribute('required', 'required');
+            if (postalCodeField) postalCodeField.setAttribute('required', 'required');
+            // Show payment button, hide pickup button
+            if (btnContinuePayment) btnContinuePayment.style.display = 'block';
+            if (btnConfirmPickup) btnConfirmPickup.style.display = 'none';
+        }
+        
+        // Trigger delivery zones load if needed
+        if (deliveryType === 'delivery' && !window.deliveryZonesLoaded) {
+            loadDeliveryZones();
+        }
+    }
+
+    function confirmPickupOrder() {
+        // Set payment method to 'cash' for in-store pickup
+        const paymentMethodRadio = document.querySelector('input[name="payment_method"][value="cash"]');
+        if (paymentMethodRadio) {
+            paymentMethodRadio.checked = true;
+        } else {
+            // Create hidden input if radio not found
+            const form = document.getElementById('checkoutForm');
+            if (form) {
+                let hiddenInput = document.querySelector('input[name="payment_method"][type="hidden"][value="cash"]');
+                if (!hiddenInput) {
+                    hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'payment_method';
+                    hiddenInput.value = 'cash';
+                    form.appendChild(hiddenInput);
+                }
+            }
+        }
+        // Submit the form directly
+        const form = document.getElementById('checkoutForm');
+        if (form) {
+            form.submit();
+        }
+    }
+
+    function loadDeliveryZones() {
+        // This will be populated by Django context or API call
+        // For now, just mark as loaded
+        window.deliveryZonesLoaded = true;
+    }
+
+    // ==========================================
+    // FUNCTIONS FOR PAYMENT METHOD MANAGEMENT
+    // ==========================================
+    function updatePaymentUI() {
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+        const deliveryType = document.querySelector('input[name="delivery_type"]:checked')?.value;
+        const proofSection = document.getElementById('chkProofSection');
+        const mpesaCard = document.getElementById('chk-pane-mpesa');
+        const airtelCard = document.getElementById('chk-pane-airtel');
+        const deliveryCashCard = document.getElementById('chk-pane-delivery-cash');
+        const cashCard = document.getElementById('chk-pane-cash');
+        
+        // Hide all cards by default
+        if (mpesaCard) mpesaCard.style.display = 'block';
+        if (airtelCard) airtelCard.style.display = 'block';
+        if (deliveryCashCard) deliveryCashCard.style.display = 'block';
+        if (cashCard) cashCard.style.display = 'block';
+        
+        // Show/hide proof section based on payment method
+        if (proofSection) {
+            if (paymentMethod === 'cash' || paymentMethod === 'delivery-cash') {
+                proofSection.style.display = 'none';
+            } else if (paymentMethod === 'm-pesa' || paymentMethod === 'airtel') {
+                proofSection.style.display = 'block';
+            }
+        }
+    }
 
     // Filter products based on selected universe
     function filterProductsByUniverse(universeName) {
@@ -1112,7 +1793,6 @@
 
             // Find matching category
             const categoryRadios = document.querySelectorAll('input[name="category"]');
-            let matched = false;
 
             categoryRadios.forEach(radio => {
                 const radioValue = radio.value;
@@ -1127,7 +1807,6 @@
                 filters.category = 'Tous';
             }
 
-            // Apply filters
             if (typeof applyFilters === 'function') {
                 applyFilters();
             }
@@ -1151,15 +1830,206 @@
         }
     }
 
+    // ── Checkout Payment Cards Logic ──
+    var _chkOpenPanel = null;
+
+    function _chkClosePanel(paneId) {
+        var body = document.getElementById('chk-body-' + paneId);
+        var icon = document.getElementById('chk-icon-' + paneId);
+        var card = document.getElementById('chk-pane-' + paneId);
+        if (body) { body.style.maxHeight = null; body.style.opacity = '0'; }
+        if (icon) icon.style.transform = '';
+        if (card) card.classList.remove('chk-method-card--selected');
+        if (_chkOpenPanel === paneId) _chkOpenPanel = null;
+    }
+
+    function _chkOpenPanelFn(paneId) {
+        var body = document.getElementById('chk-body-' + paneId);
+        var icon = document.getElementById('chk-icon-' + paneId);
+        var card = document.getElementById('chk-pane-' + paneId);
+        if (!body) return;
+        body.style.maxHeight = body.scrollHeight + 200 + 'px';
+        body.style.opacity = '1';
+        if (icon) icon.style.transform = 'rotate(180deg)';
+        if (card) card.classList.add('chk-method-card--selected');
+        _chkOpenPanel = paneId;
+    }
+
+    function _toggleProofSection(method) {
+        var proofSection = document.getElementById('chkProofSection');
+        var txnRefInput = document.getElementById('transaction_ref');
+        if (!proofSection || !txnRefInput) return;
+        
+        if (!method || method === 'cash' || method === 'delivery-cash') {
+            proofSection.style.display = 'none';
+            txnRefInput.removeAttribute('required');
+        } else {
+            proofSection.style.display = 'block';
+            txnRefInput.setAttribute('required', 'required');
+        }
+    }
+
+    function chkToggleMethod(paneId, method) {
+        if (_chkOpenPanel === paneId) {
+            // Close the currently open panel
+            _chkClosePanel(paneId);
+            // Uncheck its radio
+            document.querySelectorAll('.chk-method-radio').forEach(function(r) { r.checked = false; });
+            _toggleProofSection(null);
+            return;
+        }
+
+        // Close any previously open panel
+        if (_chkOpenPanel) {
+            _chkClosePanel(_chkOpenPanel);
+        }
+
+        // Open the new panel
+        _chkOpenPanelFn(paneId);
+
+        // Select the radio
+        if (method) {
+            document.querySelectorAll('.chk-method-radio').forEach(function(r) { r.checked = false; });
+            var radio = document.querySelector('[data-chk-method="' + method + '"] .chk-method-radio');
+            if (radio) radio.checked = true;
+            _toggleProofSection(method);
+        }
+    }
+
+    function chkSelectMethod(method, paneId) {
+        // Close any previously open panel
+        if (_chkOpenPanel && _chkOpenPanel !== paneId) {
+            _chkClosePanel(_chkOpenPanel);
+        }
+
+        // Uncheck all, check selected
+        document.querySelectorAll('.chk-method-radio').forEach(function(r) { r.checked = false; });
+        var radio = document.querySelector('[data-chk-method="' + method + '"] .chk-method-radio');
+        if (radio) radio.checked = true;
+
+        // Highlight only the selected card
+        document.querySelectorAll('.chk-method-card').forEach(function(c) {
+            c.classList.remove('chk-method-card--selected');
+        });
+        var card = document.getElementById('chk-pane-' + paneId);
+        if (card) card.classList.add('chk-method-card--selected');
+
+        // Open the panel if not already
+        if (_chkOpenPanel !== paneId) {
+            _chkOpenPanelFn(paneId);
+        }
+        
+        // Toggle Proof of Payment Section
+        _toggleProofSection(method);
+    }
+
+    function chkCopyText(text, btn) {
+        navigator.clipboard.writeText(text).then(function () {
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-clipboard-check"></i> Copié !';
+            setTimeout(function () { btn.innerHTML = orig; }, 2000);
+        });
+    }
+
+    // ── Checkout Instruction Popup Logic ──
+    function chkOpenPopup(method) {
+        var overlay = document.getElementById('chk-overlay-' + method);
+        if (!overlay) return;
+        overlay.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+
+        // Animate steps
+        var steps = overlay.querySelectorAll('.instr-step');
+        for (var i = 0; i < steps.length; i++) {
+            (function(step, delay) {
+                step.style.opacity = '0';
+                step.style.transform = 'translateX(-14px)';
+                setTimeout(function() {
+                    step.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    step.style.opacity = '1';
+                    step.style.transform = 'translateX(0)';
+                }, delay);
+            })(steps[i], 80 + i * 55);
+        }
+    }
+
+    function chkClosePopup(method) {
+        var overlay = document.getElementById('chk-overlay-' + method);
+        if (!overlay) return;
+        overlay.classList.remove('is-open');
+        // Only restore body scroll if no other overlay is open
+        var anyOpen = document.querySelector('.instr-overlay.is-open');
+        if (!anyOpen) document.body.style.overflow = '';
+    }
+
+    // Escape key to close popups
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            var openOverlays = document.querySelectorAll('.instr-overlay.is-open');
+            openOverlays.forEach(function(o) { o.classList.remove('is-open'); });
+            document.body.style.overflow = '';
+        }
+    });
+
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function () {
         // Standard initialization if needed
+        normalizeCheckoutPaymentOptions();
         
+        // Initialize delivery UI (show/hide buttons based on delivery_type)
+        updateDeliveryUI();
+
+        // Populer les zones de livraison
+        const zonesContainer = document.getElementById("deliveryZonesContainer");
+        if (zonesContainer && window.deliveryZones) {
+            let html = '<div class="form-field mb-4"><label for="delivery_zone_select" style="font-weight:600;display:block;margin-bottom:8px;">Choix de la zone <span class="text-danger">*</span></label>';
+            html += '<select id="delivery_zone_select" name="delivery_zone_id" class="form-select w-100 p-3" style="border-radius:12px;border:1px solid #e5e7eb;font-size:15px;background:#f9fafb;" required form="checkoutForm" onchange="handleZoneChange(this)">';
+            html += '<option value="" disabled selected>Sélectionnez votre zone...</option>';
+            window.deliveryZones.forEach(zone => {
+                const priceNum = parseFloat(zone.price) || 0;
+                const priceDisplay = priceNum === 0 ? "Gratuit" : `+${priceNum.toLocaleString()} FC`;
+                html += `<option value="${zone.id}" data-price="${priceNum}">${zone.name} (${priceDisplay})</option>`;
+            });
+            html += '</select></div>';
+            zonesContainer.innerHTML = html;
+        }
+
+        // Auto-open first payment method card
+        setTimeout(function() { chkToggleMethod('mpesa', 'm-pesa'); }, 100);
+
         // Update product prices with promotions
         updateProductPrices();
     });
-    
-    // Update Product Prices with Promotions
+
+    function handleZoneChange(select) {
+        // 1. Update totals
+        if (typeof renderCheckoutSummary === 'function') renderCheckoutSummary();
+
+        // 2. Filter payment methods
+        const selectedOption = select.options[select.selectedIndex];
+        const zoneName = selectedOption.text.toLowerCase();
+        const zonePrice = parseFloat(selectedOption.getAttribute('data-price')) || 0;
+
+        const isStorePickup = zoneName.includes('boutique') || zoneName.includes('retrait') || zoneName.includes('magasin') || (zonePrice === 0 && zoneName.includes('sur place'));
+
+        const paneDeliveryCash = document.getElementById('chk-pane-delivery-cash');
+        const paneStoreCash = document.getElementById('chk-pane-cash');
+
+        if (isStorePickup) {
+            if (paneDeliveryCash) paneDeliveryCash.style.display = 'none';
+            if (paneStoreCash) paneStoreCash.style.display = 'block';
+        } else {
+            if (paneDeliveryCash) paneDeliveryCash.style.display = 'block';
+            if (paneStoreCash) paneStoreCash.style.display = 'none';
+        }
+
+        // Ensure a valid method is selected if current hidden
+        const currentMethod = document.querySelector('.chk-method-radio:checked');
+        if (currentMethod && currentMethod.closest('.chk-method-card').style.display === 'none') {
+            // Default to m-pesa if available
+            chkSelectMethod('m-pesa', 'mpesa');
+        }
+    }
     function updateProductPrices() {
         if (!window.djangoProducts || !Array.isArray(window.djangoProducts)) return;
         

@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import JsonResponse, HttpResponse
 from accounts.decorators import manager_required
 from django.utils.decorators import method_decorator
@@ -152,7 +152,7 @@ class ProductListView(ListView):
         elif status == 'inactive':
             queryset = queryset.filter(is_active=False)
         elif status == 'low_stock':
-            queryset = [p for p in queryset if p.is_low_stock]
+            queryset = queryset.filter(current_stock__lte=F('minimum_stock'))
         
         return queryset
     

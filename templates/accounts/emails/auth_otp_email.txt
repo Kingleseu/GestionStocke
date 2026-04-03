@@ -1,0 +1,13 @@
+Bonjour {{ display_name }},
+
+Voici votre code OTP pour acceder a votre espace {{ account_space_label }} MKARIBU :
+
+{{ code }}
+
+Ce code expire dans {{ minutes }} minutes.
+
+Role detecte : {{ role_label }}
+
+Si vous n'etes pas a l'origine de cette demande, ignorez simplement cet email.
+
+Equipe MKARIBU

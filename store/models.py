@@ -1,5 +1,8 @@
 from django.db import models
 from django.conf import settings
+from django.urls import reverse
+from django.utils import timezone
+from django.utils.crypto import get_random_string
 from products.models import Product
 
 class StoreSettings(models.Model):
@@ -110,6 +113,32 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.quantity} x {self.product.name}"
 
+class DeliveryZone(models.Model):
+    """
+    Zones de livraison configurables par l'administration.
+    """
+    name = models.CharField(max_length=100, verbose_name="Nom de la zone")
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Tarif de livraison")
+    is_active = models.BooleanField(default=True, verbose_name="Zone active ?")
+
+    class Meta:
+        verbose_name = "Zone de Livraison"
+        verbose_name_plural = "Zones de Livraison"
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} - {self.price} FC"
+
+
+ORDER_PAYMENT_METHOD_CHOICES = [
+    ('m-pesa', 'M-Pesa'),
+    ('airtel', 'Airtel Money'),
+    ('orange', 'Orange Money'),
+    ('virement', 'Virement Bancaire'),
+    ('cash', 'Paiement en Boutique'),
+    ('delivery-cash', 'Paiement a la Livraison'),
+]
+
 class WebOrder(models.Model):
     """
     A completed order placed via the website.
@@ -129,6 +158,13 @@ class WebOrder(models.Model):
     phone = models.CharField(max_length=20)
     address = models.TextField()
     city = models.CharField(max_length=100)
+    payment_method = models.CharField(max_length=20, choices=ORDER_PAYMENT_METHOD_CHOICES, default='m-pesa')
+    order_number = models.CharField(max_length=30, unique=True, blank=True, verbose_name="Reference commande")
+    delivery_confirmation_code = models.CharField(max_length=12, blank=True, verbose_name="Code de remise")
+    
+    delivery_type = models.CharField(max_length=20, choices=[('pickup', 'Retrait en boutique'), ('delivery', 'Livraison à domicile')], default='delivery', verbose_name="Type de livraison")
+    delivery_zone = models.CharField(max_length=100, blank=True, null=True, verbose_name="Zone de livraison sélectionnée")
+    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, verbose_name="Frais de livraison appliqués")
     
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='pending_payment')
@@ -136,7 +172,58 @@ class WebOrder(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Order #{self.id} - {self.full_name} ({self.get_status_display()})"
+        reference = self.order_number or f"#{self.id}"
+        return f"Order {reference} - {self.full_name} ({self.get_status_display()})"
+
+    @property
+    def requires_manual_payment_proof(self):
+        return self.payment_method not in {'cash', 'delivery-cash'}
+
+    @property
+    def is_cash_on_delivery(self):
+        return self.payment_method == 'delivery-cash'
+
+    @property
+    def tracking_reference(self):
+        return self.order_number or f"CMD-{self.pk or 'NEW'}"
+
+    @property
+    def items_subtotal(self):
+        return sum((item.line_total for item in self.items.all()), start=0)
+
+    def get_customer_order_url(self):
+        return reverse('store:account_order_detail', args=[self.tracking_reference])
+
+    def _build_order_number(self):
+        created_at = timezone.localtime(self.created_at or timezone.now())
+        return f"CMD-{created_at.strftime('%Y%m%d')}-{self.pk:06d}"
+
+    def _build_delivery_confirmation_code(self):
+        return get_random_string(8, allowed_chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZ')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        updates = {}
+        if self.pk and not self.order_number:
+            updates['order_number'] = self._build_order_number()
+
+        if self.payment_method == 'delivery-cash' and not self.delivery_confirmation_code:
+            updates['delivery_confirmation_code'] = self._build_delivery_confirmation_code()
+        elif self.payment_method != 'delivery-cash' and self.delivery_confirmation_code:
+            updates['delivery_confirmation_code'] = ''
+
+        if updates:
+            type(self).objects.filter(pk=self.pk).update(**updates)
+            for field, value in updates.items():
+                setattr(self, field, value)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['user', 'created_at']),
+        ]
 
 class ManualPayment(models.Model):
     PAYMENT_METHODS = [
@@ -144,7 +231,8 @@ class ManualPayment(models.Model):
         ('airtel', 'Airtel Money'),
         ('orange', 'Orange Money'),
         ('virement', 'Virement Bancaire'),
-        ('cash', 'Cash / Espèces'),
+        ('cash', 'Paiement en Boutique'),
+        ('delivery-cash', 'Paiement à la Livraison'),
     ]
     
     STATUS_CHOICES = [
@@ -171,6 +259,10 @@ class ManualPayment(models.Model):
     class Meta:
         verbose_name = "Paiement Manuel"
         verbose_name_plural = "Paiements Manuels"
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['user', 'created_at']),
+        ]
 
 class WebOrderItem(models.Model):
     """Item de commande avec snapshot complet (prix, personnalisation, production)"""
@@ -222,12 +314,125 @@ class WebOrderItem(models.Model):
     def __str__(self):
         name = self.product.name if self.product else self.product_name
         return f"{self.quantity} x {name}"
+
+    @property
+    def line_total(self):
+        return self.price * self.quantity
     
     def save(self, *args, **kwargs):
         # Sauvegarder le nom du produit au moment de la commande
         if self.product and not self.product_name:
             self.product_name = self.product.name
         super().save(*args, **kwargs)
+
+
+class AdminNotification(models.Model):
+    """Notification interne visible dans la cloche d'administration."""
+
+    TYPE_CHOICES = [
+        ('new_order', 'Nouvelle commande'),
+    ]
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='admin_notifications',
+    )
+    order = models.ForeignKey(
+        WebOrder,
+        on_delete=models.CASCADE,
+        related_name='admin_notifications',
+    )
+    notification_type = models.CharField(max_length=30, choices=TYPE_CHOICES, default='new_order')
+    title = models.CharField(max_length=140)
+    message = models.CharField(max_length=255)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Notification admin"
+        verbose_name_plural = "Notifications admin"
+        indexes = [
+            models.Index(fields=['recipient', 'is_read']),
+            models.Index(fields=['recipient', 'created_at']),
+        ]
+
+
+class StorePickupVoucher(models.Model):
+    """
+    Bon de retrait pour les clients qui paient en boutique.
+    Généré automatiquement lors de la création de la commande si payment_method='cash'.
+    """
+    order = models.OneToOneField(WebOrder, on_delete=models.CASCADE, related_name='pickup_voucher')
+    voucher_number = models.CharField(max_length=30, unique=True, blank=True, verbose_name="Numéro du bon")
+    pickup_code = models.CharField(max_length=8, blank=True, verbose_name="Code de récupération")
+    
+    # QR Code (généré automatiquement)
+    qr_code = models.ImageField(upload_to='vouchers_qr/', blank=True, null=True, verbose_name="Code QR")
+    
+    # Statut du retrait
+    STATUS_CHOICES = [
+        ('active', 'Actif'),
+        ('picked_up', 'Retiré'),
+        ('cancelled', 'Annulé'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    picked_up_at = models.DateTimeField(null=True, blank=True, verbose_name="Date de retrait")
+    picked_up_by = models.CharField(max_length=255, blank=True, verbose_name="Retiré par")
+    
+    # Validité
+    valid_until = models.DateTimeField(verbose_name="Valide jusqu'au")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Bon #{self.voucher_number} - {self.order.full_name}"
+    
+    def _build_voucher_number(self):
+        """Génère un numéro de bon unique : RET-YYYYMMDD-XXXXXX"""
+        from django.utils import timezone
+        created_at = timezone.localtime(self.created_at or timezone.now())
+        return f"RET-{created_at.strftime('%Y%m%d')}-{self.order.pk:06d}"
+    
+    def save(self, *args, **kwargs):
+        if not self.voucher_number:
+            self.voucher_number = self._build_voucher_number()
+        if not self.pickup_code:
+            self.pickup_code = get_random_string(8, allowed_chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZ')
+        
+        # Définir la validité (7 jours par défaut)
+        if not self.valid_until:
+            from datetime import timedelta
+            self.valid_until = timezone.now() + timedelta(days=7)
+        
+        super().save(*args, **kwargs)
+    
+    class Meta:
+        verbose_name = "Bon de retrait"
+        verbose_name_plural = "Bons de retrait"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['order']),
+        ]
+
+    def __str__(self):
+        return f"Notification #{self.pk} -> {self.recipient} / commande #{self.order_id}"
+
+    @property
+    def open_url(self):
+        return reverse('store:admin_notification_open', args=[self.pk])
+
+    def mark_as_read(self, commit=True):
+        if self.is_read:
+            return
+
+        self.is_read = True
+        self.read_at = timezone.now()
+        if commit:
+            self.save(update_fields=['is_read', 'read_at'])
 
 
 # ============================================

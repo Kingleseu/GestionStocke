@@ -802,6 +802,12 @@
             <a href="{% url 'store:admin_weborders' %}" class="back-btn"><i class="bi bi-chevron-left"></i></a>
             <div>
                 <div class="order-title">Commande #{{ order.id }}</div>
+                {% if order.order_number %}
+                <div class="order-subtitle">Référence client {{ order.order_number }}</div>
+                {% endif %}
+                {% if order.delivery_confirmation_code %}
+                <div class="order-subtitle">Code de remise {{ order.delivery_confirmation_code }}</div>
+                {% endif %}
                 <div class="order-subtitle">Reçue le {{ order.created_at|date:"d F Y à H:i" }}</div>
             </div>
         </div>
@@ -813,8 +819,7 @@
                 <i class="bi bi-x-circle"></i> Annulée{% endif %}
             </span>
             <button onclick="window.print()" class="btn-sm-act"><i class="bi bi-printer"></i> Imprimer</button>
-            <a href="https://wa.me/{{ order.phone|cut:'+' }}" target="_blank" class="btn-sm-act"
-                style="color:#16a34a;border-color:#6ee7b7;">
+            <a href="https://wa.me/{{ order.phone|cut:'+' }}" target="_blank" class="btn-sm-act" style="color:#16a34a;border-color:#6ee7b7;">
                 <i class="bi bi-whatsapp"></i> WhatsApp
             </a>
         </div>
@@ -860,8 +865,7 @@
                                     style="cursor:pointer; border: 2px dashed var(--primary); padding: 2px;"
                                     onclick="openProofLightbox('{{ item_data.customization_details.preview }}')"
                                     title="Aperçu de la personnalisation">
-                                <span
-                                    style="font-size: 0.70rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">Personnalisé</span>
+                                <span style="font-size: 0.70rem; color: var(--primary); font-weight: 600; text-transform: uppercase;">Personnalisé</span>
                             </div>
                             {% endif %}
                         </div>
@@ -1304,6 +1308,10 @@
 </style>
 
 <script>
+    if (window.ORDER_NOTIFICATIONS && typeof window.ORDER_NOTIFICATIONS.refresh === 'function') {
+        window.ORDER_NOTIFICATIONS.refresh();
+    }
+
     function openProofLightbox(url) {
         const lb = document.getElementById('proofLightbox');
         const img = document.getElementById('lightboxImg');

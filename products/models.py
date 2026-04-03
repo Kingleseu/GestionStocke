@@ -186,6 +186,10 @@ class Product(models.Model):
         verbose_name_plural = "Produits"
         ordering = ['name']
         unique_together = ['shop', 'barcode']
+        indexes = [
+            models.Index(fields=['shop', 'is_active']),
+            models.Index(fields=['category', 'is_active']),
+        ]
     
     def __str__(self):
         return f"{self.name} ({self.barcode})"

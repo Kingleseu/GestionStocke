@@ -44,7 +44,7 @@
             </div>
 
             <!-- Formulaire -->
-            <form method="post" id="purchaseForm">
+            <form method="post" id="purchaseForm" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 <!-- Informations fournisseur -->
@@ -62,6 +62,11 @@
                                 <input type="text" name="invoice_number" class="form-control"
                                     placeholder="Ex: FAC-2024-001">
                             </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fichier facture (optionnel)</label>
+                            <input type="file" name="invoice_file" class="form-control" accept="application/pdf,image/*">
+                            <div class="form-text">Vous pouvez joindre une copie de la facture (PDF ou image).</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Notes</label>

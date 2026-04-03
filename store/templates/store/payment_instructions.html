@@ -80,6 +80,15 @@
                 </div>
             </div>
 
+            <div class="selection-banner" data-aos="fade-up">
+                <div class="selection-banner__content">
+                    <div class="selection-banner__eyebrow">Mode retenu pour cette commande</div>
+                    <div class="selection-banner__title" id="selectedMethodLabel">{{ selected_payment_details.label }}</div>
+                    <div class="selection-banner__text">Vous continuez ensuite directement vers l'envoi de la preuve, sans re-selectionner le mode de paiement.</div>
+                </div>
+                <div class="selection-banner__badge">Commande #{{ order.id }}</div>
+            </div>
+
             <!-- PAYMENT METHODS -->
             <h2 class="section-heading" data-aos="fade-up">
                 <span>Choisissez votre mode de paiement</span>
@@ -89,8 +98,8 @@
             <div class="methods-list" data-aos="fade-up">
 
                 <!-- ======= M-PESA ======= -->
-                <div class="method-card" id="pane-mpesa">
-                    <div class="method-card__header" onclick="toggleMethod('mpesa')">
+                <div class="method-card" id="pane-mpesa" data-method-card="m-pesa">
+                    <div class="method-card__header" onclick="chooseMethod('m-pesa', 'mpesa')">
                         <div class="method-card__icon method-icon--orange">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/240px-M-PESA_LOGO-01.svg.png"
                                 alt="M-Pesa" style="height:28px;width:auto;"
@@ -121,12 +130,15 @@
                             </button>
                             <span>Voir les instructions de paiement</span>
                         </div>
+                        <button type="button" class="method-select-btn" onclick="event.stopPropagation(); requestMethodSelection('m-pesa')">
+                            Utiliser M-Pesa pour cette commande
+                        </button>
                     </div>
                 </div>
 
                 <!-- ======= AIRTEL MONEY ======= -->
-                <div class="method-card" id="pane-airtel">
-                    <div class="method-card__header" onclick="toggleMethod('airtel')">
+                <div class="method-card" id="pane-airtel" data-method-card="airtel">
+                    <div class="method-card__header" onclick="chooseMethod('airtel', 'airtel')">
                         <div class="method-card__icon method-icon--red">
                             <i class="bi bi-phone-fill" style="font-size:1.5rem;color:#e00000;"></i>
                         </div>
@@ -156,12 +168,15 @@
                             </button>
                             <span>Voir les instructions de paiement</span>
                         </div>
+                        <button type="button" class="method-select-btn method-select-btn--red" onclick="event.stopPropagation(); requestMethodSelection('airtel')">
+                            Utiliser Airtel Money pour cette commande
+                        </button>
                     </div>
                 </div>
 
                 <!-- ======= CASH ======= -->
-                <div class="method-card" id="pane-cash">
-                    <div class="method-card__header" onclick="toggleMethod('cash')">
+                <div class="method-card" id="pane-cash" data-method-card="cash">
+                    <div class="method-card__header" onclick="chooseMethod('cash', 'cash')">
                         <div class="method-card__icon method-icon--green">
                             <i class="bi bi-cash-coin" style="font-size:1.5rem;color:#16a34a;"></i>
                         </div>
@@ -203,6 +218,9 @@
                             <i class="bi bi-clock-fill"></i>
                             Horaires : Lun–Sam · 8h00 – 18h00
                         </div>
+                        <button type="button" class="method-select-btn method-select-btn--green" onclick="event.stopPropagation(); requestMethodSelection('cash')">
+                            Utiliser le paiement cash pour cette commande
+                        </button>
                     </div>
                 </div>
             </div>
@@ -214,12 +232,16 @@
                         <div class="cta-card__icon"><i class="bi bi-cloud-upload-fill"></i></div>
                         <div>
                             <strong>Paiement effectué ?</strong>
-                            <span>Envoyez-nous votre preuve pour valider la commande</span>
+                            <span>Le mode choisi sera conservé et la preuve sera envoyée juste après</span>
                         </div>
                     </div>
-                    <a href="{% url 'store:payment_submit' order.id %}" class="cta-btn">
-                        Soumettre ma preuve <i class="bi bi-arrow-right"></i>
-                    </a>
+                    <form method="get" action="{% url 'store:payment_submit' order.id %}" id="continuePaymentForm">
+                        <input type="hidden" name="payment_method" id="selectedPaymentMethodInput"
+                            value="{{ selected_payment_method }}">
+                        <button type="submit" class="cta-btn" id="continuePaymentButton">
+                            Continuer avec {{ selected_payment_details.short_label }} <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </form>
                 </div>
                 <div class="timer-note">
                     <i class="bi bi-clock me-1"></i>
@@ -407,25 +429,145 @@
     <i class="bi bi-clipboard-check me-2"></i>Copié !
 </div>
 
+<div class="method-confirm-overlay" id="methodConfirmOverlay" onclick="closeMethodConfirm()">
+    <div class="method-confirm-popup" onclick="event.stopPropagation()">
+        <button type="button" class="method-confirm-popup__close" onclick="closeMethodConfirm()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        <div class="method-confirm-popup__eyebrow">Confirmation du mode</div>
+        <div class="method-confirm-popup__title">Utiliser <span id="methodConfirmLabel">{{ selected_payment_details.short_label }}</span> pour cette commande ?</div>
+        <div class="method-confirm-popup__text" id="methodConfirmText">
+            Ce mode sera gardé jusqu'à l'envoi de votre preuve de paiement.
+        </div>
+        <div class="method-confirm-popup__actions">
+            <button type="button" class="method-confirm-popup__btn method-confirm-popup__btn--ghost" onclick="closeMethodConfirm()">
+                Annuler
+            </button>
+            <button type="button" class="method-confirm-popup__btn method-confirm-popup__btn--primary" id="methodConfirmButton" onclick="confirmMethodSelection()">
+                Oui, utiliser ce mode
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     (function () {
-        var openPanels = {};
+        var openPanelId = null;
+        var pendingMethod = null;
+        var methodLabels = {
+            'm-pesa': 'M-Pesa',
+            'airtel': 'Airtel Money',
+            'cash': 'Cash / Paiement sur place'
+        };
+        var methodToPane = {
+            'm-pesa': 'mpesa',
+            'airtel': 'airtel',
+            'cash': 'cash'
+        };
+        var selectedMethod = '{{ selected_payment_method|escapejs }}' || 'm-pesa';
 
-        window.toggleMethod = function (id) {
+        function syncBodyLock() {
+            var hasOpenOverlay = document.querySelector('.instr-overlay.is-open, .method-confirm-overlay.is-open');
+            document.body.style.overflow = hasOpenOverlay ? 'hidden' : '';
+        }
+
+        function openPanel(id) {
             var body = document.getElementById('body-' + id);
             var icon = document.getElementById('icon-' + id);
             if (!body) return;
-            if (openPanels[id]) {
-                body.style.maxHeight = null;
-                body.style.opacity = '0';
-                if (icon) icon.style.transform = 'rotate(0deg)';
-                delete openPanels[id];
-            } else {
-                body.style.maxHeight = body.scrollHeight + 'px';
-                body.style.opacity = '1';
-                if (icon) icon.style.transform = 'rotate(180deg)';
-                openPanels[id] = true;
+
+            body.style.maxHeight = body.scrollHeight + 'px';
+            body.style.opacity = '1';
+            if (icon) icon.style.transform = 'rotate(180deg)';
+            openPanelId = id;
+        }
+
+        function closePanel(id) {
+            var body = document.getElementById('body-' + id);
+            var icon = document.getElementById('icon-' + id);
+            if (!body) return;
+
+            body.style.maxHeight = null;
+            body.style.opacity = '0';
+            if (icon) icon.style.transform = 'rotate(0deg)';
+            if (openPanelId === id) openPanelId = null;
+        }
+
+        window.toggleMethod = function (id) {
+            if (!id) return;
+
+            if (openPanelId === id) {
+                closePanel(id);
+                return;
             }
+
+            if (openPanelId) closePanel(openPanelId);
+            openPanel(id);
+        };
+
+        window.selectMethod = function (method) {
+            selectedMethod = method;
+            var hiddenInput = document.getElementById('selectedPaymentMethodInput');
+            var label = document.getElementById('selectedMethodLabel');
+            var button = document.getElementById('continuePaymentButton');
+            var cards = document.querySelectorAll('[data-method-card]');
+
+            if (hiddenInput) hiddenInput.value = method;
+            if (label) label.textContent = methodLabels[method] || method;
+            if (button) {
+                button.innerHTML = 'Continuer avec ' + (methodLabels[method] || method) + ' <i class="bi bi-arrow-right"></i>';
+            }
+
+            for (var i = 0; i < cards.length; i++) {
+                cards[i].classList.toggle('method-card--selected', cards[i].dataset.methodCard === method);
+            }
+        };
+
+        window.chooseMethod = function (method, paneId) {
+            window.toggleMethod(paneId);
+        };
+
+        window.requestMethodSelection = function (method) {
+            var overlay = document.getElementById('methodConfirmOverlay');
+            var label = methodLabels[method] || method;
+            var labelNode = document.getElementById('methodConfirmLabel');
+            var textNode = document.getElementById('methodConfirmText');
+            var button = document.getElementById('methodConfirmButton');
+
+            pendingMethod = method;
+
+            if (labelNode) labelNode.textContent = label;
+            if (textNode) {
+                textNode.textContent = 'Ce mode sera gardé pour cette commande et vous enverrez ensuite la preuve de paiement avec ' + label + '.';
+            }
+            if (button) button.textContent = 'Oui, utiliser ' + label;
+            if (!overlay) return;
+
+            overlay.classList.add('is-open');
+            syncBodyLock();
+        };
+
+        window.closeMethodConfirm = function () {
+            var overlay = document.getElementById('methodConfirmOverlay');
+            if (!overlay) return;
+
+            overlay.classList.remove('is-open');
+            pendingMethod = null;
+            syncBodyLock();
+        };
+
+        window.confirmMethodSelection = function () {
+            var method = pendingMethod;
+            var paneId = methodToPane[method];
+            if (!method) return;
+
+            window.selectMethod(method);
+            if (paneId && openPanelId !== paneId) {
+                if (openPanelId) closePanel(openPanelId);
+                openPanel(paneId);
+            }
+
+            window.closeMethodConfirm();
         };
 
         window.copyText = function (text, btn) {
@@ -447,7 +589,7 @@
             var overlay = document.getElementById('overlay-' + method);
             if (!overlay) { console.error('Overlay not found: overlay-' + method); return; }
             overlay.classList.add('is-open');
-            document.body.style.overflow = 'hidden';
+            syncBodyLock();
             var steps = overlay.querySelectorAll('.instr-step');
             for (var i = 0; i < steps.length; i++) {
                 (function (step, delay) {
@@ -466,7 +608,7 @@
             var overlay = document.getElementById('overlay-' + method);
             if (!overlay) return;
             overlay.classList.remove('is-open');
-            document.body.style.overflow = '';
+            syncBodyLock();
         };
 
         document.addEventListener('keydown', function (e) {
@@ -475,12 +617,17 @@
                 for (var i = 0; i < overlays.length; i++) {
                     overlays[i].classList.remove('is-open');
                 }
-                document.body.style.overflow = '';
+                window.closeMethodConfirm();
+                syncBodyLock();
             }
         });
 
         window.addEventListener('load', function () {
-            window.toggleMethod('mpesa');
+            var initialMethod = selectedMethod || 'm-pesa';
+            var initialPane = methodToPane[initialMethod] || 'mpesa';
+
+            window.selectMethod(initialMethod);
+            openPanel(initialPane);
         });
     })();
 </script>
@@ -850,9 +997,53 @@
         background: linear-gradient(90deg, #e5e7eb, transparent);
     }
 
+    .selection-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        background: linear-gradient(135deg, #ffffff, #f8faff);
+        border: 1px solid #dbeafe;
+        border-radius: 18px;
+        padding: 18px 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.08);
+    }
+
+    .selection-banner__eyebrow {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+
+    .selection-banner__title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .selection-banner__text {
+        font-size: 0.82rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+
+    .selection-banner__badge {
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.76rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
     /* ===========================
    PAYMENT METHOD CARDS
-   =========================== */
+    =========================== */
     .methods-list {
         display: flex;
         flex-direction: column;
@@ -865,11 +1056,18 @@
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
-        transition: box-shadow 0.25s ease;
+        transition: box-shadow 0.25s ease, transform 0.2s ease, border-color 0.2s ease;
+        border: 1px solid transparent;
     }
 
     .method-card:hover {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    }
+
+    .method-card--selected {
+        border-color: #6366f1;
+        transform: translateY(-2px);
+        box-shadow: 0 18px 35px rgba(99, 102, 241, 0.16);
     }
 
     .method-card__header {
@@ -939,6 +1137,159 @@
 
     .method-card__body[style*="max-height"] {
         padding: 0 20px 20px;
+    }
+
+    .method-select-btn {
+        margin-top: 16px;
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f59e0b, #f97316);
+        color: white;
+        font-size: 0.88rem;
+        font-weight: 700;
+        padding: 12px 16px;
+        box-shadow: 0 12px 24px rgba(249, 115, 22, 0.18);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .method-select-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 28px rgba(249, 115, 22, 0.24);
+    }
+
+    .method-select-btn--red {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        box-shadow: 0 12px 24px rgba(220, 38, 38, 0.18);
+    }
+
+    .method-select-btn--green {
+        background: linear-gradient(135deg, #16a34a, #15803d);
+        box-shadow: 0 12px 24px rgba(21, 128, 61, 0.18);
+    }
+
+    .method-confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.62);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        z-index: 9050;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .method-confirm-overlay.is-open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .method-confirm-popup {
+        position: relative;
+        width: min(100%, 460px);
+        background: #ffffff;
+        border-radius: 24px;
+        padding: 28px 24px 22px;
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.3);
+        transform: translateY(18px) scale(0.96);
+        transition: transform 0.25s ease;
+    }
+
+    .method-confirm-overlay.is-open .method-confirm-popup {
+        transform: translateY(0) scale(1);
+    }
+
+    .method-confirm-popup__close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 40px;
+        height: 40px;
+        border: none;
+        border-radius: 50%;
+        background: #f3f4f6;
+        color: #374151;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .method-confirm-popup__close:hover {
+        background: #e5e7eb;
+        transform: scale(1.04);
+    }
+
+    .method-confirm-popup__eyebrow {
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6366f1;
+        margin-bottom: 10px;
+    }
+
+    .method-confirm-popup__title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #111827;
+        line-height: 1.35;
+        margin-bottom: 10px;
+        padding-right: 34px;
+    }
+
+    .method-confirm-popup__text {
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #4b5563;
+        margin-bottom: 20px;
+    }
+
+    .method-confirm-popup__actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .method-confirm-popup__btn {
+        flex: 1;
+        border: none;
+        border-radius: 14px;
+        padding: 13px 16px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .method-confirm-popup__btn:hover {
+        transform: translateY(-1px);
+    }
+
+    .method-confirm-popup__btn--ghost {
+        background: #eef2ff;
+        color: #4338ca;
+    }
+
+    .method-confirm-popup__btn--ghost:hover {
+        background: #e0e7ff;
+    }
+
+    .method-confirm-popup__btn--primary {
+        background: linear-gradient(135deg, #1d4ed8, #4338ca);
+        color: #ffffff;
+        box-shadow: 0 12px 24px rgba(67, 56, 202, 0.2);
+    }
+
+    .method-confirm-popup__btn--primary:hover {
+        box-shadow: 0 16px 28px rgba(67, 56, 202, 0.28);
     }
 
     /* Steps */
@@ -1065,6 +1416,14 @@
     @media (max-width: 600px) {
         .bank-details-grid {
             grid-template-columns: 1fr;
+        }
+
+        .method-confirm-popup {
+            padding: 24px 18px 18px;
+        }
+
+        .method-confirm-popup__actions {
+            flex-direction: column;
         }
     }
 
@@ -1348,6 +1707,7 @@
         padding: 13px 24px;
         border-radius: 12px;
         white-space: nowrap;
+        border: none;
         transition: all 0.25s ease;
         box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
     }
@@ -1356,6 +1716,10 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 24px rgba(124, 58, 237, 0.5);
         color: white !important;
+    }
+
+    #continuePaymentForm {
+        margin: 0;
     }
 
     .timer-note {
@@ -1376,6 +1740,11 @@
     }
 
     @media (max-width: 600px) {
+        .selection-banner {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
         .cta-card {
             flex-direction: column;
             align-items: flex-start;

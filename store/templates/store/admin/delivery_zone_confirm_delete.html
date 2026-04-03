@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer Zone - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="card border-danger shadow-sm mx-auto" style="max-width: 500px;">
+        <div class="card-body text-center p-5">
+            <i class="bi bi-exclamation-triangle-fill text-danger mb-3 d-inline-block" style="font-size: 3rem;"></i>
+            <h3>Supprimer la zone "{{ object.name }}" ?</h3>
+            <p class="text-muted mt-3">
+                Cette action est irréversible. Les anciennes commandes conserveront le tarif payé, mais cette zone ne sera plus disponible pour les futurs achats.
+            </p>
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'store:admin_delivery_zones' %}" class="btn btn-light px-4">Annuler</a>
+                    <button type="submit" class="btn btn-danger px-4 fw-bold">Oui, supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

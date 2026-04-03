@@ -933,3 +933,244 @@ body.sidebar-open #main-content-wrapper {
         font-size: 12px !important;
     }
 }
+
+/* ── Checkout Payment Method Cards ── */
+.checkout-payment-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.chk-method-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.chk-method-card--selected {
+    border-color: #C01414;
+    box-shadow: 0 4px 12px rgba(192, 20, 20, 0.1);
+}
+
+.chk-method-header {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.chk-method-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    background: #f3f4f6;
+}
+
+.chk-icon--orange { background: rgba(255, 107, 26, 0.1); }
+.chk-icon--red { background: rgba(224, 0, 0, 0.1); }
+.chk-icon--green { background: rgba(22, 163, 74, 0.1); }
+
+.chk-method-info {
+    flex: 1;
+}
+
+.chk-method-info strong {
+    display: block;
+    font-size: 1.05rem;
+    color: #111827;
+}
+
+.chk-method-info span {
+    display: block;
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.chk-method-radio {
+    width: 20px;
+    height: 20px;
+    accent-color: #C01414;
+    margin: 0 16px;
+    pointer-events: none;
+}
+
+.chk-chevron {
+    color: #9ca3af;
+    transition: transform 0.3s ease;
+}
+
+.chk-method-body {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease;
+}
+
+.chk-method-card--selected .chk-method-body {
+    border-top: 1px solid #f3f4f6;
+}
+
+.chk-merchant-box {
+    background: rgba(255, 107, 26, 0.05);
+    border: 1px dashed rgba(255, 107, 26, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chk-merchant-box--red {
+    background: rgba(224, 0, 0, 0.05);
+    border-color: rgba(224, 0, 0, 0.3);
+}
+
+.chk-merchant-label {
+    font-size: 0.85rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.chk-merchant-num {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    font-family: monospace;
+    margin: 4px 0;
+}
+
+.chk-merchant-name {
+    font-size: 0.9rem;
+    color: #4b5563;
+    font-weight: 500;
+}
+
+.chk-copy-btn {
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chk-copy-btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.chk-steps {
+    padding: 0 16px 16px;
+}
+
+.chk-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: #374151;
+}
+
+.chk-step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.chk-select-btn {
+    width: calc(100% - 32px);
+    margin: 0 16px 16px;
+    padding: 12px;
+    background: #ff6b1a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.chk-select-btn:hover {
+    background: #e65c10;
+}
+
+.chk-select-btn--red {
+    background: #e00000;
+}
+
+.chk-select-btn--red:hover {
+    background: #cc0000;
+}
+
+.chk-select-btn--green {
+    background: #16a34a;
+}
+
+.chk-select-btn--green:hover {
+    background: #15803d;
+}
+
+.chk-address-card {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0 16px 16px;
+    display: flex;
+    gap: 16px;
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.chk-address-icon {
+    font-size: 1.5rem;
+    color: #6b7280;
+}
+
+.chk-address-title {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.chk-address-phone {
+    display: inline-block;
+    margin-top: 8px;
+    color: #C01414;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.chk-important-note {
+    margin: 0 16px 16px;
+    padding: 12px;
+    background: #fffbeb;
+    color: #b45309;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}

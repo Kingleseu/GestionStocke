@@ -234,6 +234,16 @@ html {
     transition: opacity 0.8s cubic-bezier(0.77, 0, 0.175, 1), visibility 0.8s;
 }
 
+/* Allow clicks to pass through the preloader overlay in case JS fails to remove it */
+#premiumPreloader {
+    pointer-events: none;
+}
+
+#premiumPreloader .preloader-content {
+    /* keep content non-interactive to avoid intercepting clicks */
+    pointer-events: none;
+}
+
 #premiumPreloader.fade-out {
     opacity: 0;
     visibility: hidden;
@@ -457,12 +467,73 @@ html {
     flex: 1;
     margin: 0 2rem;
     overflow: hidden;
+    min-width: 0;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.desktop-tabs-scroll {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    cursor: grab;
+}
+
+.desktop-tabs-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.desktop-tabs-scroll.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+}
+
+/* Some browsers or interrupted events can leave .is-dragging set;
+   ensure tabs remain clickable as JS already suppresses clicks after drag. */
+.desktop-tabs-scroll.is-dragging .tab-item {
+    pointer-events: auto !important;
+}
+
+.desktop-tab-nav {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #4a4a4a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.desktop-tab-nav:hover {
+    color: #E21717;
+    border-color: #E21717;
+}
+
+.desktop-tab-nav.is-hidden {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.desktop-tab-nav.is-disabled {
+    opacity: 0.35;
+    pointer-events: none;
 }
 
 .category-tabs-wrapper {
     display: flex;
     gap: 1.5rem;
-    justify-content: center;
+    justify-content: flex-start;
+    width: max-content;
     border-bottom: 2px solid transparent;
 }
 
@@ -476,6 +547,14 @@ html {
     position: relative;
     white-space: nowrap;
     transition: all 0.3s ease;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+    /* Normalize link styles */
 }
 
 .tab-item:hover {
@@ -598,6 +677,8 @@ html {
     overflow-x: auto;
     gap: 0.75rem;
     padding-bottom: 4px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
     /* for scrollbar visibility if any */
     -ms-overflow-style: none;
     /* IE and Edge */
@@ -619,6 +700,7 @@ html {
     font-weight: 500;
     white-space: nowrap;
     transition: all 0.3s ease;
+    flex: 0 0 auto;
 }
 
 .pill-item.active {
@@ -4208,5 +4290,123 @@ input:checked+.toggle-slider:before {
     .selection-grid-premium {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
+    }
+}
+
+/* =====================================
+   CHECKOUT - Shipping Options Styling
+   ===================================== */
+
+.shipping-option-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.shipping-option-label {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    position: relative;
+}
+
+.shipping-option-label input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.shipping-option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    z-index: 0;
+}
+
+.shipping-option-label input[type="radio"]:checked ~ .shipping-option-content {
+    border-color: #16a34a;
+    background: #f0fdf4;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+
+.shipping-option-label:hover .shipping-option-content {
+    border-color: #d1d5db;
+    background: #ffffff;
+}
+
+.shipping-option-label input[type="radio"]:checked:hover ~ .shipping-option-content {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+
+.shipping-option-content::before {
+    content: '';
+    display: inline-block;
+    position: absolute;
+    left: 1.5rem;
+    top: 1.5rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    background: #ffffff;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.shipping-option-label input[type="radio"]:checked ~ .shipping-option-content::before {
+    border-color: #16a34a;
+    background: #16a34a;
+    box-shadow: inset 0 0 0 3px #ffffff;
+}
+
+.shipping-option-title {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 1rem;
+    margin-left: 2rem;
+}
+
+.shipping-option-subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-left: 2rem;
+}
+
+@media (max-width: 640px) {
+    .shipping-option-group {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+
+    .shipping-option-content {
+        padding: 1.25rem;
+    }
+
+    .shipping-option-content::before {
+        left: 1.25rem;
+        top: 1.25rem;
+    }
+
+    .shipping-option-title,
+    .shipping-option-subtitle {
+        margin-left: 2rem;
     }
 }

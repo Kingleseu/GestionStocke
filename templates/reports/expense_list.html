@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Journal des Charges - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Journal des Charges</h2>
+            <p class="text-muted">Historique de vos frais de fonctionnement</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'reports:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Retour au Bilan
+            </a>
+            <a href="{% url 'reports:expense_create' %}" class="btn btn-danger shadow-sm">
+                <i class="bi bi-plus-lg"></i> Enregistrer une Charge
+            </a>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Date</th>
+                            <th>Catégorie</th>
+                            <th>Intitulé</th>
+                            <th>Enregistré par</th>
+                            <th class="text-end">Montant</th>
+                            <th class="pe-4 text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in expenses %}
+                        <tr>
+                            <td class="ps-4 fw-bold text-muted">{{ exp.date|date:"d/m/Y" }}</td>
+                            <td>
+                                <span class="badge border bg-light text-dark">
+                                    <i class="bi {{ exp.category.icon }} me-1"></i> {{ exp.category.name }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">{{ exp.title }}</div>
+                                {% if exp.notes %}<small class="text-muted">{{ exp.notes|truncatechars:50 }}</small>{% endif %}
+                            </td>
+                            <td class="small">{{ exp.created_by.get_full_name|default:exp.created_by.username }}</td>
+                            <td class="text-end fw-bold text-danger">-{{ exp.amount|floatformat:0|intcomma }} FC</td>
+                            <td class="pe-4 text-center">
+                                <form action="#" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-outline-secondary" disabled>
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
+                                Aucune charge enregistrée pour le moment.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

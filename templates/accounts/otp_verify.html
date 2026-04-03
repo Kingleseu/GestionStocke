@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verification OTP - MKARIBU{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center min-vh-100 py-5" style="background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);">
+    <div class="col-md-6 col-lg-4">
+        <div class="text-center mb-4">
+            <img src="{% static 'img/mkaribu_logo.png' %}" alt="MKARIBU" class="img-fluid mb-3" style="height: 110px; width: auto;">
+            <p class="text-muted fw-medium mb-0">Verification en 2 etapes par email</p>
+        </div>
+
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <div class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 68px; height: 68px;">
+                        <i class="bi bi-shield-check display-6"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Entrez votre code OTP</h4>
+                    <p class="text-muted small mb-0">
+                        Un code a 6 chiffres a ete envoye a
+                        <strong>{{ masked_email }}</strong>.
+                    </p>
+                </div>
+
+                <div class="alert alert-light border rounded-4 small mb-3">
+                    Vous n'etes pas encore connecte. La session ne sera ouverte qu'apres verification du code OTP.
+                </div>
+
+                {% if is_local_email_preview and debug_otp %}
+                <div class="alert alert-warning rounded-4 small mb-4">
+                    Aucun serveur email n'est configure en local.
+                    <br>
+                    <strong>Code OTP de test :</strong> {{ debug_otp }}
+                </div>
+                {% endif %}
+
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    {{ form.email }}
+                    {{ form.account_space }}
+                    {{ form.next }}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger py-2 small rounded-3 mb-3">
+                        {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.code.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Code OTP</label>
+                        {{ form.code }}
+                        {% for error in form.code.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="small text-muted mb-4">
+                        Le code expire rapidement. Si vous ne voyez rien, verifiez aussi vos spams.
+                    </div>
+
+                    <button type="submit" class="btn btn-dark w-100 py-3 fw-bold rounded-3 shadow-sm">
+                        Verifier et ouvrir la session
+                    </button>
+                </form>
+
+                <form method="post" action="{% url 'accounts:otp_resend' %}" class="d-grid gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="email" value="{{ form.email.value }}">
+                    <input type="hidden" name="account_space" value="{{ account_space }}">
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <button type="submit" class="btn btn-outline-secondary rounded-3">
+                        Renvoyer le code
+                    </button>
+                    <a href="{% url 'accounts:login' %}?space={{ account_space }}" class="btn btn-link text-decoration-none">
+                        Changer d'email
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

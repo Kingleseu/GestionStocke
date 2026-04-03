@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from products.models import Product, Category, CustomizationTemplate
 from products.services import CustomizationService
+from django.contrib.auth.models import User
 from decimal import Decimal
 import json
 
@@ -49,6 +50,11 @@ class CustomizationLogicTest(TestCase):
             customization_template=self.template
         )
         self.client = Client()
+        self.user = User.objects.create_user(
+            username='customization-client',
+            email='customization@example.com',
+            password='Secret123!',
+        )
 
     def test_price_calculation(self):
         # Case 1: Text only (5 carbons = base 5 + 5*0.5 = 7.5 extra)
@@ -73,6 +79,8 @@ class CustomizationLogicTest(TestCase):
             CustomizationService.validate_customization_data(self.product, data)
 
     def test_cart_synchronization(self):
+        self.client.force_login(self.user)
+
         # Mock a cart sync
         cart_data = [
             {

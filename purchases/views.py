@@ -68,16 +68,20 @@ def purchase_create_view(request):
             
             # Créer l'achat avec transaction atomique
             with transaction.atomic():
+                # Handle optional uploaded invoice file
+                invoice_file = request.FILES.get('invoice_file') if request.FILES else None
+
                 purchase = Purchase.objects.create(
                     shop=request.user.profile.shop,
                     supplier=supplier,
                     invoice_number=invoice_number,
+                    invoice_file=invoice_file,
                     notes=notes,
                     is_received=is_received,
                     created_by=request.user,
                     total=0  # Sera calculé automatiquement
                 )
-                
+
                 # Créer les lignes d'achat
                 for item in items:
                     product = get_object_or_404(Product, id=item['product_id'])
@@ -87,7 +91,7 @@ def purchase_create_view(request):
 
                     quantity = int(item['quantity'])
                     purchase_price = float(item['price'])
-                    
+
                     PurchaseItem.objects.create(
                         purchase=purchase,
                         product=product,
@@ -95,10 +99,10 @@ def purchase_create_view(request):
                         purchase_price=purchase_price,
                         subtotal=quantity * purchase_price
                     )
-                
+
                 # Le total et l'ajout au stock sont gérés automatiquement par le modèle
                 purchase.refresh_from_db()
-                
+
                 messages.success(request, f'Achat créé avec succès ! Total : {purchase.total}$')
                 return redirect('purchases:purchase_detail', pk=purchase.id)
                 

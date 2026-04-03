@@ -35,20 +35,17 @@
                 </div>
                 <div class="summary-row">
                     <span>Livraison</span>
-                    <span id="cartDelivery">Calculé à la prochaine étape</span>
+                    <span id="cartDelivery">Calcule a la prochaine etape</span>
                 </div>
-                <div class="summary-row">
-                    <span>TVA (estimée)</span>
-                    <span id="cartTax">0.00 FC</span>
-                </div>
+
                 <div class="summary-total">
                     <span>Total</span>
                     <span id="cartTotal">0.00 FC</span>
                 </div>
             </div>
 
-            <button class="checkout-btn" onclick="proceedToCheckout()">
-                Procéder au paiement
+            <button class="checkout-btn" id="cartCheckoutButton" onclick="proceedToCheckout()">
+                {% if request.user.is_authenticated %}Proceder au paiement{% else %}Se connecter pour commander{% endif %}
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>

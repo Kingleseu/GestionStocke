@@ -1,0 +1,83 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Mes commandes{% endblock %}
+
+{% block content %}
+<section class="container py-5" style="max-width: 1080px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted small mb-1">Espace client</p>
+            <h1 class="h3 mb-1">Mes commandes</h1>
+            <p class="text-muted mb-0">Retrouvez vos references, factures detaillees et l'etat d'avancement de chaque commande.</p>
+        </div>
+        <a href="{% url 'store:account_profile' %}" class="btn btn-outline-dark">Mon profil</a>
+    </div>
+
+    {% if orders %}
+        <div class="row g-4">
+            {% for order in orders %}
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                                <div>
+                                    <p class="text-uppercase text-muted small mb-1">{{ order.created_at|date:"d/m/Y H:i" }}</p>
+                                    <h2 class="h5 mb-1">{{ order.tracking_reference }}</h2>
+                                    <p class="text-muted mb-0">{{ order.items.count }} article{{ order.items.count|pluralize }} · {{ order.get_payment_method_display }}</p>
+                                </div>
+                                <div class="text-md-end">
+                                    <span class="badge text-bg-dark">{{ order.get_status_display }}</span>
+                                    <div class="mt-2 fw-semibold">{{ order.total_amount|floatformat:0 }} FC</div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-3">
+                                <div class="col-md-7">
+                                    <div class="small text-muted mb-1">Livraison</div>
+                                    <div>{{ order.address }}</div>
+                                    <div>{{ order.city }}{% if order.delivery_zone %} · {{ order.delivery_zone }}{% endif %}</div>
+                                </div>
+                                <div class="col-md-5 text-md-end">
+                                    {% if order.is_cash_on_delivery %}
+                                        <div class="small text-muted mb-1">Code de remise</div>
+                                        <div class="fw-semibold">{{ order.delivery_confirmation_code }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mt-4 d-flex flex-wrap gap-2">
+                                <a href="{% url 'store:account_order_detail' order.tracking_reference %}" class="btn btn-dark">Ouvrir le suivi</a>
+                                {% if order.requires_manual_payment_proof and order.status == 'pending_payment' %}
+                                    <a href="{% url 'store:payment_submit' order.id %}" class="btn btn-outline-dark">Envoyer une preuve</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Precedent</a></li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-5 text-center">
+                <h2 class="h5 mb-2">Aucune commande pour le moment</h2>
+                <p class="text-muted mb-4">Vos futures commandes apparaitront ici avec leur reference et leur suivi.</p>
+                <a href="{% url 'store:catalog' %}" class="btn btn-dark">Retour a la boutique</a>
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

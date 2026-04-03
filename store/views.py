@@ -1,13 +1,16 @@
-﻿from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
+from django import forms as django_forms
 from django.utils import timezone
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy, reverse
 from django.utils.decorators import method_decorator
 from accounts.decorators import manager_required
-from .models import HeroSection, HeroCard, AboutSection, AboutStat, FooterConfig, SocialLink, FooterLink, StoreSettings, Universe, Collection, WebOrder, ManualPayment
+from .models import HeroSection, HeroCard, AboutSection, AboutStat, FooterConfig, SocialLink, FooterLink, StoreSettings, Universe, Collection, WebOrder, ManualPayment, AdminNotification, CustomerProfile, StorePickupVoucher
 from accounts.models import Shop
-from .forms import HeroSectionForm, HeroCardForm, AboutSectionForm, AboutStatForm, FooterConfigForm, SocialLinkForm, FooterLinkForm, CategoryForm, UniverseForm, CollectionForm, ShopForm, ManualPaymentForm
+from .forms import HeroSectionForm, HeroCardForm, AboutSectionForm, AboutStatForm, FooterConfigForm, SocialLinkForm, FooterLinkForm, CategoryForm, UniverseForm, CollectionForm, ShopForm, ManualPaymentForm, CustomerAccountForm
+from .services import send_order_confirmation_email
 # Promotions
 try:
     from promotions.models import Promotion
@@ -17,12 +20,182 @@ except ImportError:
     PROMOTIONS_ENABLED = False
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Count, Q
 from django.db.utils import OperationalError, ProgrammingError
 from products.models import Product
 from products.models import Product, Category
 from products.services import CustomizationService
 import json
+
+
+def _serialize_admin_notification(notification):
+    return {
+        'id': notification.id,
+        'title': notification.title,
+        'message': notification.message,
+        'is_read': notification.is_read,
+        'order_id': notification.order_id,
+        'open_url': notification.open_url,
+        'created_at': timezone.localtime(notification.created_at).strftime('%d/%m %H:%M'),
+    }
+
+
+PAYMENT_METHOD_DETAILS = {
+    'm-pesa': {
+        'label': 'M-Pesa',
+        'short_label': 'M-Pesa',
+        'description': 'Paiement marchand via numéro de caisse',
+        'pane_id': 'mpesa',
+        'icon_class': 'bi bi-phone-fill',
+        'accent_class': 'is-orange',
+        'reference_label': 'Référence M-Pesa',
+        'reference_placeholder': 'Ex: DAK55I7BV49',
+        'reference_hint': 'Copiez la référence reçue par SMS après votre paiement M-Pesa.',
+        'proof_hint': 'Capture du SMS ou reçu M-Pesa en photo/PDF.',
+    },
+    'airtel': {
+        'label': 'Airtel Money',
+        'short_label': 'Airtel',
+        'description': "Envoi direct via votre compte Airtel Money",
+        'pane_id': 'airtel',
+        'icon_class': 'bi bi-phone-fill',
+        'accent_class': 'is-red',
+        'reference_label': 'Référence Airtel Money',
+        'reference_placeholder': 'Ex: AIRTELMONEY12345',
+        'reference_hint': 'Entrez la référence ou le code visible dans la confirmation Airtel Money.',
+        'proof_hint': 'Capture de la confirmation Airtel Money ou reçu PDF.',
+    },
+    'delivery-cash': {
+        'label': 'Paiement a la livraison',
+        'short_label': 'Livraison',
+        'description': 'Le paiement se fait au moment de la remise du colis',
+        'pane_id': 'delivery-cash',
+        'icon_class': 'bi bi-truck',
+        'accent_class': 'is-blue',
+        'reference_label': 'Reference du bon',
+        'reference_placeholder': 'Ex: CMD-20260403-000123',
+        'reference_hint': 'Conservez votre reference de commande et votre code de remise.',
+        'proof_hint': 'Aucune preuve n\'est requise avant la livraison.',
+    },
+    'cash': {
+        'label': 'Cash / Paiement sur place',
+        'short_label': 'Cash',
+        'description': 'Paiement en boutique ou à la réception',
+        'pane_id': 'cash',
+        'icon_class': 'bi bi-cash-coin',
+        'accent_class': 'is-green',
+        'reference_label': 'Référence du reçu',
+        'reference_placeholder': 'Ex: Recu-145 ou Depot boutique',
+        'reference_hint': 'Entrez le numéro du reçu ou une note courte pour identifier votre paiement.',
+        'proof_hint': 'Photo nette du reçu ou preuve remise en boutique.',
+    },
+}
+
+PAYMENT_METHOD_ALIASES = {
+    'mpesa': 'm-pesa',
+    'm-pesa': 'm-pesa',
+    'airtel': 'airtel',
+    'orange': 'orange',
+    'virement': 'virement',
+    'delivery-cash': 'delivery-cash',
+    'cash': 'cash',
+}
+
+
+def _normalize_payment_method(value, default='m-pesa'):
+    if value is None:
+        return default
+
+    normalized = PAYMENT_METHOD_ALIASES.get(str(value).strip().lower())
+    if normalized in PAYMENT_METHOD_DETAILS:
+        return normalized
+    return default
+
+
+def _resolve_payment_method_for_order(order, request):
+    requested = _normalize_payment_method(request.GET.get('payment_method'), default=None)
+    if requested:
+        return requested
+
+    existing_payment = getattr(order, 'manual_payment', None)
+    if existing_payment:
+        return _normalize_payment_method(existing_payment.payment_method, default='m-pesa')
+
+    return _normalize_payment_method(getattr(order, 'payment_method', None), default='m-pesa')
+
+
+def _store_auth_required_response(request):
+    login_url = f"{reverse('accounts:login')}?next={reverse('store:catalog')}"
+    payload = {
+        'success': False,
+        'auth_required': True,
+        'message': "Connectez-vous ou creez un compte pour commander.",
+        'login_url': login_url,
+    }
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return JsonResponse(payload, status=401)
+
+    messages.info(request, payload['message'])
+    return redirect(login_url)
+
+
+def _active_store_products_queryset():
+    return Product.objects.filter(is_active=True).select_related('category').order_by('-id')
+
+
+def _build_order_timeline(order):
+    done_statuses = {
+        'pending_payment': {'pending_payment'},
+        'awaiting_verification': {'pending_payment', 'awaiting_verification'},
+        'paid': {'pending_payment', 'awaiting_verification', 'paid'},
+        'shipped': {'pending_payment', 'awaiting_verification', 'paid', 'shipped'},
+        'delivered': {'pending_payment', 'awaiting_verification', 'paid', 'shipped', 'delivered'},
+        'cancelled': {'cancelled'},
+    }
+    current_done = done_statuses.get(order.status, set())
+    return [
+        {
+            'code': 'pending_payment',
+            'label': 'Commande enregistree',
+            'done': 'pending_payment' in current_done,
+            'active': order.status == 'pending_payment',
+        },
+        {
+            'code': 'awaiting_verification',
+            'label': 'Paiement en controle',
+            'done': 'awaiting_verification' in current_done,
+            'active': order.status == 'awaiting_verification',
+        },
+        {
+            'code': 'paid',
+            'label': 'Commande validee',
+            'done': 'paid' in current_done,
+            'active': order.status == 'paid',
+        },
+        {
+            'code': 'shipped',
+            'label': 'En cours de livraison',
+            'done': 'shipped' in current_done,
+            'active': order.status == 'shipped',
+        },
+        {
+            'code': 'delivered',
+            'label': 'Livree',
+            'done': 'delivered' in current_done,
+            'active': order.status == 'delivered',
+        },
+    ]
+
+
+def _get_customer_order_for_user(user, order_number):
+    return get_object_or_404(
+        WebOrder.objects.prefetch_related('items__product', 'manual_payment'),
+        user=user,
+        order_number=order_number,
+    )
+
 
 class SPAContextMixin:
     def get_spa_context(self, request):
@@ -33,7 +206,7 @@ class SPAContextMixin:
         ctx = {}
         
         # Products - Order by newest first
-        products_qs = Product.objects.filter(is_active=True).order_by('-id')
+        products_qs = _active_store_products_queryset()
         products_data = []
         
         # Try to import pricing function
@@ -82,49 +255,61 @@ class SPAContextMixin:
         store_settings = StoreSettings.objects.first()
         settings_data = {
             'deliveryPrice': float(store_settings.delivery_fee) if store_settings else 5.99,
-            'freeShippingThreshold': 100000, 
-            'taxRate': 0.16,
+            'freeShippingThreshold': 100000,
             'bannerText': '🎁 Livraison gratuite dès 100 000 FC d\'achat',
             'bannerActive': True,
         }
         ctx['store_settings_json'] = json.dumps(settings_data)
 
+        # Zones de livraison
+        from .models import DeliveryZone
+        delivery_zones = list(DeliveryZone.objects.filter(is_active=True).values('id', 'name', 'price'))
+        for zone in delivery_zones:
+            zone['price'] = float(zone['price'])
+        ctx['delivery_zones_json'] = json.dumps(delivery_zones)
         # Cart
         session_cart = request.session.get('cart', {})
         cart_data_js = []
-        for key, item_data in session_cart.items():
-            try:
-                # Handle both legacy (int) and new (complex key) entries
-                # New structure: key -> { 'product_id': 1, 'quantity': 1, 'customization': ... }
-                # OR key -> qty (legacy)
-                
-                if isinstance(item_data, dict):
-                    pid = item_data.get('product_id')
-                    qty = item_data.get('quantity')
-                    customization = item_data.get('customization')
-                else:
-                    # Legacy: key is pid, value is qty
-                    pid = key
-                    qty = item_data
-                    customization = None
-                
-                # Retrieve product
-                # Clean pid if it comes from composite key (though if dict, we likely stored explicit pid)
-                 # Safety check
-                if not pid: continue
+        cart_entries = []
+        product_ids = set()
 
-                p = Product.objects.get(id=pid)
-                cart_data_js.append({
-                    'id': key, # Use the unique key
-                    'productId': str(p.id),
-                    'name': p.name,
-                    'price': float(p.selling_price) + float(customization.get('extra_cost', 0) if customization else 0),
-                    'image': p.image.url if p.image else '',
-                    'quantity': qty,
-                    'customization': customization 
-                })
-            except Product.DoesNotExist:
+        for key, item_data in session_cart.items():
+            if isinstance(item_data, dict):
+                pid = item_data.get('product_id')
+                qty = item_data.get('quantity')
+                customization = item_data.get('customization')
+            else:
+                # Legacy: key is pid, value is qty
+                pid = key
+                qty = item_data
+                customization = None
+
+            if not pid:
                 continue
+
+            try:
+                pid_int = int(pid)
+            except (TypeError, ValueError):
+                continue
+
+            product_ids.add(pid_int)
+            cart_entries.append((key, pid_int, qty, customization))
+
+        cart_products = Product.objects.filter(id__in=product_ids).in_bulk()
+        for key, pid_int, qty, customization in cart_entries:
+            product = cart_products.get(pid_int)
+            if not product:
+                continue
+
+            cart_data_js.append({
+                'id': key,
+                'productId': str(product.id),
+                'name': product.name,
+                'price': float(product.selling_price) + float(customization.get('extra_cost', 0) if customization else 0),
+                'image': product.image.url if product.image else '',
+                'quantity': qty,
+                'customization': customization,
+            })
         ctx['cart_json'] = json.dumps(cart_data_js)
 
         # Categories (shared across nav, filtres, catalogue tabs)
@@ -154,6 +339,20 @@ class SPAContextMixin:
             ctx['footer_links_help'] = []
             ctx['footer_links_legal'] = []
 
+        customer_profile = None
+        if request.user.is_authenticated:
+            customer_profile = CustomerProfile.objects.filter(user=request.user).first()
+
+        ctx['checkout_customer'] = {
+            'first_name': request.user.first_name if request.user.is_authenticated else '',
+            'last_name': request.user.last_name if request.user.is_authenticated else '',
+            'email': request.user.email if request.user.is_authenticated else '',
+            'phone': customer_profile.phone if customer_profile else '',
+            'address': customer_profile.address if customer_profile else '',
+            'city': customer_profile.city if customer_profile else '',
+            'zip_code': customer_profile.zip_code if customer_profile else '',
+        }
+
         
         return ctx
 
@@ -173,9 +372,25 @@ class StoreCatalogView(SPAContextMixin, ListView):
 
     def get_queryset(self):
         query = self.request.GET.get('search')
+        queryset = _active_store_products_queryset()
         if query:
-            return Product.objects.filter(Q(name__icontains=query) | Q(barcode=query), is_active=True)
-        return Product.objects.filter(is_active=True)
+            return queryset.filter(Q(name__icontains=query) | Q(barcode=query))
+        # Support filtering by category passed as query param (name or id)
+        category_param = self.request.GET.get('category')
+        if category_param:
+            # Ignore the generic "Tous" value
+            if str(category_param).strip().lower() != 'tous' and str(category_param).strip() != 'all':
+                try:
+                    # If numeric, try by id
+                    if str(category_param).isdigit():
+                        queryset = queryset.filter(category__id=int(category_param))
+                    else:
+                        # Otherwise match by name (case-insensitive)
+                        queryset = queryset.filter(category__name__iexact=category_param)
+                except Exception:
+                    # If anything goes wrong, fallback to full queryset
+                    pass
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -217,6 +432,122 @@ class StoreCartView(SPAContextMixin, TemplateView):
         context.update(self.get_spa_context(self.request))
         return context
 
+
+class StoreCustomerProfileView(LoginRequiredMixin, SPAContextMixin, TemplateView):
+    template_name = 'store/account_profile.html'
+
+    def _get_customer_profile(self):
+        profile, _ = CustomerProfile.objects.get_or_create(user=self.request.user)
+        return profile
+
+    def _build_form(self):
+        profile = self._get_customer_profile()
+        return CustomerAccountForm(initial={
+            'first_name': self.request.user.first_name,
+            'last_name': self.request.user.last_name,
+            'email': self.request.user.email,
+            'phone': profile.phone,
+            'address': profile.address,
+            'city': profile.city,
+            'zip_code': profile.zip_code,
+        })
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_spa_context(self.request))
+        context['account_form'] = kwargs.get('form') or self._build_form()
+        context['active_view'] = 'account_profile'
+        context['customer_orders_count'] = WebOrder.objects.filter(user=self.request.user).count()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = CustomerAccountForm(request.POST)
+        if not form.is_valid():
+            return self.render_to_response(self.get_context_data(form=form))
+
+        with transaction.atomic():
+            request.user.first_name = form.cleaned_data['first_name']
+            request.user.last_name = form.cleaned_data['last_name']
+            request.user.email = form.cleaned_data['email']
+            request.user.save(update_fields=['first_name', 'last_name', 'email'])
+
+            profile = self._get_customer_profile()
+            profile.phone = form.cleaned_data['phone']
+            profile.address = form.cleaned_data['address']
+            profile.city = form.cleaned_data['city']
+            profile.zip_code = form.cleaned_data['zip_code']
+            profile.save()
+
+        messages.success(request, "Votre profil client a Ã©tÃ© mis Ã  jour.")
+        return redirect('store:account_profile')
+
+
+class CustomerOrderListView(LoginRequiredMixin, SPAContextMixin, ListView):
+    template_name = 'store/account_orders.html'
+    context_object_name = 'orders'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return (
+            WebOrder.objects
+            .filter(user=self.request.user)
+            .select_related()
+            .prefetch_related('items__product', 'manual_payment')
+            .order_by('-created_at')
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_spa_context(self.request))
+        context['active_view'] = 'account_orders'
+        context['customer_orders_count'] = self.get_queryset().count()
+        return context
+
+
+class CustomerOrderDetailView(LoginRequiredMixin, SPAContextMixin, TemplateView):
+    template_name = 'store/account_order_detail.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_spa_context(self.request))
+        order = _get_customer_order_for_user(self.request.user, self.kwargs['order_number'])
+        context['order'] = order
+        context['active_view'] = 'account_orders'
+        context['timeline_steps'] = _build_order_timeline(order)
+        context['manual_payment'] = getattr(order, 'manual_payment', None)
+        context['selected_payment_details'] = PAYMENT_METHOD_DETAILS.get(order.payment_method, PAYMENT_METHOD_DETAILS['cash'])
+        context['payment_instructions_url'] = reverse('store:payment_instructions', args=[order.id])
+        context['payment_submit_url'] = reverse('store:payment_submit', args=[order.id])
+        context['invoice_url'] = reverse('store:account_order_invoice', args=[order.order_number])
+        return context
+
+
+class CustomerOrderInvoiceView(LoginRequiredMixin, SPAContextMixin, TemplateView):
+    template_name = 'store/account_order_invoice.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.get_spa_context(self.request))
+        order = _get_customer_order_for_user(self.request.user, self.kwargs['order_number'])
+        shop = Shop.objects.order_by('id').first()
+
+        items_with_pricing = []
+        for item in order.items.all():
+            items_with_pricing.append({
+                'obj': item,
+                'unit_price': item.price,
+                'subtotal': item.line_total,
+            })
+
+        context['order'] = order
+        context['shop'] = shop
+        context['items'] = items_with_pricing
+        context['items_subtotal'] = order.items_subtotal
+        context['delivery_fee'] = order.delivery_fee
+        context['grand_total'] = order.total_amount
+        context['auto_print'] = self.request.GET.get('print') == '1'
+        return context
+
 class StoreCheckoutView(LoginRequiredMixin, SPAContextMixin, TemplateView):
     template_name = 'store/home.html' 
     
@@ -227,50 +558,52 @@ class StoreCheckoutView(LoginRequiredMixin, SPAContextMixin, TemplateView):
         context['active_view'] = 'checkout'
         return context
 
-    def post(self, request, *args, **kwargs):
+    def _process_checkout(self, request, cart, selected_payment_method, first_name, last_name, email, phone, address, city, zip_code, delivery_type='delivery', delivery_zone_id=''):
         from .models import WebOrder, WebOrderItem
-        
-        cart = request.session.get('cart', {})
-        if not cart:
-            messages.error(request, "Votre panier est vide.")
-            return redirect('store:catalog')
 
-        try:
-            # Simple Order Creation
+        with transaction.atomic():
+            request.user.first_name = first_name
+            request.user.last_name = last_name
+            request.user.email = email
+            request.user.save(update_fields=['first_name', 'last_name', 'email'])
+
+            customer_profile, _ = CustomerProfile.objects.get_or_create(user=request.user)
+            customer_profile.phone = phone
+            customer_profile.address = address
+            customer_profile.city = city
+            customer_profile.zip_code = zip_code
+            customer_profile.save()
+
             order = WebOrder.objects.create(
                 user=request.user,
-                # ... existing fields ...
-                full_name=f"{request.POST.get('first_name')} {request.POST.get('last_name')}",
-                email=request.POST.get('email'),
-                phone=request.POST.get('phone'),
-                address=request.POST.get('address'),
-                city=request.POST.get('city'),
-                total_amount=0 
+                full_name=f"{first_name} {last_name}".strip(),
+                email=email,
+                phone=phone,
+                address=address,
+                city=city,
+                payment_method=selected_payment_method,
+                total_amount=0,
             )
-            
-            total = Decimal('0')
+
             total = Decimal('0')
             for key, item_data in cart.items():
-                # Handle new vs legacy cart structure
                 if isinstance(item_data, dict):
                     pid = item_data.get('product_id')
                     qty = item_data.get('quantity')
                     customization = item_data.get('customization')
                 else:
-                    # Legacy
                     pid = key.split('_')[0] if '_' in key else key
                     qty = item_data
                     customization = None
 
-                if not pid: continue
+                if not pid:
+                    continue
 
                 product = Product.objects.get(id=pid)
-                # Calculate price including customization
                 base_price = product.selling_price
                 extra_cost = Decimal(str(customization.get('extra_cost', 0))) if customization else Decimal('0')
                 final_price = base_price + extra_cost
 
-                # Create item
                 order_item = WebOrderItem.objects.create(
                     order=order,
                     product=product,
@@ -278,18 +611,13 @@ class StoreCheckoutView(LoginRequiredMixin, SPAContextMixin, TemplateView):
                     price=final_price,
                     customization_data=customization
                 )
-                
-                # Persist preview image and production data if available
+
                 if customization:
                     try:
-                        from products.services import CustomizationService
                         order_item.production_data = CustomizationService.generate_production_data(product, customization)
                         order_item.save()
 
-                        # --- DEFINITIVE MEDIA PERSISTENCE ---
                         preview_saved = False
-                        
-                        # 1. Handle generated PREVIEW (Base64 is preferred for the 'actual result')
                         b64_preview = customization.get('preview')
                         if b64_preview and isinstance(b64_preview, str) and ';base64,' in b64_preview:
                             from django.core.files.base import ContentFile
@@ -303,7 +631,6 @@ class StoreCheckoutView(LoginRequiredMixin, SPAContextMixin, TemplateView):
                             except Exception as e:
                                 print(f"B64 Preview save failed: {e}")
 
-                        # Fallback to preview_id if B64 failed/missing
                         if not preview_saved and customization.get('preview_id'):
                             from products.models import CustomizationPreview
                             try:
@@ -314,15 +641,13 @@ class StoreCheckoutView(LoginRequiredMixin, SPAContextMixin, TemplateView):
                                         preview_obj.preview_image.file,
                                         save=True
                                     )
-                                    preview_saved = True
-                            except: pass
+                            except Exception:
+                                pass
 
-                        # 2. Handle CLIENT'S ORIGINAL PHOTO (Crucial for workshop)
                         choices = customization.get('choices', {})
                         client_img_data = None
-                        # Broad search for any uploaded image key
-                        for key in ['recto', 'verso', 'studio_engraving', 'image_upload', 'image']:
-                            side = choices.get(key)
+                        for image_key in ['recto', 'verso', 'studio_engraving', 'image_upload', 'image']:
+                            side = choices.get(image_key)
                             if isinstance(side, dict):
                                 client_img_data = side.get('image_data') or side.get('url') or side.get('file') or side.get('image_preview')
                                 if client_img_data and isinstance(client_img_data, str) and len(client_img_data) > 100:
@@ -330,38 +655,135 @@ class StoreCheckoutView(LoginRequiredMixin, SPAContextMixin, TemplateView):
                             elif isinstance(side, str) and len(side) > 100:
                                 client_img_data = side
                                 break
-                        
-                        if client_img_data and isinstance(client_img_data, str):
+
+                        if client_img_data and isinstance(client_img_data, str) and ';base64,' in client_img_data:
                             from django.core.files.base import ContentFile
                             import base64
-                            if ';base64,' in client_img_data:
-                                try:
-                                    format, imgstr = client_img_data.split(';base64,')
-                                    ext = format.split('/')[-1]
-                                    data = ContentFile(base64.b64decode(imgstr), name=f"client_photo_{order.id}_{order_item.id}.{ext}")
-                                    order_item.client_image.save(data.name, data, save=True)
-                                except Exception as e:
-                                    print(f"Client image save failed: {e}")
-                                # (URL handling omitted for now as Base64 covers 99% of Studio uploads)
-
+                            try:
+                                format, imgstr = client_img_data.split(';base64,')
+                                ext = format.split('/')[-1]
+                                data = ContentFile(base64.b64decode(imgstr), name=f"client_photo_{order.id}_{order_item.id}.{ext}")
+                                order_item.client_image.save(data.name, data, save=True)
+                            except Exception as e:
+                                print(f"Client image save failed: {e}")
                     except Exception as e:
                         print(f"Error persisting production/preview data: {e}")
-                total += final_price * qty
-            
-            # Update total with tax/delivery logic if needed
-            # For now just subtotal
-            order.total_amount = total 
-            order.save()
-            
-            # Clear cart
-            request.session['cart'] = {}
-            messages.success(request, f"Commande #{order.id} enregistrée. Veuillez suivre les instructions pour le paiement.")
-            return redirect('store:payment_instructions', order_id=order.id)
-            
-        except Exception as e:
-            messages.error(request, f"Erreur lors de la commande: {str(e)}")
-            return redirect('store:catalog') # Redirect to catalog (SPA) which has the data
 
+                total += final_price * qty
+
+            delivery_fee = Decimal('0.00')
+            delivery_zone_name = ''
+            
+            # Only add delivery fee if delivery type is 'delivery' (not pickup)
+            if delivery_type == 'delivery' and delivery_zone_id:
+                from store.models import DeliveryZone
+                try:
+                    zone = DeliveryZone.objects.get(id=delivery_zone_id, is_active=True)
+                    delivery_fee = zone.price
+                    delivery_zone_name = zone.name
+                except DeliveryZone.DoesNotExist:
+                    pass
+            elif delivery_type == 'pickup':
+                # For pickup, no delivery fee or zone needed
+                delivery_zone_name = 'Retrait en boutique'  # Mark as pickup
+
+            total += delivery_fee
+            order.delivery_type = delivery_type
+            order.delivery_fee = delivery_fee
+            order.delivery_zone = delivery_zone_name
+            order.total_amount = total
+            
+            # Set status based on payment method
+            if selected_payment_method == 'cash':
+                order.status = 'pending_payment'  # Payment in store, no verification needed
+            elif selected_payment_method == 'delivery-cash':
+                order.status = 'awaiting_verification'  # Delivery cash needs verification
+            else:
+                order.status = 'awaiting_verification'  # Other methods need verification
+            
+            order.save()
+
+            # Generate pickup voucher if payment method is 'cash' (in-store pickup)
+            if selected_payment_method == 'cash':
+                from datetime import timedelta
+                StorePickupVoucher.objects.create(
+                    order=order,
+                    valid_until=timezone.now() + timedelta(days=7)
+                )
+
+            transaction_ref = request.POST.get('transaction_ref', '').strip()
+            proof_file = request.FILES.get('proof_file')
+            if order.requires_manual_payment_proof and (transaction_ref or proof_file):
+                ManualPayment.objects.create(
+                    order=order,
+                    user=request.user,
+                    payment_method=selected_payment_method,
+                    transaction_ref=transaction_ref,
+                    proof_file=proof_file,
+                    status='submitted'
+                )
+                order.status = 'awaiting_verification'
+                order.save()
+
+        try:
+            send_order_confirmation_email(order, request)
+        except Exception as email_error:
+            print(f"Order confirmation email failed: {email_error}")
+            messages.warning(request, "La commande est enregistrÃ©e, mais l'email de confirmation n'a pas pu partir immÃ©diatement.")
+
+        if order.payment_method == 'cash':
+            voucher = order.pickup_voucher
+            messages.success(request, f"✅ Bon de retrait généré! Numéro: {voucher.voucher_number} | Code: {voucher.pickup_code}")
+        elif order.requires_manual_payment_proof and getattr(order, 'manual_payment', None):
+            messages.success(request, f"Commande {order.tracking_reference} enregistrée. Votre preuve de paiement est en cours de vérification.")
+        elif order.requires_manual_payment_proof:
+            messages.info(request, f"Commande {order.tracking_reference} enregistrée. Vous pouvez envoyer votre preuve de paiement depuis l'espace Mes commandes.")
+        elif order.is_cash_on_delivery:
+            messages.success(request, f"Commande {order.tracking_reference} enregistrée. Conservez le code de remise {order.delivery_confirmation_code} pour la livraison.")
+        else:
+            messages.success(request, f"Commande {order.tracking_reference} enregistrée.")
+
+        request.session['cart'] = {}
+        request.session.modified = True
+        return redirect('store:account_order_detail', order_number=order.tracking_reference)
+
+    def post(self, request, *args, **kwargs):
+        from .models import WebOrder, WebOrderItem
+        
+        cart = request.session.get('cart', {})
+        if not cart:
+            messages.error(request, "Votre panier est vide.")
+            return redirect('store:checkout')
+
+        selected_payment_method = _normalize_payment_method(
+            request.POST.get('payment_method') or request.POST.get('paymentMethod'),
+            default='m-pesa',
+        )
+
+        first_name = (request.POST.get('first_name') or request.user.first_name or '').strip()
+        last_name = (request.POST.get('last_name') or request.user.last_name or '').strip()
+        email = (request.POST.get('email') or request.user.email or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
+        address = (request.POST.get('address') or '').strip()
+        city = (request.POST.get('city') or '').strip()
+        zip_code = (request.POST.get('postal_code') or request.POST.get('zip_code') or '').strip()
+        delivery_type = request.POST.get('delivery_type', 'delivery').strip()  # 'pickup' or 'delivery'
+        delivery_zone_id = request.POST.get('delivery_zone_id', '').strip()  # Only for delivery type
+
+        return self._process_checkout(
+            request,
+            cart,
+            selected_payment_method,
+            first_name,
+            last_name,
+            email,
+            phone,
+            address,
+            city,
+            zip_code,
+            delivery_type,
+            delivery_zone_id,
+        )
 class StoreProductDetailView(SPAContextMixin, TemplateView):
     template_name = 'store/product_detail.html'
 
@@ -449,6 +871,9 @@ def add_to_cart(request, product_id):
     Handle adding items to cart.
     Supports simple GET (legacy) and POST (customization).
     """
+    if not request.user.is_authenticated:
+        return _store_auth_required_response(request)
+
     product = get_object_or_404(Product, id=product_id)
     cart = request.session.get('cart', {})
     
@@ -535,6 +960,9 @@ def sync_cart(request):
     from django.http import JsonResponse
     from django.views.decorators.csrf import csrf_exempt
 
+    if not request.user.is_authenticated:
+        return _store_auth_required_response(request)
+
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -549,6 +977,11 @@ def sync_cart(request):
                 customization = item.get('customization')
                 
                 if pid and qty > 0:
+                    try:
+                        product = Product.objects.get(id=pid)
+                    except Product.DoesNotExist:
+                        continue
+
                     # Generate a unique key for this combination
                     import hashlib
                     cust_str = json.dumps(customization, sort_keys=True)
@@ -557,11 +990,11 @@ def sync_cart(request):
                     
                     if customization and not customization.get('preview_url'):
                         # Try to generate preview if missing
-                        preview_file = CustomizationService.generate_preview_image(Product.objects.get(id=pid), customization)
+                        preview_file = CustomizationService.generate_preview_image(product, customization)
                         if preview_file:
                             from products.models import CustomizationPreview
                             preview_obj = CustomizationPreview.objects.create(
-                                product=Product.objects.get(id=pid),
+                                product=product,
                                 customization_data=customization,
                                 preview_image=preview_file
                             )
@@ -580,8 +1013,6 @@ def sync_cart(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return JsonResponse({'status': 'error'}, status=405)
-
-
 # ============================================
 # WEBSITE ADMINISTRATION VIEWS
 # ============================================
@@ -749,7 +1180,6 @@ class AboutStatDeleteView(DeleteView):
         messages.warning(request, "Statistique supprimée.")
         return super().delete(request, *args, **kwargs)
 
-
 # ============================================
 # FOOTER ADMINISTRATION
 # ============================================
@@ -885,8 +1315,11 @@ class ManualPaymentInstructionsView(LoginRequiredMixin, SPAContextMixin, Templat
         context = super().get_context_data(**kwargs)
         order_id = self.kwargs.get('order_id')
         order = get_object_or_404(WebOrder, id=order_id, user=self.request.user)
-        
+        selected_payment_method = _resolve_payment_method_for_order(order, self.request)
+
         context['order'] = order
+        context['selected_payment_method'] = selected_payment_method
+        context['selected_payment_details'] = PAYMENT_METHOD_DETAILS[selected_payment_method]
         context.update(self.get_spa_context(self.request))
         return context
 
@@ -903,51 +1336,79 @@ class ManualPaymentSubmissionView(LoginRequiredMixin, SPAContextMixin, CreateVie
         if hasattr(order, 'manual_payment') and order.manual_payment.status in ['submitted', 'approved']:
             messages.info(request, "Vous avez déjà soumis une preuve de paiement pour cette commande.")
             return redirect('store:catalog')
-            
+             
         return super().dispatch(request, *args, **kwargs)
+
+    def _get_order(self):
+        order_id = self.kwargs.get('order_id')
+        return get_object_or_404(WebOrder, id=order_id, user=self.request.user)
+
+    def _get_selected_payment_method(self, order=None):
+        order = order or self._get_order()
+        if self.request.method == 'POST':
+            return _normalize_payment_method(
+                self.request.POST.get('payment_method'),
+                default=_resolve_payment_method_for_order(order, self.request),
+            )
+        return _resolve_payment_method_for_order(order, self.request)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        selected_payment_method = self._get_selected_payment_method()
+        form.fields['payment_method'].widget = django_forms.HiddenInput()
+        form.fields['payment_method'].initial = selected_payment_method
+        form.initial['payment_method'] = selected_payment_method
+        form.fields['transaction_ref'].label = PAYMENT_METHOD_DETAILS[selected_payment_method]['reference_label']
+        form.fields['transaction_ref'].widget.attrs['placeholder'] = PAYMENT_METHOD_DETAILS[selected_payment_method]['reference_placeholder']
+        return form
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        order_id = self.kwargs.get('order_id')
-        context['order'] = get_object_or_404(WebOrder, id=order_id, user=self.request.user)
+        order = self._get_order()
+        selected_payment_method = self._get_selected_payment_method(order)
+        context['order'] = order
+        context['selected_payment_method'] = selected_payment_method
+        context['selected_payment_details'] = PAYMENT_METHOD_DETAILS[selected_payment_method]
+        context['payment_instructions_url'] = (
+            f"{reverse('store:payment_instructions', args=[order.id])}?payment_method={selected_payment_method}"
+        )
         context.update(self.get_spa_context(self.request))
         return context
 
     def form_valid(self, form):
-        order_id = self.kwargs.get('order_id')
-        order = get_object_or_404(WebOrder, id=order_id, user=self.request.user)
-        
-        form.instance.order = order
-        form.instance.user = self.request.user
-        form.instance.status = 'submitted'
-        
+        order = self._get_order()
+        selected_payment_method = self._get_selected_payment_method(order)
+        existing_payment = getattr(order, 'manual_payment', None)
+
+        if existing_payment and existing_payment.status == 'rejected':
+            payment = existing_payment
+            payment.payment_method = selected_payment_method
+            payment.transaction_ref = form.cleaned_data['transaction_ref']
+            payment.proof_file = form.cleaned_data['proof_file']
+        else:
+            payment = form.save(commit=False)
+            payment.order = order
+            payment.user = self.request.user
+
+        payment.payment_method = selected_payment_method
+        payment.order = order
+        payment.user = self.request.user
+        payment.status = 'submitted'
+        payment.rejection_reason = ''
+        payment.verified_at = None
+        payment.save()
+
         # Update Order Status
+        order.payment_method = selected_payment_method
         order.status = 'awaiting_verification'
         order.save()
         
         messages.success(self.request, "Votre preuve de paiement a été envoyée. Nous allons la vérifier sous peu.")
-        form.save()
-        return redirect('store:catalog')
+        return redirect('store:account_order_detail', order_number=order.tracking_reference)
 
+"""# ============================================
+# CATEGORY ADMINISTRATION
 # ============================================
-# ADMIN PAYMENT VERIFICATION
-# ============================================
-
-@method_decorator(manager_required, name='dispatch')
-class AdminPaymentListView(ListView):
-    model = ManualPayment
-    template_name = 'store/admin/payment_list.html'
-    context_object_name = 'payments'
-    
-    def get_queryset(self):
-        return ManualPayment.objects.filter(status='submitted').order_by('-created_at')
-
-@manager_required
-def approve_payment(request, pk):
-    payment = get_object_or_404(ManualPayment, pk=pk)
-    payment.status = 'approved'
-    payment.verified_at = timezone.now() if 'timezone' in globals() else None
-    payment.save()
     
     # Update Order
     order = payment.order
@@ -979,6 +1440,7 @@ def reject_payment(request, pk):
         return super().form_valid(form)
 
 
+"""
 # ============================================
 # CATEGORY ADMINISTRATION
 # ============================================
@@ -1237,6 +1699,52 @@ def sync_universes(request):
 
 
 # ============================================
+# WEB ORDERS NOTIFICATIONS
+# ============================================
+
+@manager_required
+def notifications_feed(request):
+    notifications = list(
+        AdminNotification.objects.filter(recipient=request.user)
+        .select_related('order')
+        .order_by('-created_at')[:8]
+    )
+    unread_count = AdminNotification.objects.filter(
+        recipient=request.user,
+        is_read=False,
+    ).count()
+    return JsonResponse({
+        'unread_count': unread_count,
+        'notifications': [_serialize_admin_notification(notification) for notification in notifications],
+    })
+
+
+@manager_required
+def mark_all_notifications_read(request):
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed.'}, status=405)
+
+    updated = AdminNotification.objects.filter(
+        recipient=request.user,
+        is_read=False,
+    ).update(
+        is_read=True,
+        read_at=timezone.now(),
+    )
+    return JsonResponse({'success': True, 'updated': updated})
+
+
+@manager_required
+def open_notification(request, pk):
+    notification = get_object_or_404(
+        AdminNotification.objects.select_related('order'),
+        pk=pk,
+        recipient=request.user,
+    )
+    notification.mark_as_read()
+    return redirect('store:admin_weborder_detail', pk=notification.order_id)
+
+
 # WEB ORDERS MANAGEMENT VIEWS
 # ============================================
 
@@ -1277,13 +1785,19 @@ class WebOrderListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['status_choices'] = WebOrder.STATUS_CHOICES
-        context['total_orders'] = WebOrder.objects.count()
-        context['pending_orders'] = WebOrder.objects.filter(status='pending_payment').count()
-        context['awaiting_verification_count'] = WebOrder.objects.filter(status='awaiting_verification').count()
-        context['paid_orders_count'] = WebOrder.objects.filter(status='paid').count()
-        context['customized_orders'] = WebOrder.objects.filter(
-            items__customization_data__isnull=False
-        ).distinct().count()
+        context.update(
+            WebOrder.objects.aggregate(
+                total_orders=Count('id'),
+                pending_orders=Count('id', filter=Q(status='pending_payment')),
+                awaiting_verification_count=Count('id', filter=Q(status='awaiting_verification')),
+                paid_orders_count=Count('id', filter=Q(status='paid')),
+                customized_orders=Count(
+                    'id',
+                    filter=Q(items__customization_data__isnull=False),
+                    distinct=True,
+                ),
+            )
+        )
         context['pending_payment_count'] = ManualPayment.objects.filter(status='submitted').count()
         
         # Filtres actifs
@@ -1303,6 +1817,15 @@ class WebOrderDetailView(TemplateView):
         context = super().get_context_data(**kwargs)
         order_id = kwargs.get('pk')
         order = get_object_or_404(WebOrder.objects.prefetch_related('items__product'), id=order_id)
+
+        AdminNotification.objects.filter(
+            recipient=self.request.user,
+            order=order,
+            is_read=False,
+        ).update(
+            is_read=True,
+            read_at=timezone.now(),
+        )
         
         # Préparer les items avec détails de personnalisation
         items_with_details = []
@@ -1681,3 +2204,51 @@ def get_active_promotions_api(request):
         promotions_list.append(promo)
     
     return JsonResponse(promotions_list, safe=False)
+
+# ============================================
+# DELIVERY ZONES ADMINISTRATION
+# ============================================
+
+from .models import DeliveryZone
+from .forms import DeliveryZoneForm
+from django.urls import reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.contrib import messages
+
+@method_decorator(manager_required, name='dispatch')
+class DeliveryZoneListView(ListView):
+    model = DeliveryZone
+    template_name = 'store/admin/delivery_zone_list.html'
+    context_object_name = 'delivery_zones'
+
+@method_decorator(manager_required, name='dispatch')
+class DeliveryZoneCreateView(CreateView):
+    model = DeliveryZone
+    form_class = DeliveryZoneForm
+    template_name = 'store/admin/delivery_zone_form.html'
+    success_url = reverse_lazy('store:admin_delivery_zones')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Zone de livraison créée avec succès.")
+        return super().form_valid(form)
+
+@method_decorator(manager_required, name='dispatch')
+class DeliveryZoneUpdateView(UpdateView):
+    model = DeliveryZone
+    form_class = DeliveryZoneForm
+    template_name = 'store/admin/delivery_zone_form.html'
+    success_url = reverse_lazy('store:admin_delivery_zones')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Zone de livraison mise à jour avec succès.")
+        return super().form_valid(form)
+
+@method_decorator(manager_required, name='dispatch')
+class DeliveryZoneDeleteView(DeleteView):
+    model = DeliveryZone
+    template_name = 'store/admin/delivery_zone_confirm_delete.html'
+    success_url = reverse_lazy('store:admin_delivery_zones')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, "Zone de livraison supprimée.")
+        return super().delete(request, *args, **kwargs)

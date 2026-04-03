@@ -299,6 +299,10 @@
     }
 
     function submitToCart() {
+        if (typeof requireStoreAuth === 'function' && !requireStoreAuth(() => submitToCart(), { mode: 'signup', reason: 'add_to_cart' })) {
+            return;
+        }
+
         const btn = document.getElementById('btn-next');
         btn.disabled = true;
         btn.textContent = "CHARGEMENT...";
@@ -314,16 +318,27 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRFToken': '{{ csrf_token }}'
             },
             body: JSON.stringify(payload)
         })
-            .then(res => res.json())
+            .then(async (res) => ({ status: res.status, payload: await res.json() }))
             .then(data => {
-                if (data.success) {
+                if (data.status === 401 && data.payload && data.payload.auth_required) {
+                    if (typeof openAuthModal === 'function') {
+                        openAuthModal('signup', 'add_to_cart');
+                    }
+                    btn.disabled = false;
+                    btn.textContent = "AJOUTER AU PANIER";
+                    return;
+                }
+
+                if (data.payload && data.payload.success) {
                     window.location.href = "{% url 'store:cart' %}";
                 } else {
-                    alert("Erreur: " + data.error);
+                    alert("Erreur: " + ((data.payload && data.payload.error) || "Impossible d'ajouter au panier."));
                     btn.disabled = false;
                     btn.textContent = "AJOUTER AU PANIER";
                 }

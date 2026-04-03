@@ -16,7 +16,7 @@ def manager_required(view_func):
         if not request.user.is_authenticated:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest' or '/api/' in request.path:
                 return JsonResponse({'success': False, 'error': 'Session expirée. Veuillez vous reconnecter.'}, status=401)
-            return redirect('accounts:login')
+            return redirect('accounts:manager_login')
         
         if request.user.is_superuser or request.user.groups.filter(name='Manager').exists():
             return view_func(request, *args, **kwargs)
@@ -41,7 +41,7 @@ def cashier_required(view_func):
         if not request.user.is_authenticated:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest' or '/api/' in request.path:
                 return JsonResponse({'success': False, 'error': 'Session expirée. Veuillez vous reconnecter.'}, status=401)
-            return redirect('accounts:login')
+            return redirect('accounts:manager_login')
         
         if (request.user.is_superuser or 
             request.user.groups.filter(name__in=['Manager', 'Cashier']).exists()):
@@ -52,7 +52,7 @@ def cashier_required(view_func):
 
         from django.contrib import messages
         messages.error(request, "Accès refusé. Vous devez être caissier pour accéder à cette page.")
-        return redirect('accounts:login')
+        return redirect('accounts:manager_login')
     
     return wrapper
 

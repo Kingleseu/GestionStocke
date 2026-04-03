@@ -1,58 +1,82 @@
 {% extends 'base.html' %}
 
-{% block title %}Inscription Manager - MKARIBU{% endblock %}
+{% block title %}Creation Boutique - MKARIBU{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-lg border-0 rounded-lg">
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <h3 class="mb-0 fw-bold">Créer votre Boutique</h3>
-                    <p class="mb-0 opacity-75">Inscription Manager</p>
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-dark text-white py-4 text-center">
+                    <h3 class="mb-2 fw-bold">Creer votre boutique</h3>
+                    <p class="mb-0 opacity-75">Parcours manager simplifie avec OTP par email</p>
                 </div>
-                <div class="card-body p-4">
-                    <form method="post">
+                <div class="card-body p-4 p-lg-5">
+                    <form method="post" novalidate>
                         {% csrf_token %}
 
-                        <!-- Shop Name -->
-                        <div class="mb-4">
-                            <label for="shop_name" class="form-label fw-bold">Nom de la Boutique</label>
-                            <input type="text" name="shop_name" id="shop_name" class="form-control form-control-lg"
-                                placeholder="Ma Super Boutique" required>
-                            <div class="form-text">Ce nom sera affiché sur vos tickets et documents.</div>
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                            {% endfor %}
                         </div>
+                        {% endif %}
 
-                        <hr class="my-4">
-
-                        <!-- User Fields -->
                         {% for field in form %}
                         <div class="mb-3">
-                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
                             {{ field }}
                             {% if field.help_text %}
-                            <div class="form-text small text-muted">{{ field.help_text }}</div>
+                            <div class="form-text">{{ field.help_text }}</div>
                             {% endif %}
                             {% for error in field.errors %}
-                            <div class="text-danger small">{{ error }}</div>
+                            <div class="text-danger small mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>
                         {% endfor %}
 
-                        <div class="d-grid gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg fw-bold">
-                                S'inscrire et Créer
+                        <div class="rounded-4 bg-light p-3 small text-muted mb-4">
+                            Nous creons votre compte manager, votre boutique, puis nous envoyons un code OTP sur votre email pour la premiere connexion.
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-3">
+                                Creer ma boutique
                             </button>
                         </div>
                     </form>
                 </div>
                 <div class="card-footer text-center py-3 bg-light">
-                    <div class="small">
-                        <a href="{% url 'accounts:login' %}">Déjà un compte ? Se connecter</a>
-                    </div>
+                    <a href="{% url 'accounts:login' %}?space=staff" class="text-decoration-none">
+                        Deja un compte personnel ? Recevoir un code OTP
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    #id_shop_name,
+    #id_first_name,
+    #id_last_name,
+    #id_email,
+    #id_phone {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid #d0d7de;
+        border-radius: 0.85rem;
+    }
+
+    #id_shop_name:focus,
+    #id_first_name:focus,
+    #id_last_name:focus,
+    #id_email:focus,
+    #id_phone:focus {
+        outline: none;
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.12);
+    }
+</style>
 {% endblock %}

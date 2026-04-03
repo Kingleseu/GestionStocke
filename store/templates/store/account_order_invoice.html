@@ -1,0 +1,169 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Facture {{ order.tracking_reference }}{% endblock %}
+
+{% block content %}
+<style>
+    .receipt-container {
+        max-width: 450px;
+        margin: 2rem auto;
+        background: white;
+        padding: 1.5rem;
+        border: 1px solid #eee;
+        color: #000;
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .receipt-header {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        .receipt-container,
+        .receipt-container * {
+            visibility: visible;
+        }
+
+        .receipt-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            box-shadow: none;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="container py-4">
+    <div class="receipt-container mx-auto">
+        <div class="receipt-header text-center">
+            {% if shop %}
+                <h4 class="mb-1 font-weight-bold" style="font-size: 1.25rem;"><strong>{{ shop.name }}</strong></h4>
+                <p class="mb-0 small">{{ shop.address|default:'' }}</p>
+                {% if shop.rccm %}<p class="mb-0 small">RCCM : {{ shop.rccm }}</p>{% endif %}
+                {% if shop.id_nat %}<p class="mb-0 small">ID.NAT : {{ shop.id_nat }}</p>{% endif %}
+                {% if shop.nif %}<p class="mb-0 small">NIF : {{ shop.nif }}</p>{% endif %}
+                {% if shop.bureau %}<p class="mb-0 small">Bureau - {{ shop.bureau }}</p>{% endif %}
+                <p class="mb-0 small">DR Congo</p>
+                {% if shop.phone %}<p class="mb-0 small">{{ shop.phone }}</p>{% endif %}
+                {% if shop.email %}<p class="mb-0 small">{{ shop.email }}</p>{% endif %}
+            {% else %}
+                <h4 class="mb-1 font-weight-bold" style="font-size: 1.25rem;"><strong>MKARIBU</strong></h4>
+            {% endif %}
+        </div>
+
+        <div class="text-center my-2">
+            <div style="border-top: 2px dotted #000; margin: 5px 0;"></div>
+            <h5 class="m-0 py-1" style="letter-spacing: 2px;">FACTURE</h5>
+            <div style="border-top: 2px dotted #000; margin: 5px 0;"></div>
+        </div>
+
+        <div class="mb-3 small">
+            <div class="d-flex justify-content-between">
+                <span>No de facture</span>
+                <span>{{ order.tracking_reference }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Date</span>
+                <span>{{ order.created_at|date:"d.m.Y" }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Client</span>
+                <span>{{ order.full_name }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Paiement</span>
+                <span>{{ order.get_payment_method_display }}</span>
+            </div>
+            {% if order.is_cash_on_delivery %}
+                <div class="d-flex justify-content-between">
+                    <span>Code remise</span>
+                    <span>{{ order.delivery_confirmation_code }}</span>
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="border-top: 2px dotted #000; margin: 10px 0;"></div>
+
+        <table class="table table-borderless table-sm small mb-0">
+            <thead>
+                <tr style="border-bottom: 1px dotted #000;">
+                    <th class="ps-0">#</th>
+                    <th>Article</th>
+                    <th class="text-center">Quantite</th>
+                    <th class="text-end">Taux</th>
+                    <th class="text-end pe-0">Montant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="ps-0">{{ forloop.counter }}</td>
+                    <td>{{ item.obj.product_name|default:item.obj.product.name }}</td>
+                    <td class="text-center">{{ item.obj.quantity }}</td>
+                    <td class="text-end">{{ item.unit_price|floatformat:2 }}</td>
+                    <td class="text-end pe-0">{{ item.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="border-top: 1px dotted #000; margin: 5px 0;"></div>
+
+        <div class="small w-100 ps-4">
+            <div class="d-flex justify-content-between">
+                <span style="margin-left: auto;">Sous-total produits</span>
+                <span class="text-end" style="width: 120px;">{{ items_subtotal|floatformat:2 }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span style="margin-left: auto;">Livraison</span>
+                <span class="text-end" style="width: 120px;">{{ delivery_fee|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div style="border-top: 2px solid #000; margin: 10px 0;"></div>
+
+        <div class="d-flex justify-content-between align-items-center py-2">
+            <h3 class="m-0"><strong>TOTAL</strong></h3>
+            <div class="text-end">
+                <h3 class="m-0"><strong>{{ grand_total|floatformat:2 }} FC</strong></h3>
+            </div>
+        </div>
+
+        <div style="border-top: 2px solid #000; margin: 10px 0;"></div>
+
+        <div class="text-center small px-2 mt-4">
+            <p>Merci de votre confiance. Conservez cette facture pour le suivi de votre commande.</p>
+            {% if order.address %}
+                <p class="mb-0">{{ order.address }}, {{ order.city }}</p>
+            {% endif %}
+        </div>
+
+        <div class="no-print mt-4 d-grid gap-2">
+            <button onclick="window.print()" class="btn btn-dark btn-lg">
+                <i class="bi bi-printer"></i> Imprimer la facture
+            </button>
+            <a href="{% url 'store:account_order_detail' order.order_number %}" class="btn btn-outline-dark">
+                <i class="bi bi-arrow-left"></i> Retour au suivi
+            </a>
+        </div>
+    </div>
+</div>
+
+{% if auto_print %}
+<script>
+    window.addEventListener('load', function () {
+        window.print();
+    });
+</script>
+{% endif %}
+{% endblock %}

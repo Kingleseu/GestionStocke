@@ -443,21 +443,21 @@
                 <button class="thumb-item active" type="button"
                     data-full="{% if product.image %}{{ product.image.url }}{% else %}{{ placeholder_img }}{% endif %}">
                     <img src="{% if product.image %}{{ product.image.url }}{% else %}{{ placeholder_img }}{% endif %}"
-                        alt="{{ product.name }}">
+                        alt="{{ product.name }}" loading="lazy" decoding="async">
                 </button>
                 {% if product.secondary_image %}
                 <button class="thumb-item" type="button" data-full="{{ product.secondary_image.url }}">
-                    <img src="{{ product.secondary_image.url }}" alt="{{ product.name }}">
+                    <img src="{{ product.secondary_image.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
                 </button>
                 {% endif %}
                 {% if product.extra_image_1 %}
                 <button class="thumb-item" type="button" data-full="{{ product.extra_image_1.url }}">
-                    <img src="{{ product.extra_image_1.url }}" alt="{{ product.name }}">
+                    <img src="{{ product.extra_image_1.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
                 </button>
                 {% endif %}
                 {% if product.extra_image_2 %}
                 <button class="thumb-item" type="button" data-full="{{ product.extra_image_2.url }}">
-                    <img src="{{ product.extra_image_2.url }}" alt="{{ product.name }}">
+                    <img src="{{ product.extra_image_2.url }}" alt="{{ product.name }}" loading="lazy" decoding="async">
                 </button>
                 {% endif %}
             </div>
@@ -586,10 +586,10 @@
             <div class="product-image-wrapper"
                 style="position: relative; aspect-ratio: 1; overflow: hidden; border-radius: 12px; margin-bottom: 15px; background: #f9f9f9;">
                 {% if prod.image %}
-                <img src="{{ prod.image.url }}" alt="{{ prod.name }}"
+                <img src="{{ prod.image.url }}" alt="{{ prod.name }}" loading="lazy" decoding="async"
                     style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;">
                 {% else %}
-                <img src="{{ placeholder_img }}" alt="{{ prod.name }}"
+                <img src="{{ placeholder_img }}" alt="{{ prod.name }}" loading="lazy" decoding="async"
                     style="width: 100%; height: 100%; object-fit: cover;">
                 {% endif %}
                 <button class="wishlist-btn"
@@ -719,7 +719,11 @@
             }
 
             // Now call the global addToCart with full customization context
-            await addToCart(PRODUCT_ID);
+            const added = await addToCart(PRODUCT_ID);
+            if (!added) {
+                return;
+            }
+
             console.log("✅ Produit ajouté au panier");
 
             // Open the cart drawer

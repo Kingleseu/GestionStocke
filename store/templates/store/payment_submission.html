@@ -46,27 +46,38 @@
                 <form method="post" enctype="multipart/form-data" id="proofForm">
                     {% csrf_token %}
 
-                    <!-- METHOD SELECT -->
+                    {{ form.payment_method }}
+
+                    <!-- SELECTED METHOD -->
                     <div class="field-group">
                         <label class="field-label">
                             <i class="bi bi-credit-card me-2 text-violet"></i>
-                            Mode de paiement utilisé
+                            Mode de paiement retenu
                         </label>
-                        <div class="custom-select-wrapper">
-                            {{ form.payment_method }}
+                        <div class="payment-method-lock payment-method-lock--{{ selected_payment_method }}">
+                            <div class="payment-method-lock__icon {{ selected_payment_details.accent_class }}">
+                                <i class="{{ selected_payment_details.icon_class }}"></i>
+                            </div>
+                            <div class="payment-method-lock__content">
+                                <div class="payment-method-lock__title">{{ selected_payment_details.label }}</div>
+                                <div class="payment-method-lock__desc">{{ selected_payment_details.description }}</div>
+                            </div>
+                            <a href="{{ payment_instructions_url }}" class="payment-method-lock__change">
+                                Changer
+                            </a>
                         </div>
-                        {% if form.payment_method.errors %}<div class="field-error">{{ form.payment_method.errors }}
-                        </div>{% endif %}
+                        <div class="field-hint">Ce mode vient de l'étape précédente. Il reste déjà sélectionné pour cet envoi.</div>
+                        {% if form.payment_method.errors %}<div class="field-error">{{ form.payment_method.errors }}</div>{% endif %}
                     </div>
 
                     <!-- REFERENCE -->
                     <div class="field-group">
                         <label class="field-label">
                             <i class="bi bi-hash me-2 text-violet"></i>
-                            Référence de la transaction
+                            {{ selected_payment_details.reference_label }}
                         </label>
                         {{ form.transaction_ref }}
-                        <div class="field-hint">Numéro de transaction reçu par SMS ou sur votre reçu</div>
+                        <div class="field-hint">{{ selected_payment_details.reference_hint }}</div>
                         {% if form.transaction_ref.errors %}<div class="field-error">{{ form.transaction_ref.errors }}
                         </div>{% endif %}
                     </div>
@@ -75,7 +86,7 @@
                     <div class="field-group">
                         <label class="field-label">
                             <i class="bi bi-paperclip me-2 text-violet"></i>
-                            Preuve de paiement
+                            Preuve de paiement pour {{ selected_payment_details.short_label }}
                         </label>
                         <div class="file-drop-zone" id="fileDropZone"
                             onclick="document.getElementById('proof-file-input').click()">
@@ -85,7 +96,7 @@
                             <div class="file-drop-zone__text">
                                 <strong>Glissez votre fichier ici</strong> ou <span class="text-violet">parcourir</span>
                             </div>
-                            <div class="file-drop-zone__hint">JPG, PNG, PDF – Max 5 Mo</div>
+                            <div class="file-drop-zone__hint">{{ selected_payment_details.proof_hint }} JPG, PNG, PDF – Max 5 Mo</div>
                             <div class="file-preview" id="filePreview" style="display:none;">
                                 <i class="bi bi-file-earmark-check text-success"></i>
                                 <span id="fileName">—</span>
@@ -127,7 +138,7 @@
             </div>
 
             <div class="text-center mt-4">
-                <a href="{% url 'store:payment_instructions' order.id %}" class="back-link">
+                <a href="{{ payment_instructions_url }}" class="back-link">
                     <i class="bi bi-arrow-left me-1"></i>Retour aux instructions de paiement
                 </a>
             </div>
@@ -364,10 +375,91 @@
         .form-card {
             padding: 24px 16px;
         }
+
+        .payment-method-lock {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .payment-method-lock__change {
+            align-self: stretch;
+            text-align: center;
+        }
     }
 
     .field-group {
         margin-bottom: 24px;
+    }
+
+    .payment-method-lock {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 18px;
+        border-radius: 18px;
+        border: 1px solid #e5e7eb;
+        background: linear-gradient(135deg, #ffffff, #faf7ff);
+        box-shadow: 0 10px 30px rgba(124, 58, 237, 0.08);
+    }
+
+    .payment-method-lock__icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+        color: white;
+        background: linear-gradient(135deg, #7c3aed, #6366f1);
+    }
+
+    .payment-method-lock__icon.is-orange {
+        background: linear-gradient(135deg, #f59e0b, #f97316);
+    }
+
+    .payment-method-lock__icon.is-red {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+
+    .payment-method-lock__icon.is-green {
+        background: linear-gradient(135deg, #16a34a, #15803d);
+    }
+
+    .payment-method-lock__content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .payment-method-lock__title {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #111827;
+    }
+
+    .payment-method-lock__desc {
+        margin-top: 4px;
+        font-size: 0.82rem;
+        color: #6b7280;
+    }
+
+    .payment-method-lock__change {
+        align-self: flex-start;
+        padding: 8px 12px;
+        border-radius: 10px;
+        background: #ffffff;
+        border: 1px solid #ddd6fe;
+        color: #6d28d9;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .payment-method-lock__change:hover {
+        color: #5b21b6;
+        border-color: #c4b5fd;
     }
 
     .field-label {

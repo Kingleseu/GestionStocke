@@ -1,0 +1,83 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Profil client{% endblock %}
+
+{% block content %}
+<section class="container py-5" style="max-width: 960px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <p class="text-uppercase text-muted small mb-1">Espace client</p>
+            <h1 class="h3 mb-1">Profil</h1>
+            <p class="text-muted mb-0">Gardez vos informations a jour pour accelerer vos prochaines commandes.</p>
+        </div>
+        <a href="{% url 'store:account_orders' %}" class="btn btn-outline-dark">Mes commandes</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Prenom</label>
+                                {{ account_form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nom</label>
+                                {{ account_form.last_name }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Email</label>
+                                {{ account_form.email }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Telephone</label>
+                                {{ account_form.phone }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Code postal</label>
+                                {{ account_form.zip_code }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Ville</label>
+                                {{ account_form.city }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Adresse</label>
+                                {{ account_form.address }}
+                            </div>
+                        </div>
+                        <div class="mt-4 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-dark px-4">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <p class="text-uppercase text-muted small mb-2">Resume</p>
+                    <h2 class="h5 mb-3">Compte client</h2>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Nom affiche</span>
+                        <strong>{% firstof request.user.get_full_name request.user.username %}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between border-bottom py-2">
+                        <span class="text-muted">Email</span>
+                        <strong>{{ request.user.email|default:'-' }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">Commandes</span>
+                        <strong>{{ customer_orders_count }}</strong>
+                    </div>
+                    <hr>
+                    <p class="small text-muted mb-0">Ces informations sont reprises automatiquement au checkout et dans vos emails de confirmation.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

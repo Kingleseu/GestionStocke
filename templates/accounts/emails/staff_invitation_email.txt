@@ -1,0 +1,12 @@
+Bonjour,
+
+Vous avez recu une invitation MKARIBU pour rejoindre la boutique "{{ shop_name }}" en tant que {{ role_label }}.
+
+Ce lien ouvre directement le formulaire de creation du compte et conserve ce role :
+{{ invite_url }}
+
+Cette invitation expire le {{ expires_at }}.
+
+Une fois le compte cree, un manager devra encore l'activer avant votre premiere connexion OTP.
+
+Equipe MKARIBU

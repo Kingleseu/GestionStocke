@@ -15,9 +15,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 
     <!-- Core CSS (Layout & Base) -->
-    <link rel="stylesheet" href="{% static 'css/des_store.css' %}?v=3.8">
+    <link rel="stylesheet" href="{% static 'css/des_store.css' %}?v=4.3">
     <!-- Premium Styles (Loaded LAST to override) -->
-    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.2">
+    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.3">
 
     <style>
         /* Force scroll layout */
@@ -157,12 +157,11 @@
 
             <!-- Categories -->
             <div class="category-tabs" style="display:flex; gap:0.5rem; padding:1rem 1.5rem; overflow-x:auto;">
-                <div class="category-tab active" data-category="all" onclick="selectUniverse('Tous')">Tous</div>
+                <a class="category-tab active" data-category="all" href="{% url 'store:catalog' %}?category=Tous" onclick="if (typeof selectUniverse === 'function') { selectUniverse('Tous'); return false; }">Tous</a>
                 {% get_active_categories as fallback_categories %}
                 {% with category_list=categories|default:fallback_categories %}
                 {% for category in category_list %}
-                <div class="category-tab" data-category="{{ category.id}}"
-                    onclick="selectUniverse('{{ category.name|escapejs }}')">{{ category.name }}</div>
+                <a class="category-tab" data-category="{{ category.id}}" href="{% url 'store:catalog' %}?category={{ category.name|urlencode }}" onclick="if (typeof selectUniverse === 'function') { selectUniverse('{{ category.name|escapejs }}'); return false; }">{{ category.name }}</a>
                 {% empty %}
                 <!-- No categories fallback -->
                 {% endfor %}
@@ -365,7 +364,7 @@
     </script>
 
     <!-- Scripts -->
-    <script src="{% static 'js/des_store.js' %}?v=4.4"></script>
+    <script src="{% static 'js/des_store.js' %}?v=5.1"></script>
 </body>
 
 </html>

@@ -1,89 +1,118 @@
-from django.views.generic import TemplateView
-from django.db.models import Sum, Count, F
-from django.db.models.functions import TruncDate
-from django.utils import timezone
-from datetime import timedelta, datetime
-from sales.models import Sale, SaleItem
-from products.models import Product
-from django.contrib.auth.mixins import LoginRequiredMixin
-from accounts.decorators import manager_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, View
+from django.urls import reverse_lazy
+from django.contrib import messages
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
+from accounts.decorators import manager_required
+from .models import Expense, ExpenseCategory
+from .services import AccountingService
+from .utils import ExportManager
+from datetime import datetime
 
 @method_decorator(manager_required, name='dispatch')
-class DashboardView(TemplateView):
-    template_name = 'reports/dashboard.html'
+class AccountingDashboardView(View):
+    template_name = 'reports/accounting_dashboard.html'
+    
+    def get(self, request):
+        service = AccountingService(request.user.profile.shop)
+        period = request.GET.get('period', 'month')
+        start_date, end_date = service.get_date_range(period)
+        
+        # Surcharge manuelle possible (via formulaire futur)
+        custom_start = request.GET.get('start_date')
+        custom_end = request.GET.get('end_date')
+        if custom_start:
+            start_date = datetime.strptime(custom_start, '%Y-%m-%d').date()
+        if custom_end:
+            end_date = datetime.strptime(custom_end, '%Y-%m-%d').date()
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        shop = getattr(getattr(self.request.user, "profile", None), "shop", None)
+        data = service.get_financial_summary(start_date, end_date)
+        breakdown = list(service.get_expense_breakdown(start_date, end_date))
+        
+        # Calculer les pourcentages pour le template
+        total_ops = data['operating_expenses']
+        for item in breakdown:
+            item['percentage'] = (item['total'] / total_ops * 100) if total_ops > 0 else 0
 
-        # Base queryset filtered by shop when available
-        sales_qs = Sale.objects.filter(is_cancelled=False)
-        if shop:
-            sales_qs = sales_qs.filter(cashier__profile__shop=shop)
-
-        today = timezone.now().date()
-        today_sales = sales_qs.filter(sale_date__date=today)
-        context["daily_total"] = today_sales.aggregate(total=Sum("total"))["total"] or 0
-        context["daily_count"] = today_sales.count()
-
-        product_qs = Product.objects.filter(is_active=True)
-        if shop:
-            product_qs = product_qs.filter(shop=shop)
-        context["low_stock_products"] = product_qs.filter(current_stock__lte=F("minimum_stock")).order_by("current_stock")
-
-        seven_days_ago = timezone.now() - timedelta(days=7)
-        top_products_qs = SaleItem.objects.filter(
-            sale__is_cancelled=False,
-            sale__sale_date__gte=seven_days_ago,
-        )
-        if shop:
-            top_products_qs = top_products_qs.filter(product__shop=shop)
-
-        context["top_products"] = (
-            top_products_qs.values("product__name", "product__barcode")
-            .annotate(total_qty=Sum("quantity"), total_revenue=Sum("subtotal"))
-            .order_by("-total_revenue")[:10]
-        )
-
-        return context
+        # Calculer la marge bénéficiaire
+        revenue = data['revenue']
+        margin_percent = (data['net_profit'] / revenue * 100) if revenue > 0 else 0
+        
+        context = {
+            'period': period,
+            'start_date': start_date,
+            'end_date': end_date,
+            'summary': data,
+            'breakdown': breakdown,
+            'margin_percent': margin_percent,
+            'now': datetime.now(),
+        }
+        return render(request, self.template_name, context)
 
 @method_decorator(manager_required, name='dispatch')
-class SalesReportView(TemplateView):
-    template_name = 'reports/sales_report.html'
+class ExpenseListView(ListView):
+    model = Expense
+    template_name = 'reports/expense_list.html'
+    context_object_name = 'expenses'
+    
+    def get_queryset(self):
+        return Expense.objects.filter(shop=self.request.user.profile.shop)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+@method_decorator(manager_required, name='dispatch')
+class ExpenseCreateView(CreateView):
+    model = Expense
+    fields = ['category', 'title', 'amount', 'date', 'notes']
+    template_name = 'reports/expense_form.html'
+    success_url = reverse_lazy('reports:expense_list')
+
+    def form_valid(self, form):
+        form.instance.shop = self.request.user.profile.shop
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "Dépense enregistrée avec succès.")
+        return super().form_valid(form)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Filtrer les catégories par boutique
+        form.fields['category'].queryset = ExpenseCategory.objects.filter(shop=self.request.user.profile.shop)
+        return form
+
+@method_decorator(manager_required, name='dispatch')
+class ExpenseCategoryCreateView(CreateView):
+    model = ExpenseCategory
+    fields = ['name', 'description', 'icon']
+    template_name = 'reports/category_form.html'
+    success_url = reverse_lazy('reports:dashboard')
+
+    def form_valid(self, form):
+        form.instance.shop = self.request.user.profile.shop
+        messages.success(self.request, "Nouvelle catégorie de dépense créée.")
+        return super().form_valid(form)
+
+@method_decorator(manager_required, name='dispatch')
+class ExportAccountingView(View):
+    def get(self, request, format):
+        service = AccountingService(request.user.profile.shop)
+        period = request.GET.get('period', 'month')
+        start_date, end_date = service.get_date_range(period)
         
-        # Filters
-        date_from = self.request.GET.get('date_from')
-        date_to = self.request.GET.get('date_to')
+        data = service.get_financial_summary(start_date, end_date)
+        period_name = f"{period} ({start_date or ''} - {end_date or ''})"
         
-        sales_qs = Sale.objects.filter(is_cancelled=False)
-        
-        if date_from:
-            sales_qs = sales_qs.filter(sale_date__date__gte=date_from)
-        if date_to:
-            sales_qs = sales_qs.filter(sale_date__date__lte=date_to)
+        if format == 'excel':
+            output = ExportManager.to_excel(data, period_name)
+            response = HttpResponse(
+                output.read(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename=Bilan_MKARIBU_{period}.xlsx'
+            return response
             
-        # Aggregates
-        total_revenue = sales_qs.aggregate(Sum('total'))['total__sum'] or 0
-        total_transactions = sales_qs.count()
-        avg_basket = total_revenue / total_transactions if total_transactions > 0 else 0
-        
-        context['total_revenue'] = total_revenue
-        context['total_transactions'] = total_transactions
-        context['avg_basket'] = avg_basket
-        
-        # Chart Data (Daily Trend)
-        daily_trend = sales_qs.annotate(date=TruncDate('sale_date')).values('date').annotate(
-            daily_total=Sum('total')
-        ).order_by('date')
-        
-        context['chart_labels'] = [d['date'].strftime('%d/%m') for d in daily_trend]
-        context['chart_data'] = [float(d['daily_total']) for d in daily_trend]
-        
-        # Recent Sales Table
-        context['recent_sales'] = sales_qs.select_related('cashier').order_by('-sale_date')[:50]
-        
-        return context
+        elif format == 'pdf':
+            buffer = ExportManager.to_pdf(data, period_name)
+            response = HttpResponse(buffer, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename=Bilan_MKARIBU_{period}.pdf'
+            return response
+            
+        return redirect('reports:dashboard')

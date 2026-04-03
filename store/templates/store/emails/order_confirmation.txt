@@ -1,0 +1,32 @@
+Bonjour {{ order.full_name }},
+
+Votre commande {{ order.tracking_reference }} a bien ete enregistree.
+
+Resume de la commande
+- Date: {{ order.created_at|date:"d/m/Y H:i" }}
+- Statut: {{ order.get_status_display }}
+- Paiement: {{ order.get_payment_method_display }}
+- Total: {{ order.total_amount|floatformat:0 }} FC
+
+Articles
+{% for item in order.items.all %}- {{ item.product_name|default:item.product.name }} x {{ item.quantity }} : {{ item.line_total|floatformat:0 }} FC
+{% endfor %}
+
+Livraison
+- Adresse: {{ order.address }}, {{ order.city }}
+{% if order.delivery_zone %}- Zone: {{ order.delivery_zone }}{% endif %}
+{% if order.delivery_fee %}- Frais de livraison: {{ order.delivery_fee|floatformat:0 }} FC{% endif %}
+
+{% if order.is_cash_on_delivery %}
+Paiement a la livraison
+- Reference: {{ order.tracking_reference }}
+- Code de remise: {{ order.delivery_confirmation_code }}
+Conservez ces deux informations pour la reception du colis.
+{% endif %}
+
+Suivre la commande et consulter la facture detaillee:
+{{ order_url }}
+
+{% if branding.shop_name %}{{ branding.shop_name }}{% endif %}
+{% if branding.shop_phone %}Telephone: {{ branding.shop_phone }}{% endif %}
+{% if branding.shop_email %}Email: {{ branding.shop_email }}{% endif %}

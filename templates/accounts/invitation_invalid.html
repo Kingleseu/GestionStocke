@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Invitation invalide - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="mb-3">Lien d'invitation invalide</h3>
+                    {% if reason == 'not_found' %}
+                        <p>Ce lien d'invitation ne semble pas exister. Vérifiez le lien ou contactez le manager.</p>
+                    {% elif reason == 'expired' %}
+                        <p>Cette invitation a expiré le <strong>{{ invitation.expires_at|date:"d/m/Y H:i" }}</strong>.</p>
+                    {% elif reason == 'used' %}
+                        <p>Cette invitation a déjà été utilisée par <strong>{{ invitation.used_by.get_full_name|default:invitation.used_by.username }}</strong>.</p>
+                    {% else %}
+                        <p>Ce lien d'invitation n'est pas valide.</p>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <a href="{% url 'accounts:login' %}?space=staff" class="btn btn-primary me-2">Retour à la connexion personnel</a>
+                        <a href="{% url 'accounts:manager_login' %}" class="btn btn-outline-secondary">Page manager</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

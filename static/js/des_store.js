@@ -3,7 +3,7 @@ const products = window.djangoProducts || [];
 let adminSettings = window.storeSettings || {
     deliveryPrice: 5.99,
     freeShippingThreshold: 100000,
-    taxRate: 0.2,
+    taxRate: 0,
     bannerText: '🎁 Livraison gratuite dès 100 000 FC d\'achat',
     bannerActive: true,
 };
@@ -22,6 +22,474 @@ let filters = {
 };
 
 let productCustomizations = {};
+let pendingStoreAuthAction = null;
+
+function getStoreAuthState() {
+    if (!window.storeAuth) {
+        window.storeAuth = {
+            isAuthenticated: false,
+            loginUrl: '/accounts/login/',
+            signupUrl: '/accounts/login/',
+            currentPath: window.location.pathname,
+            userDisplayName: ''
+        };
+    }
+    return window.storeAuth;
+}
+
+function setStoreAuthFeedback(message, type = 'error') {
+    const feedback = document.getElementById('storeAuthFeedback');
+    if (!feedback) return;
+
+    if (!message) {
+        feedback.className = 'store-auth-feedback';
+        feedback.textContent = '';
+        return;
+    }
+
+    feedback.className = `store-auth-feedback is-visible is-${type}`;
+    feedback.textContent = message;
+}
+
+function clearStoreAuthErrors(mode) {
+    document.querySelectorAll(`[data-auth-error-for^="${mode}."]`).forEach((node) => {
+        node.textContent = '';
+    });
+    setStoreAuthFeedback('');
+}
+
+function setStoreAuthFieldErrors(mode, errors) {
+    clearStoreAuthErrors(mode);
+    if (!errors) return;
+
+    Object.entries(errors).forEach(([field, fieldErrors]) => {
+        const messages = Array.isArray(fieldErrors) ? fieldErrors : [fieldErrors];
+        if (field === '__all__') {
+            setStoreAuthFeedback(messages.join(' '), 'error');
+            return;
+        }
+
+        const target = document.querySelector(`[data-auth-error-for="${mode}.${field}"]`);
+        if (target) target.textContent = messages.join(' ');
+    });
+}
+
+function setStoreAuthReason(reasonKey) {
+    const reasonNode = document.getElementById('storeAuthModalReason');
+    const titleNode = document.getElementById('storeAuthPanelTitle');
+    const textNode = document.getElementById('storeAuthPanelText');
+    if (!reasonNode || !titleNode || !textNode) return;
+
+    const copy = {
+        default: {
+            reason: "Connectez-vous ou créez votre compte pour suivre vos commandes et garder un historique clair de vos paiements.",
+            loginTitle: 'Bon retour.',
+            loginText: "Entrez vos identifiants pour accéder à votre espace client.",
+            signupTitle: 'Créez votre compte client.',
+            signupText: "Quelques informations suffisent pour créer votre compte sécurisé."
+        },
+        add_to_cart: {
+            reason: "Un compte client est requis pour ajouter un article au panier et rattacher chaque commande à une personne identifiée.",
+            loginTitle: 'Connectez-vous pour ajouter cet article.',
+            loginText: "Saisissez vos identifiants pour continuer votre achat en toute sécurité.",
+            signupTitle: 'Créez votre compte pour commander.',
+            signupText: "Ouvrez votre compte client maintenant et ajoutez ce produit à votre panier juste après."
+        },
+        checkout: {
+            reason: "Le paiement et la création de commande sont réservés aux clients connectés pour garantir un suivi clair des informations.",
+            loginTitle: 'Connectez-vous pour finaliser.',
+            loginText: "Votre compte permet de sécuriser vos coordonnées et votre suivi de livraison.",
+            signupTitle: 'Créez votre compte avant le paiement.',
+            signupText: "Une fois le compte créé, vous pourrez continuer vers le checkout avec vos informations enregistrées."
+        }
+    };
+
+    const mode = document.querySelector('.store-auth-form.is-active')?.id === 'storeSignupForm' ? 'signup' : 'login';
+    const selected = copy[reasonKey] || copy.default;
+
+    reasonNode.textContent = selected.reason;
+    titleNode.textContent = mode === 'signup' ? selected.signupTitle : selected.loginTitle;
+    textNode.textContent = mode === 'signup' ? selected.signupText : selected.loginText;
+}
+
+function populateStoreAuthNextValues() {
+    const auth = getStoreAuthState();
+    const nextValue = `${window.location.pathname}${window.location.search}${window.location.hash}` || auth.currentPath || '/store/';
+    document.querySelectorAll('#storeAuthModal input[name="next"]').forEach((input) => {
+        input.value = nextValue;
+    });
+    auth.currentPath = nextValue;
+}
+
+function renderStoreAuthState() {
+    const auth = getStoreAuthState();
+    const isAuthenticated = !!auth.isAuthenticated;
+
+    document.querySelectorAll('[data-store-auth-guest]').forEach((node) => {
+        node.hidden = isAuthenticated;
+    });
+    document.querySelectorAll('[data-store-auth-user]').forEach((node) => {
+        node.hidden = !isAuthenticated;
+    });
+    document.querySelectorAll('[data-store-auth-name]').forEach((node) => {
+        node.textContent = auth.userDisplayName || 'Mon compte';
+    });
+
+    const checkoutButton = document.getElementById('cartCheckoutButton');
+    if (checkoutButton) {
+        const label = isAuthenticated ? 'Proceder au paiement' : 'Se connecter pour commander';
+        const iconMarkup = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+        `;
+        checkoutButton.innerHTML = `${label}${iconMarkup}`;
+    }
+}
+
+let _otpCountdownInterval = null;
+
+function startOtpCountdown(seconds) {
+    clearInterval(_otpCountdownInterval);
+    const timerEl = document.getElementById('storeOtpTimer');
+    const countdownDiv = document.getElementById('storeOtpCountdown');
+    const expiredDiv = document.getElementById('storeOtpExpired');
+    const submitBtn = document.querySelector('#storeOtpForm [data-auth-submit]');
+
+    if (!timerEl) return;
+    countdownDiv.style.display = '';
+    expiredDiv.style.display = 'none';
+    if (submitBtn) submitBtn.disabled = false;
+
+    let remaining = seconds;
+    const update = () => {
+        const m = Math.floor(remaining / 60);
+        const s = remaining % 60;
+        timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        if (remaining <= 0) {
+            clearInterval(_otpCountdownInterval);
+            countdownDiv.style.display = 'none';
+            expiredDiv.style.display = '';
+            if (submitBtn) submitBtn.disabled = true;
+        }
+        remaining--;
+    };
+    update();
+    _otpCountdownInterval = setInterval(update, 1000);
+}
+
+function switchToOtpMode(email, space, nextUrl) {
+    // Populate hidden fields
+    const emailHidden = document.getElementById('storeOtpEmailHidden');
+    const spaceHidden = document.getElementById('storeOtpSpaceHidden');
+    const nextHidden = document.getElementById('storeOtpNextHidden');
+    const emailDisplay = document.getElementById('storeOtpEmailDisplay');
+    if (emailHidden) emailHidden.value = email || '';
+    if (spaceHidden) spaceHidden.value = space || 'customer';
+    if (nextHidden) nextHidden.value = nextUrl || '';
+    if (emailDisplay) emailDisplay.textContent = email || '';
+
+    // Reset code input
+    const codeInput = document.getElementById('storeOtpCode');
+    if (codeInput) { codeInput.value = ''; }
+
+    // Switch display
+    switchAuthMode('otp');
+
+    // Focus the code input
+    setTimeout(() => { if (codeInput) codeInput.focus(); }, 80);
+
+    // Start 90-second countdown
+    startOtpCountdown(90);
+}
+
+function switchAuthMode(mode) {
+    // Hide tabs only when in OTP mode
+    const tabsEl = document.querySelector('.store-auth-tabs');
+    if (tabsEl) tabsEl.style.display = mode === 'otp' ? 'none' : '';
+
+    document.querySelectorAll('.store-auth-tab').forEach((tab) => {
+        tab.classList.toggle('is-active', tab.dataset.authTab === mode);
+    });
+    document.querySelectorAll('.store-auth-form').forEach((form) => {
+        const isActive =
+            (mode === 'login' && form.id === 'storeLoginForm') ||
+            (mode === 'signup' && form.id === 'storeSignupForm');
+        form.classList.toggle('is-active', isActive);
+    });
+    clearStoreAuthErrors(mode);
+    clearInterval(_otpCountdownInterval);
+    setStoreAuthReason(document.getElementById('storeAuthModal')?.dataset.reason || 'default');
+}
+
+function openAuthModal(mode = 'login', reason = 'default') {
+    const modal = document.getElementById('storeAuthModal');
+    if (!modal) return;
+
+    modal.dataset.reason = reason;
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    populateStoreAuthNextValues();
+    switchAuthMode(mode);
+}
+
+function closeAuthModal(clearPending = true) {
+    const modal = document.getElementById('storeAuthModal');
+    if (!modal) return;
+
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    setStoreAuthFeedback('');
+    if (clearPending) pendingStoreAuthAction = null;
+}
+
+function notifySocialProvider(provider) {
+    const auth = getStoreAuthState();
+    if (auth.socialProvidersConfigured) return;
+    if (typeof showToast === 'function') {
+        showToast(`Connexion ${provider} bientot disponible apres configuration OAuth.`, 'info');
+    }
+}
+
+function requireStoreAuth(action, options = {}) {
+    const auth = getStoreAuthState();
+    if (auth.isAuthenticated) return true;
+
+    pendingStoreAuthAction = typeof action === 'function' ? action : null;
+    if (typeof window.openAuthModal === 'function') {
+        window.openAuthModal(options.mode || 'signup', options.reason || 'default');
+    } else {
+        const baseUrl = (options.mode || 'signup') === 'signup' ? auth.signupUrl : auth.loginUrl;
+        const nextValue = auth.currentPath || `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        window.location.href = `${baseUrl}?next=${encodeURIComponent(nextValue)}`;
+    }
+    return false;
+}
+
+function setStoreAuthBusy(form, isBusy) {
+    const submit = form?.querySelector('[data-auth-submit]');
+    if (!submit) return;
+
+    if (!submit.dataset.originalText) {
+        submit.dataset.originalText = submit.textContent;
+    }
+
+    submit.disabled = isBusy;
+    submit.textContent = isBusy ? 'Traitement...' : submit.dataset.originalText;
+}
+
+async function handleStoreAuthSubmit(form, mode) {
+    if (!form) return;
+
+    setStoreAuthBusy(form, true);
+    clearStoreAuthErrors(mode);
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: new FormData(form)
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.success) {
+            setStoreAuthFieldErrors(mode, payload.errors || { '__all__': [payload.message || 'Operation impossible.'] });
+            return;
+        }
+
+        // No more OTP handling required here for standard password auth
+
+        // ── OTP verified (or already logged in): redirect ──
+        if (payload.redirect_url) {
+            window.location.href = payload.redirect_url;
+            return;
+        }
+
+        // ── Fallback: update auth state directly ──
+        const auth = getStoreAuthState();
+        auth.isAuthenticated = true;
+        auth.userDisplayName = payload.user?.display_name || auth.userDisplayName;
+
+        form.reset();
+        populateStoreAuthNextValues();
+        renderStoreAuthState();
+
+        const queuedAction = pendingStoreAuthAction;
+        pendingStoreAuthAction = null;
+        closeAuthModal(false);
+
+        if (typeof queuedAction === 'function') {
+            await queuedAction();
+        }
+    } catch (error) {
+        console.error('Store auth submission failed:', error);
+        setStoreAuthFeedback("Impossible de contacter le serveur pour l'authentification.", 'error');
+    } finally {
+        setStoreAuthBusy(form, false);
+    }
+}
+
+function initStoreAuth() {
+    const loginForm = document.getElementById('storeLoginForm');
+    const signupForm = document.getElementById('storeSignupForm');
+    const otpForm = document.getElementById('storeOtpForm');
+
+    if (loginForm && !loginForm.dataset.bound) {
+        loginForm.dataset.bound = '1';
+        loginForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            handleStoreAuthSubmit(loginForm, 'login');
+        });
+    }
+
+    if (signupForm && !signupForm.dataset.bound) {
+        signupForm.dataset.bound = '1';
+        signupForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            handleStoreAuthSubmit(signupForm, 'signup');
+        });
+    }
+
+    if (otpForm && !otpForm.dataset.bound) {
+        otpForm.dataset.bound = '1';
+        otpForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            handleStoreAuthSubmit(otpForm, 'otp');
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeAuthModal();
+    });
+
+    populateStoreAuthNextValues();
+    renderStoreAuthState();
+}
+
+window.openAuthModal = openAuthModal;
+window.closeAuthModal = closeAuthModal;
+window.switchAuthMode = switchAuthMode;
+window.notifySocialProvider = notifySocialProvider;
+window.requireStoreAuth = requireStoreAuth;
+
+function syncDesktopCategoryScroller() {
+    const scrollContainer = document.getElementById('desktopTabsScroll');
+    const leftBtn = document.getElementById('desktopTabsLeft');
+    const rightBtn = document.getElementById('desktopTabsRight');
+    if (!scrollContainer || !leftBtn || !rightBtn) return;
+
+    const isDesktop = window.matchMedia('(min-width: 992px)').matches;
+    if (!isDesktop) {
+        leftBtn.classList.add('is-hidden');
+        rightBtn.classList.add('is-hidden');
+        return;
+    }
+
+    const maxScrollLeft = Math.max(0, scrollContainer.scrollWidth - scrollContainer.clientWidth);
+    const canScroll = maxScrollLeft > 2;
+
+    leftBtn.classList.toggle('is-hidden', !canScroll);
+    rightBtn.classList.toggle('is-hidden', !canScroll);
+
+    if (!canScroll) return;
+
+    leftBtn.classList.toggle('is-disabled', scrollContainer.scrollLeft <= 2);
+    rightBtn.classList.toggle('is-disabled', scrollContainer.scrollLeft >= maxScrollLeft - 2);
+}
+
+function scrollActiveDesktopCategoryIntoView() {
+    const scrollContainer = document.getElementById('desktopTabsScroll');
+    const tabsWrapper = document.getElementById('desktopCategoryTabs');
+    if (!scrollContainer || !tabsWrapper) return;
+    const activeTab = tabsWrapper.querySelector('.tab-item.active');
+    if (!activeTab) return;
+    activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+function initDesktopCategoryScroller() {
+    const scrollContainer = document.getElementById('desktopTabsScroll');
+    const leftBtn = document.getElementById('desktopTabsLeft');
+    const rightBtn = document.getElementById('desktopTabsRight');
+    if (!scrollContainer || !leftBtn || !rightBtn || scrollContainer.dataset.bound === '1') return;
+
+    scrollContainer.dataset.bound = '1';
+
+    leftBtn.addEventListener('click', () => {
+        const step = Math.max(220, Math.round(scrollContainer.clientWidth * 0.5));
+        scrollContainer.scrollBy({ left: -step, behavior: 'smooth' });
+    });
+
+    rightBtn.addEventListener('click', () => {
+        const step = Math.max(220, Math.round(scrollContainer.clientWidth * 0.5));
+        scrollContainer.scrollBy({ left: step, behavior: 'smooth' });
+    });
+
+    scrollContainer.addEventListener('scroll', syncDesktopCategoryScroller, { passive: true });
+
+    // Convert vertical wheel to horizontal scroll on desktop nav.
+    scrollContainer.addEventListener('wheel', (event) => {
+        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+        scrollContainer.scrollLeft += event.deltaY;
+        event.preventDefault();
+    }, { passive: false });
+
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartScrollLeft = 0;
+    let didDrag = false;
+
+    scrollContainer.addEventListener('mousedown', (event) => {
+        if (event.button !== 0) return;
+        isDragging = true;
+        didDrag = false;
+        dragStartX = event.pageX;
+        dragStartScrollLeft = scrollContainer.scrollLeft;
+        scrollContainer.classList.add('is-dragging');
+    });
+
+    window.addEventListener('mousemove', (event) => {
+        if (!isDragging) return;
+        const delta = event.pageX - dragStartX;
+        if (Math.abs(delta) > 3) didDrag = true;
+        scrollContainer.scrollLeft = dragStartScrollLeft - delta;
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        scrollContainer.classList.remove('is-dragging');
+        didDrag = false; // Reset didDrag on mouseup
+        syncDesktopCategoryScroller();
+    });
+
+    scrollContainer.addEventListener('click', (event) => {
+        // Allow clicks on tab items and links to pass through
+        const isTabItem = event.target.closest('.tab-item, a, button');
+        if (isTabItem || !didDrag) return;
+        
+        event.preventDefault();
+        event.stopPropagation();
+        didDrag = false;
+    }, true);
+
+    window.addEventListener('resize', syncDesktopCategoryScroller);
+    window.addEventListener('load', () => {
+        scrollActiveDesktopCategoryIntoView();
+        syncDesktopCategoryScroller();
+    });
+
+    setTimeout(() => {
+        scrollActiveDesktopCategoryIntoView();
+        syncDesktopCategoryScroller();
+    }, 120);
+}
 
 const DEFAULT_FONTS = [
     { name: 'Arial', family: 'sans-serif' },
@@ -92,21 +560,31 @@ function updateMainPagePrice(product) {
 let saveCartTimeout;
 async function saveCart() {
     clearTimeout(saveCartTimeout);
-    saveCartTimeout = setTimeout(async () => {
-        if (!window.urls || !window.urls.syncCart) return;
-        try {
-            await fetch(window.urls.syncCart, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': window.csrfToken
-                },
-                body: JSON.stringify({ cart: cart })
-            });
-        } catch (e) {
-            console.error("Cart sync failed", e);
-        }
-    }, 500);
+    return new Promise((resolve) => {
+        saveCartTimeout = setTimeout(async () => {
+            if (!window.urls || !window.urls.syncCart) {
+                resolve();
+                return;
+            }
+            try {
+                const response = await fetch(window.urls.syncCart, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.csrfToken
+                    },
+                    body: JSON.stringify({ cart: cart })
+                });
+                if (response.status === 401) {
+                    requireStoreAuth(null, { mode: 'login', reason: 'checkout' });
+                }
+            } catch (e) {
+                console.error("Cart sync failed", e);
+            } finally {
+                resolve();
+            }
+        }, 500);
+    });
 }
 
 // Toggle Cart Drawer
@@ -150,7 +628,7 @@ function updateCartUI() {
                 const itemTotal = price * (item.quantity || 1);
                 return `
                     <div class="cart-item" style="display:flex; gap:1rem; padding:1rem; border-bottom:1px solid #eee;">
-                        <img src="${item.image || '/static/img/placeholder.png'}" alt="${item.name}" style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
+                        <img src="${item.image || '/static/img/placeholder.png'}" alt="${item.name}" loading="lazy" decoding="async" style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
                         <div style="flex:1;">
                             <h4 style="margin:0 0 0.5rem; font-size:14px;">${item.name}</h4>
                             <p style="margin:0; font-size:12px; color:#666;">Quantité: ${item.quantity || 1}</p>
@@ -182,6 +660,9 @@ function proceedToCheckout() {
         alert('Votre panier est vide');
         return;
     }
+    if (!requireStoreAuth(() => proceedToCheckout(), { mode: 'login', reason: 'checkout' })) {
+        return;
+    }
     if (window.urls && window.urls.checkout) {
         window.location.href = window.urls.checkout;
     }
@@ -190,6 +671,8 @@ function proceedToCheckout() {
 // Initialize
 document.addEventListener('DOMContentLoaded', function () {
     const preloader = document.getElementById('premiumPreloader');
+
+    initStoreAuth();
 
     // Robust Preloader Removal
     const removePreloader = () => {
@@ -211,6 +694,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize with Error Safety
     const initFunctions = [
         { name: 'initSiteContent', fn: initSiteContent },
+        { name: 'initDesktopCategoryScroller', fn: initDesktopCategoryScroller },
         { name: 'renderFeaturedProducts', fn: renderFeaturedProducts },
         { name: 'renderCatalogueProducts', fn: renderCatalogueProducts },
         { name: 'renderProductsTable', fn: renderProductsTable },
@@ -454,6 +938,11 @@ function updateCategoryUI() {
             btn.classList.remove('active');
         }
     });
+
+    requestAnimationFrame(() => {
+        scrollActiveDesktopCategoryIntoView();
+        syncDesktopCategoryScroller();
+    });
 }
 
 
@@ -538,8 +1027,8 @@ function createProductCard(product) {
                 </button>
                 ${product.image
             ? `
-                <img src="${product.image}" alt="${product.name}" class="product-image primary-img">
-                ${product.secondary_image ? `<img src="${product.secondary_image}" alt="${product.name}" class="product-image secondary-img">` : ''}
+                <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" class="product-image primary-img">
+                ${product.secondary_image ? `<img src="${product.secondary_image}" alt="${product.name}" loading="lazy" decoding="async" class="product-image secondary-img">` : ''}
               `
             : `<div class="product-image-placeholder"><i class="bi bi-image"></i></div>`}
                 <button class="add-btn-overlay" type="button" onclick="event.stopPropagation(); ${isCustomizable
@@ -1117,7 +1606,7 @@ async function addToCart(productId) {
             return addToCart(productId.dataset.id);
         }
         console.error("Product not found:", productId);
-        return;
+        return false;
     }
 
     if (!productCustomizations[productId]) {
@@ -1192,9 +1681,11 @@ async function addToCart(productId) {
 
         // RE-INIT STATE (Empty)
         initCustomizationState(productId);
+        return true;
 
     } catch (error) {
         console.error("Error adding to cart:", error);
+        return false;
     }
 }
 
@@ -1385,12 +1876,10 @@ function updateCartSummary() {
     const settings = adminSettings || {};
     const freeThreshold = settings.freeShippingThreshold || 100000;
     const delivery = settings.deliveryPrice || 0;
-    const taxRate = settings.taxRate || 0;
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const deliveryFee = subtotal >= freeThreshold ? 0 : delivery;
-    const tax = subtotal * taxRate;
-    const total = subtotal + deliveryFee + tax;
+    const total = subtotal + deliveryFee;
 
     document.getElementById('cartSubtotal').textContent = `${subtotal.toFixed(2)} FC`;
     const deliveryEl = document.getElementById('cartDelivery');
@@ -1399,7 +1888,6 @@ function updateCartSummary() {
             ? '<span class="free-delivery">Gratuit</span>'
             : `${deliveryFee.toFixed(2)} FC`;
     }
-    document.getElementById('cartTax').textContent = `${tax.toFixed(2)} FC`;
     document.getElementById('cartTotal').textContent = `${total.toFixed(2)} FC`;
 }
 
@@ -1479,6 +1967,9 @@ function validateCheckoutStep(stepNumber) {
 
 async function proceedToCheckout() {
     if (cart.length === 0) return;
+    if (!requireStoreAuth(() => proceedToCheckout(), { mode: 'login', reason: 'checkout' })) {
+        return;
+    }
 
     const checkoutBtn = document.querySelector('.checkout-btn');
     const originalText = checkoutBtn ? checkoutBtn.innerHTML : '';
@@ -1605,18 +2096,20 @@ function renderCheckoutSummary() {
     list.innerHTML = html;
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const deliveryFee = subtotal >= adminSettings.freeShippingThreshold ? 0 : adminSettings.deliveryPrice;
-    const tax = subtotal * adminSettings.taxRate;
-    const total = subtotal + deliveryFee + tax;
+    let deliveryFee = 0;
+    const zoneSelect = document.getElementById('delivery_zone_select');
+    if (zoneSelect && zoneSelect.selectedIndex > 0) {
+        deliveryFee = parseFloat(zoneSelect.options[zoneSelect.selectedIndex].getAttribute('data-price')) || 0;
+    } else {
+        deliveryFee = subtotal >= adminSettings.freeShippingThreshold ? 0 : adminSettings.deliveryPrice;
+    }
+    const total = subtotal + deliveryFee;
 
     const subEl = document.getElementById('checkoutSubtotal');
     if (subEl) subEl.textContent = `${subtotal.toFixed(2)} FC`;
 
     const delEl = document.getElementById('checkoutDelivery');
     if (delEl) delEl.innerHTML = deliveryFee === 0 ? '<span class="free-delivery">Gratuit</span>' : `${deliveryFee.toFixed(2)} FC`;
-
-    const taxEl = document.getElementById('checkoutTax');
-    if (taxEl) taxEl.textContent = `${tax.toFixed(2)} FC`;
 
     const totEl = document.getElementById('checkoutTotal');
     if (totEl) totEl.textContent = `${total.toFixed(2)} FC`;
@@ -2766,6 +3259,10 @@ function toggleWishlist(productId, btnElement) {
 // Enhance addToCart to include Flying Animation
 const originalAddToCart = addToCart;
 addToCart = async function (productId) {
+    if (!requireStoreAuth(() => addToCart(productId), { mode: 'signup', reason: 'add_to_cart' })) {
+        return false;
+    }
+
     // Run animation
     try {
         // Find product image
@@ -2786,7 +3283,7 @@ addToCart = async function (productId) {
     } catch (e) { console.error(e); }
 
     // Call original
-    await originalAddToCart(productId);
+    return await originalAddToCart(productId);
 };
 
 function runFlyAnimation(sourceImg) {

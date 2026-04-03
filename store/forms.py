@@ -1,5 +1,5 @@
 from django import forms
-from .models import HeroSection, HeroCard, AboutSection, AboutStat, TrustSignal, FooterConfig, SocialLink, FooterLink, Universe, Collection, ManualPayment
+from .models import HeroSection, HeroCard, AboutSection, AboutStat, TrustSignal, FooterConfig, SocialLink, FooterLink, Universe, Collection, ManualPayment, DeliveryZone
 from accounts.models import Shop, UserProfile
 from products.models import Category
 
@@ -173,6 +173,16 @@ class CollectionForm(forms.ModelForm):
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
         }
 
+class CustomerAccountForm(forms.Form):
+    first_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    phone = forms.CharField(max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    address = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3}))
+    city = forms.CharField(max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    zip_code = forms.CharField(max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+
 class ManualPaymentForm(forms.ModelForm):
     class Meta:
         model = ManualPayment
@@ -181,4 +191,14 @@ class ManualPaymentForm(forms.ModelForm):
             'payment_method': forms.Select(attrs={'class': 'form-select'}),
             'transaction_ref': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: TXN-123456789'}),
             'proof_file': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+class DeliveryZoneForm(forms.ModelForm):
+    class Meta:
+        model = DeliveryZone
+        fields = ['name', 'price', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Gombe'}),
+            'price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
         }

@@ -15,9 +15,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Custom Modern CSS -->
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/des_store.css' %}?v=3.1">
+    <link rel="stylesheet" href="{% static 'css/des_store.css' %}?v=3.5">
     <link rel="stylesheet" href="{% static 'css/des_store_part2.css' %}?v=1.5">
-    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.2">
+    <link rel="stylesheet" href="{% static 'css/des_store_premium.css' %}?v=3.3">
     <style>
         /* CRITICAL: Inline Hover Effect for Storefront */
         .product-image {
@@ -48,12 +48,648 @@
         .product-image .primary-img {
             z-index: 1;
         }
+
+        .nav-account-zone {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-right: 10px;
+        }
+
+        .nav-auth-actions,
+        .nav-user-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-user-actions > .nav-auth-btn {
+            display: none;
+        }
+
+        .nav-auth-btn,
+        .nav-user-pill,
+        .mobile-auth-btn,
+        .mobile-user-pill {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+
+        .nav-auth-btn:hover,
+        .nav-user-pill:hover,
+        .mobile-auth-btn:hover,
+        .mobile-user-pill:hover {
+            transform: translateY(-1px);
+        }
+
+        .nav-auth-btn--ghost,
+        .mobile-auth-btn--ghost {
+            background: rgba(255, 255, 255, 0.92);
+            color: #111827;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        }
+
+        .nav-auth-btn--primary,
+        .mobile-auth-btn--primary {
+            background: linear-gradient(135deg, #111827, #b91c1c);
+            color: #ffffff;
+            box-shadow: 0 12px 28px rgba(127, 29, 29, 0.24);
+        }
+
+        .nav-user-pill,
+        .mobile-user-pill {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(244, 244, 245, 0.95));
+            color: #111827;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
+        }
+
+        .nav-user-pill__avatar,
+        .mobile-user-pill__avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dc2626, #111827);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .store-account-menu {
+            position: relative;
+        }
+
+        .store-account-trigger {
+            border: none;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 244, 245, 0.94));
+            color: #111827;
+            border-radius: 999px;
+            padding: 8px 14px 8px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .store-account-trigger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
+        }
+
+        .store-account-trigger__text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.05;
+        }
+
+        .store-account-trigger__text strong {
+            font-size: 14px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .store-account-trigger__text small {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #6b7280;
+        }
+
+        .store-account-trigger__caret {
+            font-size: 12px;
+            color: #dc2626;
+            transition: transform 0.2s ease;
+        }
+
+        .store-account-menu.is-open .store-account-trigger__caret {
+            transform: rotate(180deg);
+        }
+
+        .store-account-dropdown {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 12px);
+            width: 230px;
+            background: #ffffff;
+            border-radius: 22px;
+            padding: 14px;
+            box-shadow: 0 26px 70px rgba(15, 23, 42, 0.2);
+            border: 1px solid rgba(17, 24, 39, 0.06);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+            z-index: 40;
+        }
+
+        .store-account-menu.is-open .store-account-dropdown {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .store-account-dropdown__header {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 10px;
+            padding: 6px 8px 2px;
+        }
+
+        .store-account-dropdown__item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 14px;
+            color: #111827;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+        }
+
+        .store-account-dropdown__item:hover {
+            background: #f4f4f5;
+            color: #111827;
+            transform: translateX(1px);
+        }
+
+        .store-account-dropdown__item i {
+            font-size: 16px;
+            color: #111827;
+        }
+
+        .store-account-dropdown__divider {
+            height: 1px;
+            background: rgba(17, 24, 39, 0.1);
+            margin: 10px 0;
+        }
+
+        .store-account-dropdown__item.is-danger,
+        .store-account-dropdown__item.is-danger i {
+            color: #dc2626;
+        }
+
+        .mobile-account-links {
+            display: grid;
+            gap: 8px;
+        }
+
+        .mobile-auth-block {
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(17, 24, 39, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .store-auth-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 12000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 22px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+
+        .store-auth-modal.is-open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .store-auth-modal__backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .store-auth-modal__dialog {
+            position: relative;
+            z-index: 1;
+            width: min(100%, 900px);
+            background: #ffffff;
+            border-radius: 32px;
+            overflow: clip;
+            display: grid;
+            grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr);
+            box-shadow: 0 32px 80px rgba(15, 23, 42, 0.32);
+            transform: translateY(18px) scale(0.98);
+            transition: transform 0.25s ease;
+            margin: 18px auto;
+        }
+
+        .store-auth-modal.is-open .store-auth-modal__dialog {
+            transform: translateY(0) scale(1);
+        }
+
+        .store-auth-modal__aside {
+            position: relative;
+            padding: 32px 28px 26px;
+            background:
+                radial-gradient(circle at top left, rgba(255, 255, 255, 0.2), transparent 36%),
+                linear-gradient(145deg, #111827 0%, #7f1d1d 58%, #b91c1c 100%);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 18px;
+        }
+
+        .store-auth-modal__eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .store-auth-modal__aside h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 3vw, 2.55rem);
+            line-height: 1.02;
+            margin: 14px 0 10px;
+        }
+
+        .store-auth-modal__aside p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.82);
+            line-height: 1.65;
+            font-size: 14px;
+        }
+
+        .store-auth-benefits {
+            display: grid;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .store-auth-benefit {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .store-auth-benefit i {
+            font-size: 18px;
+            color: #fde68a;
+            margin-top: 2px;
+        }
+
+        .store-auth-benefit strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 3px;
+        }
+
+        .store-auth-benefit span {
+            display: block;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.82);
+            line-height: 1.45;
+        }
+
+        .store-auth-modal__panel {
+            position: relative;
+            padding: 28px 28px 22px;
+            display: flex;
+            flex-direction: column;
+            background:
+                radial-gradient(circle at top right, rgba(239, 68, 68, 0.08), transparent 28%),
+                #ffffff;
+        }
+
+        .store-auth-close {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 42px;
+            height: 42px;
+            border: none;
+            border-radius: 50%;
+            background: #f3f4f6;
+            color: #111827;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .store-auth-close:hover {
+            background: #e5e7eb;
+            transform: scale(1.04);
+        }
+
+        .store-auth-tabs {
+            display: inline-flex;
+            gap: 8px;
+            padding: 6px;
+            border-radius: 999px;
+            background: #f3f4f6;
+            width: fit-content;
+            margin-bottom: 18px;
+        }
+
+        .store-auth-tab {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 18px;
+            background: transparent;
+            color: #4b5563;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .store-auth-tab.is-active {
+            background: #ffffff;
+            color: #111827;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        }
+
+        .store-auth-panel__header h4 {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 6px;
+        }
+
+        .store-auth-panel__header p {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .store-auth-feedback {
+            display: none;
+            margin-bottom: 16px;
+            padding: 13px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .store-auth-feedback.is-visible {
+            display: block;
+        }
+
+        .store-auth-feedback.is-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .store-auth-feedback.is-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .store-auth-forms {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .store-auth-form {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .store-auth-form.is-active {
+            display: flex;
+        }
+
+        .store-auth-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .store-auth-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .store-auth-field--full {
+            grid-column: 1 / -1;
+        }
+
+        .store-auth-field label {
+            font-size: 12px;
+            font-weight: 800;
+            color: #111827;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .store-auth-field input,
+        .store-auth-field textarea {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 12px 14px;
+            font-size: 14px;
+            color: #111827;
+            background: #f9fafb;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .store-auth-field textarea {
+            min-height: 72px;
+            resize: vertical;
+        }
+
+        .store-auth-field input:focus,
+        .store-auth-field textarea:focus {
+            outline: none;
+            border-color: #dc2626;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.08);
+        }
+
+        .store-auth-field__error {
+            min-height: 18px;
+            font-size: 12px;
+            color: #b91c1c;
+        }
+
+        .store-auth-submit {
+            border: none;
+            border-radius: 18px;
+            padding: 15px 18px;
+            font-size: 15px;
+            font-weight: 800;
+            color: #ffffff;
+            background: linear-gradient(135deg, #111827, #b91c1c);
+            box-shadow: 0 18px 34px rgba(127, 29, 29, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+
+        .store-auth-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 22px 38px rgba(127, 29, 29, 0.26);
+        }
+
+        .store-auth-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .store-auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 2px 0;
+            color: #9ca3af;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .store-auth-divider::before,
+        .store-auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e5e7eb;
+        }
+
+        .store-auth-socials {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .store-auth-social-btn {
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 12px 14px;
+            background: #ffffff;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .store-auth-social-btn:hover {
+            transform: translateY(-1px);
+            border-color: #d1d5db;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .store-auth-social-btn i {
+            font-size: 18px;
+        }
+
+        .store-auth-social-btn--facebook {
+            color: #1d4ed8;
+        }
+
+        .store-auth-social-note {
+            margin-top: 4px;
+            color: #6b7280;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 1199px) {
+            .nav-account-zone {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .store-auth-modal {
+                padding: 12px;
+            }
+
+            .store-auth-modal__dialog {
+                grid-template-columns: 1fr;
+                width: min(100%, 720px);
+                margin: 8px auto 14px;
+            }
+
+            .store-auth-modal__aside {
+                padding: 24px 20px 18px;
+            }
+
+            .store-auth-modal__panel {
+                padding: 22px 20px 20px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .store-auth-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .store-auth-socials {
+                grid-template-columns: 1fr;
+            }
+
+            .store-auth-modal__dialog {
+                border-radius: 24px;
+                margin: 6px auto 12px;
+            }
+        }
     </style>
 
     <!-- Data Injection -->
     <script>
         window.djangoProducts = JSON.parse('{{ products_json|default:"[]"|escapejs }}');
         window.storeSettings = JSON.parse('{{ store_settings_json|default:"{}"|escapejs }}');
+        window.deliveryZones = JSON.parse('{{ delivery_zones_json|default:"[]"|escapejs }}');
         window.djangoCart = JSON.parse('{{ cart_json|default:"[]"|escapejs }}');
         window.csrfToken = "{{ csrf_token }}";
         window.urls = {
@@ -61,6 +697,78 @@
             syncCart: "{% url 'store:sync_cart' %}",
             productDetail: "{% url 'store:product_detail' 0 %}"
         };
+        window.storeAuth = {
+            isAuthenticated: {{ request.user.is_authenticated|yesno:"true,false" }},
+            loginUrl: "{% url 'accounts:login' %}",
+            signupUrl: "{% url 'accounts:login' %}",
+            logoutUrl: "{% url 'accounts:logout' %}?next={% url 'store:catalog' %}",
+            homeUrl: "{% url 'store:catalog' %}",
+            currentPath: "{{ request.get_full_path|escapejs }}",
+            userDisplayName: "{% if request.user.get_full_name %}{{ request.user.get_full_name|escapejs }}{% elif request.user.username %}{{ request.user.username|escapejs }}{% endif %}",
+            socialProvidersConfigured: false
+        };
+
+        function openAuthModal(mode, reason) {
+            const auth = window.storeAuth || {};
+            const targetMode = mode === 'signup' ? 'signup' : 'login';
+            const baseUrl = targetMode === 'signup' ? auth.signupUrl : auth.loginUrl;
+            const nextValue = auth.currentPath || `${window.location.pathname}${window.location.search}${window.location.hash}` || '/store/';
+
+            const modal = document.getElementById('storeAuthModal');
+            if (modal) {
+                modal.dataset.reason = reason || 'default';
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+
+                modal.querySelectorAll('input[name="next"]').forEach((input) => {
+                    input.value = nextValue;
+                });
+
+                modal.querySelectorAll('.store-auth-tab').forEach((tab) => {
+                    tab.classList.toggle('is-active', tab.dataset.authTab === targetMode);
+                });
+                modal.querySelectorAll('.store-auth-form').forEach((form) => {
+                    const isActive = (targetMode === 'login' && form.id === 'storeLoginForm') || (targetMode === 'signup' && form.id === 'storeSignupForm');
+                    form.classList.toggle('is-active', isActive);
+                });
+                return;
+            }
+
+            if (baseUrl) {
+                const separator = baseUrl.includes('?') ? '&' : '?';
+                window.location.href = `${baseUrl}${separator}next=${encodeURIComponent(nextValue)}`;
+            }
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('storeAuthModal');
+            if (!modal) return;
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        function switchAuthMode(mode) {
+            openAuthModal(mode || 'login', document.getElementById('storeAuthModal')?.dataset.reason || 'default');
+        }
+
+        function notifySocialProvider(provider) {
+            if (typeof showToast === 'function') {
+                showToast(`Connexion ${provider} bientot disponible apres configuration OAuth.`, 'info');
+                return;
+            }
+            window.alert(`Connexion ${provider} bientot disponible apres configuration OAuth.`);
+        }
+
+        function requireStoreAuth(action, options) {
+            const auth = window.storeAuth || {};
+            if (auth.isAuthenticated) {
+                return true;
+            }
+            openAuthModal((options && options.mode) || 'login', (options && options.reason) || 'default');
+            return false;
+        }
 
         // Countdown Timer for Promotions
         function initPromoCountdown() {
@@ -110,7 +818,56 @@
         }
         
         // Navigation & Universe Logic
+        function buildStoreCatalogUrl(categoryName) {
+            const url = new URL("{% url 'store:catalog' %}", window.location.origin);
+            if (categoryName && categoryName !== 'Tous') {
+                url.searchParams.set('category', categoryName);
+            }
+            return url.pathname + url.search;
+        }
+
+        function canUseStoreSpaNavigation() {
+            return typeof showView === 'function' && typeof renderCatalogueProducts === 'function' && !!document.getElementById('catalogueView');
+        }
+
+        function openStoreHome() {
+            if (canUseStoreSpaNavigation()) {
+                showView('home');
+                return;
+            }
+            window.location.href = "{% url 'store:catalog' %}";
+        }
+
+        function openStoreCategory(categoryName) {
+            const selectedCategory = categoryName || 'Tous';
+
+            if (!canUseStoreSpaNavigation()) {
+                window.location.href = buildStoreCatalogUrl(selectedCategory);
+                return;
+            }
+
+            if (typeof filters !== 'undefined') {
+                filters.category = selectedCategory;
+            }
+            showView('catalogue');
+            renderCatalogueProducts();
+
+            const navItems = document.querySelectorAll('.tab-item, .pill-item');
+            navItems.forEach((item) => {
+                item.classList.remove('active');
+                if (item.textContent.trim().toUpperCase() === selectedCategory.toUpperCase() ||
+                    (item.dataset && item.dataset.category === selectedCategory)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
         function selectUniverse(universeName) {
+            if (!canUseStoreSpaNavigation()) {
+                openStoreCategory(universeName);
+                return;
+            }
+
             const revealOverlay = document.getElementById('categoryReveal');
             const revealTitle = document.getElementById('categoryRevealTitle');
 
@@ -128,17 +885,7 @@
                         if (typeof renderCatalogueProducts === 'function') renderCatalogueProducts();
                     }
 
-                    if (typeof showView === 'function') showView('catalogue');
-
-                    // Update active state for nav items
-                    const navItems = document.querySelectorAll('.tab-item, .pill-item');
-                    navItems.forEach(item => {
-                        item.classList.remove('active');
-                        if (item.textContent.trim().toUpperCase() === universeName.toUpperCase() ||
-                            (item.dataset && item.dataset.category === universeName)) {
-                            item.classList.add('active');
-                        }
-                    });
+                    openStoreCategory(universeName);
                 }, 500);
 
                 setTimeout(() => {
@@ -146,7 +893,7 @@
                 }, 1200);
             } else {
                 if (typeof filterProductsByUniverse === 'function') filterProductsByUniverse(universeName);
-                if (typeof showView === 'function') showView('catalogue');
+                openStoreCategory(universeName);
             }
         }
 
@@ -191,7 +938,7 @@
     </div>
     <!-- Toast Container -->
     <div id="toastContainer"
-        style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;">
+        style="position: fixed; top: 20px; right: 20px; z-index: 14000; display: flex; flex-direction: column; gap: 10px;">
     </div>
 
     <!-- Toast Script -->
@@ -495,28 +1242,86 @@
                     </svg>
                 </div>
 
-                <div class="logo" onclick="showView('home')">
+                <div class="logo" onclick="openStoreHome()">
                     <img src="{% static 'img/mkaribu_logo.png' %}" alt="Mkaribu" style="height: 40px; width: auto; max-width: 120px; object-fit: contain;">
                 </div>
 
                 <div class="desktop-menu-tabs d-none d-lg-flex">
-                    <div class="category-tabs-wrapper">
-                        <button class="tab-item {% if not request.GET.category or request.GET.category == 'Tous' %}active{% endif %}" onclick="selectUniverse('Tous')">TOUS</button>
+                    <button class="desktop-tab-nav desktop-tab-nav-left is-hidden" id="desktopTabsLeft" type="button"
+                        aria-label="Défiler à gauche">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <div class="desktop-tabs-scroll" id="desktopTabsScroll">
+                        <div class="category-tabs-wrapper" id="desktopCategoryTabs">
+                            <a class="tab-item {% if not request.GET.category or request.GET.category == 'Tous' %}active{% endif %}"
+                                data-category="Tous" href="{% url 'store:catalog' %}?category=Tous"
+                                onclick="if (typeof selectUniverse === 'function') { selectUniverse('Tous'); return false; }">TOUS</a>
 
-                        {% get_active_categories as all_cats %}
-                        {% for univ in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS"|split:"," %}
-                        <button class="tab-item" data-category="{{ univ }}" onclick="selectUniverse('{{ univ|escapejs }}')">
-                            {{ univ }}
-                        </button>
-                        {% endfor %}
+                            {% get_active_categories as all_cats %}
+                            {% for univ in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS"|split:"," %}
+                            <a class="tab-item" data-category="{{ univ }}"
+                                href="{% url 'store:catalog' %}?category={{ univ|urlencode }}"
+                                onclick="if (typeof selectUniverse === 'function') { selectUniverse('{{ univ|escapejs }}'); return false; }">
+                                {{ univ }}
+                            </a>
+                            {% endfor %}
 
-                        {% for category in all_cats %}
-                        {% if category.name|upper not in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS" %}
-                        <button class="tab-item" data-category="{{ category.name }}" onclick="selectUniverse('{{ category.name|escapejs }}')">
-                            {{ category.name|upper }}
+                            {% for category in all_cats %}
+                            {% if category.name|upper not in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS" %}
+                            <a class="tab-item" data-category="{{ category.name }}"
+                                href="{% url 'store:catalog' %}?category={{ category.name|urlencode }}"
+                                onclick="if (typeof selectUniverse === 'function') { selectUniverse('{{ category.name|escapejs }}'); return false; }">
+                                {{ category.name|upper }}
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <button class="desktop-tab-nav desktop-tab-nav-right is-hidden" id="desktopTabsRight" type="button"
+                        aria-label="Défiler à droite">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="nav-account-zone">
+                    <div class="nav-auth-actions" data-store-auth-guest {% if request.user.is_authenticated %}hidden{% endif %}>
+                        <button type="button" class="nav-auth-btn nav-auth-btn--ghost" onclick="window.openAuthModal('login')">
+                            Se connecter
                         </button>
-                        {% endif %}
-                        {% endfor %}
+                        <button type="button" class="nav-auth-btn nav-auth-btn--primary" onclick="window.openAuthModal('signup')">
+                            S'inscrire
+                        </button>
+                    </div>
+                    <div class="nav-user-actions" data-store-auth-user {% if not request.user.is_authenticated %}hidden{% endif %}>
+                        <div class="store-account-menu" data-store-account-menu>
+                            <button type="button" class="store-account-trigger" data-store-account-trigger aria-expanded="false">
+                                <span class="nav-user-pill__avatar">{{ request.user.first_name|default:request.user.username|first|upper }}</span>
+                                <span class="store-account-trigger__text">
+                                    <strong data-store-auth-name>{% firstof request.user.first_name request.user.username "Mon compte" %}</strong>
+                                    <small>Client</small>
+                                </span>
+                                <i class="bi bi-chevron-down store-account-trigger__caret"></i>
+                            </button>
+                            <div class="store-account-dropdown">
+                                <div class="store-account-dropdown__header">Compte</div>
+                                <a href="{% url 'store:account_profile' %}" class="store-account-dropdown__item">
+                                    <i class="bi bi-person"></i>
+                                    <span>Profil</span>
+                                </a>
+                                <a href="{% url 'store:account_orders' %}" class="store-account-dropdown__item">
+                                    <i class="bi bi-receipt"></i>
+                                    <span>Mes commandes</span>
+                                </a>
+                                <div class="store-account-dropdown__divider"></div>
+                                <a href="{% url 'accounts:logout' %}?next={% url 'store:catalog' %}" class="store-account-dropdown__item is-danger">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span>Deconnexion</span>
+                                </a>
+                            </div>
+                        </div>
+                        <a href="{% url 'accounts:logout' %}?next={% url 'store:catalog' %}" class="nav-auth-btn nav-auth-btn--ghost">
+                            Déconnexion
+                        </a>
                     </div>
                 </div>
 
@@ -544,19 +1349,20 @@
 
     <!-- Mobile Category Navigation (Horizontal Scroll) -->
     <div class="mobile-category-nav d-lg-none">
-        <div class="pill-scroll-container">
-            <button class="pill-item active" onclick="selectUniverse('Tous')">Tous</button>
+
+            <div class="pill-scroll-container">
+            <a class="pill-item active" href="{% url 'store:catalog' %}?category=Tous" onclick="if (typeof selectUniverse === 'function') { selectUniverse('Tous'); return false; }">Tous</a>
 
             {% for univ in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS"|split:"," %}
-            <button class="pill-item" onclick="selectUniverse('{{ univ|escapejs }}')">
+            <a class="pill-item" href="{% url 'store:catalog' %}?category={{ univ|urlencode }}" onclick="if (typeof selectUniverse === 'function') { selectUniverse('{{ univ|escapejs }}'); return false; }">
                 {{ univ|title }}
-            </button>
+            </a>
             {% endfor %}
 
             {% get_active_categories as mobile_all_cats %}
             {% for category in mobile_all_cats %}
             {% if category.name|upper not in "IDÉES CADEAUX,COLLIERS,BRACELETS,BAGUES,BOUCLES D'OREILLES,MONTRES,COMPLETS" %}
-            <button class="pill-item" onclick="selectUniverse('{{ category.name|escapejs }}')">{{ category.name }}</button>
+            <a class="pill-item" href="{% url 'store:catalog' %}?category={{ category.name|urlencode }}" onclick="if (typeof selectUniverse === 'function') { selectUniverse('{{ category.name|escapejs }}'); return false; }">{{ category.name }}</a>
             {% endif %}
             {% endfor %}
         </div>
@@ -576,20 +1382,41 @@
             <div class="mobile-category">
                 <h3>Catalogue</h3>
                 <div class="mobile-subcategories">
-                    <button
-                        onclick="showView('catalogue'); filters.category='Tous'; renderCatalogueProducts(); toggleMobileMenu()">Tout
-                        voir</button>
+                    <a href="{% url 'store:catalog' %}?category=Tous" onclick="if (typeof openStoreCategory === 'function') { openStoreCategory('Tous'); toggleMobileMenu(); return false; }">Tout voir</a>
                     {% get_active_categories as mobile_categories_fallback %}
                     {% with mobile_list=mobile_categories|default:categories|default:mobile_categories_fallback %}
                     {% for category in mobile_list %}
-                    <button onclick="filters.category='{{ category.name|escapejs }}'; showView('catalogue'); renderCatalogueProducts(); toggleMobileMenu()">{{ category.name }}</button>
+                    <a href="{% url 'store:catalog' %}?category={{ category.name|urlencode }}" onclick="if (typeof openStoreCategory === 'function') { openStoreCategory('{{ category.name|escapejs }}'); toggleMobileMenu(); return false; }">{{ category.name }}</a>
                     {% empty %}
                     <span class="text-muted small px-2">Aucune catégorie</span>
                     {% endfor %}
                     {% endwith %}
                 </div>
             </div>
+            <div class="mobile-auth-block">
+                <div data-store-auth-guest {% if request.user.is_authenticated %}hidden{% endif %}>
+                    <button type="button" class="mobile-auth-btn mobile-auth-btn--primary w-100 justify-content-center" onclick="window.openAuthModal('signup'); toggleMobileMenu();">
+                        Créer un compte client
+                    </button>
+                    <button type="button" class="mobile-auth-btn mobile-auth-btn--ghost w-100 justify-content-center mt-2" onclick="window.openAuthModal('login'); toggleMobileMenu();">
+                        Se connecter
+                    </button>
+                </div>
+                <div data-store-auth-user {% if not request.user.is_authenticated %}hidden{% endif %}>
+                    <div class="mobile-user-pill w-100 justify-content-center mb-2">
+                        <span class="mobile-user-pill__avatar">{{ request.user.first_name|default:request.user.username|first|upper }}</span>
+                        <span data-store-auth-name>{% firstof request.user.first_name request.user.username "Mon compte" %}</span>
+                    </div>
+                    <div class="mobile-account-links">
+                        <a href="{% url 'store:account_profile' %}" class="mobile-auth-btn mobile-auth-btn--ghost w-100 justify-content-center">Profil</a>
+                        <a href="{% url 'store:account_orders' %}" class="mobile-auth-btn mobile-auth-btn--ghost w-100 justify-content-center">Mes commandes</a>
+                        <a href="{% url 'accounts:logout' %}?next={% url 'store:catalog' %}" class="mobile-auth-btn mobile-auth-btn--ghost w-100 justify-content-center">
+                        Déconnexion
+                    </a>
+                </div>
+            </div>
         </div>
+    </div>
     </div>
 
     <!-- Main Content -->
@@ -625,10 +1452,10 @@
                 <div class="footer-col">
                     <h4>Boutique</h4>
                     <ul>
-                        <li><button onclick="selectUniverse('Tous')">Catalogue</button></li>
+                        <li><a href="{% url 'store:catalog' %}?category=Tous" onclick="if (typeof openStoreCategory === 'function') { openStoreCategory('Tous'); return false; }">Catalogue</a></li>
                         {% get_active_categories as f_cats %}
                         {% for category in f_cats %}
-                        <li><button onclick="selectUniverse('{{ category.name|escapejs }}')">{{category.name }}</button></li>
+                        <li><a href="{% url 'store:catalog' %}?category={{ category.name|urlencode }}" onclick="if (typeof openStoreCategory === 'function') { openStoreCategory('{{ category.name|escapejs }}'); return false; }">{{category.name }}</a></li>
                         {% empty %}
                         <li><span class="text-muted small">Aucune catégorie</span></li>
                         {% endfor %}
@@ -687,10 +1514,180 @@
 
     {% include 'store/components/cart_drawer.html' %}
 
+    <div class="store-auth-modal" id="storeAuthModal" aria-hidden="true">
+        <div class="store-auth-modal__backdrop" onclick="window.closeAuthModal()"></div>
+        <div class="store-auth-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="storeAuthModalTitle">
+            <aside class="store-auth-modal__aside">
+                <div>
+                    <div class="store-auth-modal__eyebrow">
+                        <i class="bi bi-shield-lock-fill"></i>
+                        Compte client securise
+                    </div>
+                    <h3 id="storeAuthModalTitle">Commandez avec un compte qui vous ressemble.</h3>
+                    <p id="storeAuthModalReason">
+                        Connectez-vous ou creez votre compte pour ajouter au panier, suivre vos commandes et garder un historique clair de vos paiements.
+                    </p>
+                </div>
+
+                <div class="store-auth-benefits">
+                    <div class="store-auth-benefit">
+                        <i class="bi bi-bag-check-fill"></i>
+                        <div>
+                            <strong>Suivi réel des commandes</strong>
+                            <span>Chaque commande reste rattachee a votre identite, votre telephone et votre adresse.</span>
+                        </div>
+                    </div>
+                    <div class="store-auth-benefit">
+                        <i class="bi bi-bell-fill"></i>
+                        <div>
+                            <strong>Paiements et confirmations</strong>
+                            <span>Vos preuves de paiement et validations restent centralisees sur le meme compte.</span>
+                        </div>
+                    </div>
+                    <div class="store-auth-benefit">
+                        <i class="bi bi-shield-lock-fill"></i>
+                        <div>
+                            <strong>Accès sécurisé</strong>
+                            <span>Protégez votre compte avec un mot de passe pour un suivi optimal.</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="store-auth-modal__panel">
+                <button type="button" class="store-auth-close" onclick="window.closeAuthModal()" aria-label="Fermer">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+
+                <div class="store-auth-tabs">
+                    <button type="button" class="store-auth-tab is-active" data-auth-tab="login" onclick="window.switchAuthMode('login')">
+                        Connexion
+                    </button>
+                    <button type="button" class="store-auth-tab" data-auth-tab="signup" onclick="window.switchAuthMode('signup')">
+                        Inscription
+                    </button>
+                </div>
+
+                <div class="store-auth-panel__header">
+                    <h4 id="storeAuthPanelTitle">Bon retour.</h4>
+                    <p id="storeAuthPanelText">Entrez vos identifiants pour accéder à votre compte.</p>
+                </div>
+
+                <div class="store-auth-feedback" id="storeAuthFeedback"></div>
+
+                <div class="store-auth-forms">
+                    <form id="storeLoginForm" class="store-auth-form is-active" action="{% url 'accounts:login' %}" method="post" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'store:catalog' %}">
+                        <div class="store-auth-grid">
+                            <div class="store-auth-field store-auth-field--full">
+                                <label for="storeLoginEmail">Email</label>
+                                <input type="email" id="storeLoginEmail" name="email" autocomplete="email" placeholder="votre@email.com" required>
+                                <div class="store-auth-field__error" data-auth-error-for="login.email"></div>
+                            </div>
+                            <div class="store-auth-field store-auth-field--full">
+                                <label for="storeLoginPassword">Mot de passe</label>
+                                <input type="password" id="storeLoginPassword" name="password" autocomplete="current-password" placeholder="••••••••" required>
+                                <div class="store-auth-field__error" data-auth-error-for="login.password"></div>
+                                <div class="text-end mt-1">
+                                    <a href="{% url 'accounts:password_reset' %}" class="small text-muted text-decoration-none">Oublié ?</a>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="store-auth-submit" data-auth-submit>
+                            Se connecter
+                        </button>
+                    </form>
+
+                    <form id="storeSignupForm" class="store-auth-form" action="{% url 'accounts:customer_signup' %}" method="post" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'store:catalog' %}">
+                        <div class="store-auth-grid">
+                            <div class="store-auth-field">
+                                <label for="storeSignupFirstName">Prénom</label>
+                                <input type="text" id="storeSignupFirstName" name="first_name" autocomplete="given-name" placeholder="Votre prénom" required>
+                                <div class="store-auth-field__error" data-auth-error-for="signup.first_name"></div>
+                            </div>
+                            <div class="store-auth-field">
+                                <label for="storeSignupLastName">Nom</label>
+                                <input type="text" id="storeSignupLastName" name="last_name" autocomplete="family-name" placeholder="Votre nom" required>
+                                <div class="store-auth-field__error" data-auth-error-for="signup.last_name"></div>
+                            </div>
+                            <div class="store-auth-field store-auth-field--full">
+                                <label for="storeSignupEmail">Email</label>
+                                <input type="email" id="storeSignupEmail" name="email" autocomplete="email" placeholder="votre@email.com" required>
+                                <div class="store-auth-field__error" data-auth-error-for="signup.email"></div>
+                            </div>
+                            <div class="store-auth-field">
+                                <label for="storeSignupPassword">Mot de passe</label>
+                                <input type="password" id="storeSignupPassword" name="password" autocomplete="new-password" placeholder="••••••••" required>
+                                <div class="store-auth-field__error" data-auth-error-for="signup.password"></div>
+                            </div>
+                            <div class="store-auth-field">
+                                <label for="storeSignupPasswordConfirm">Confirmer</label>
+                                <input type="password" id="storeSignupPasswordConfirm" name="password_confirm" autocomplete="new-password" placeholder="••••••••" required>
+                                <div class="store-auth-field__error" data-auth-error-for="signup.password_confirm"></div>
+                            </div>
+                            <div class="store-auth-field store-auth-field--full">
+                                <label for="storeSignupPhone">Téléphone</label>
+                                <input type="tel" id="storeSignupPhone" name="phone" autocomplete="tel" placeholder="+243 ...">
+                                <div class="store-auth-field__error" data-auth-error-for="signup.phone"></div>
+                            </div>
+                        </div>
+                        <button type="submit" class="store-auth-submit" data-auth-submit>
+                            Créer mon compte
+                        </button>
+                    </form>
+
+                </div>
+            </section>
+        </div>
+    </div>
+
 
 
     <!-- Scripts -->
-    <script src="{% static 'js/des_store.js' %}?v=4.4"></script>
+    <script>
+        (function () {
+            function closeStoreAccountMenus() {
+                document.querySelectorAll('[data-store-account-menu].is-open').forEach(function (menu) {
+                    menu.classList.remove('is-open');
+                    var trigger = menu.querySelector('[data-store-account-trigger]');
+                    if (trigger) {
+                        trigger.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            }
+
+            document.addEventListener('click', function (event) {
+                var trigger = event.target.closest('[data-store-account-trigger]');
+                if (trigger) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    var menu = trigger.closest('[data-store-account-menu]');
+                    var shouldOpen = !menu.classList.contains('is-open');
+                    closeStoreAccountMenus();
+                    if (shouldOpen) {
+                        menu.classList.add('is-open');
+                        trigger.setAttribute('aria-expanded', 'true');
+                    }
+                    return;
+                }
+
+                if (!event.target.closest('[data-store-account-menu]')) {
+                    closeStoreAccountMenus();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeStoreAccountMenus();
+                }
+            });
+        }());
+    </script>
+    <script src="{% static 'js/des_store.js' %}?v=5.1"></script>
 </body>
 
 </html>
+

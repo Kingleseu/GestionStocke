@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Enregistrer une Charge - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-primary text-white py-3 border-0">
+                <h5 class="fw-bold mb-0">Enregistrer une Nouvelle Dépense</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Catégorie</label>
+                        {{ form.category }}
+                        {% if not form.category.queryset.exists %}
+                        <div class="mt-2 small text-danger">
+                            Aucune catégorie configurée. <a href="{% url 'reports:category_create' %}" class="fw-bold">Créer une catégorie ici</a>.
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase">Intitule (ex: Loyer Mars)</label>
+                        {{ form.title }}
+                        <div class="form-text">Description courte de la dépense.</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold small text-uppercase">Montant (FC)</label>
+                            {{ form.amount }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold small text-uppercase">Date</label>
+                            {{ form.date }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase">Notes additionnelles</label>
+                        {{ form.notes }}
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                            <i class="bi bi-save"></i> Enregistrer la dépense
+                        </button>
+                        <a href="{% url 'reports:dashboard' %}" class="btn btn-light">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select { padding: 12px 15px; border-radius: 8px; border: 1px solid #dee2e6; }
+    .form-control:focus, .form-select:focus { border-color: #1F4E78; box-shadow: 0 0 0 0.25rem rgba(31, 78, 120, 0.1); }
+    .bg-primary { background-color: #1F4E78 !important; }
+    .btn-primary { background-color: #1F4E78; border-color: #1F4E78; }
+</style>
+{% endblock %}

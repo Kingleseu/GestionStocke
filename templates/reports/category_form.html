@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouvelle Catégorie - MKARIBU{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-dark text-white py-3 border-0">
+                <h5 class="fw-bold mb-0">Créer une Catégorie de Charge</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nom (ex: Transport)</label>
+                        {{ form.name }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Icône (Bootstrap Icon)</label>
+                        {{ form.icon }}
+                        <div class="form-text small">Ex: bi-truck, bi-lightning, bi-house, bi-tools</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-dark btn-lg shadow-sm">
+                            <i class="bi bi-save"></i> Créer la catégorie
+                        </button>
+                        <a href="{% url 'reports:dashboard' %}" class="btn btn-light">Retour</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control, .form-select { padding: 12px 15px; border-radius: 8px; border: 1px solid #dee2e6; }
+    .form-control:focus, .form-select:focus { border-color: #000; box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.1); }
+</style>
+{% endblock %}

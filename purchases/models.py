@@ -45,6 +45,12 @@ class Purchase(models.Model):
         null=True,
         verbose_name="Numéro de facture"
     )
+    invoice_file = models.FileField(
+        upload_to='invoices/%Y/%m',
+        blank=True,
+        null=True,
+        verbose_name="Fichier facture"
+    )
     notes = models.TextField(
         blank=True,
         null=True,
