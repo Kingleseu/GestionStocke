@@ -1,0 +1,67 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}Catalogue fournisseurs{% endblock %}
+{% block ops_subtitle %}Ces produits apparaissent dans le catalogue d'approvisionnement des boutiques.{% endblock %}
+{% block ops_action %}
+<a class="pb-primary pb-link-button" href="{% url 'supply:ops_product_add' %}" data-modal data-title="Nouveau produit catalogue" data-submit="Créer le produit" data-width="760px">
+    <i class="bi bi-plus-circle"></i>
+    Nouveau produit
+</a>
+{% endblock %}
+
+{% block ops_content %}
+<div class="pb-panel">
+    <form class="pb-filter-bar" method="get">
+        <input class="pb-input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Produit">
+        <select class="pb-input" name="supplier">
+            <option value="">Tous fournisseurs</option>
+            {% for supplier in suppliers %}
+            <option value="{{ supplier.pk }}" {% if request.GET.supplier == supplier.pk|stringformat:"s" %}selected{% endif %}>{{ supplier.name }}</option>
+            {% endfor %}
+        </select>
+        <select class="pb-input" name="supply_category">
+            <option value="">Toutes categories</option>
+            {% for category in supply_categories %}
+            <option value="{{ category.pk }}" {% if request.GET.supply_category == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+        <button class="pb-secondary pb-link-button" type="submit">Filtrer</button>
+    </form>
+    <div class="pb-table-wrap">
+        <table class="pb-table">
+            <thead><tr><th>Produit</th><th>Fournisseur</th><th>Categorie</th><th>Unite</th><th>Prix</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.supplier.name }}</td>
+                    <td>{{ product.supply_category.name|default:"-" }}</td>
+                    <td>{{ product.unit_label }}</td>
+                    <td>{{ product.price_label }}</td>
+                    <td><span class="pb-status">{{ product.is_active|yesno:"Actif,Inactif" }}</span></td>
+                    <td class="pb-row-actions">
+                        <a href="{% url 'supply:ops_product_edit' product.pk %}" data-modal data-title="Modifier {{ product.name }}" data-submit="Mettre à jour" data-width="760px">Modifier</a>
+                        <form method="post" action="{% url 'supply:ops_toggle_active' 'product' product.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit">{{ product.is_active|yesno:"Suspendre,Activer" }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="pb-empty-cell">
+                        Aucun produit.
+                        {% if suppliers %}
+                        <button type="button" class="pb-link-button" data-modal data-url="{% url 'supply:ops_product_add' %}" data-title="Nouveau produit catalogue" data-submit="Créer le produit" data-width="760px">Créer le premier produit</button>
+                        {% else %}
+                        <button type="button" class="pb-link-button" data-modal data-url="{% url 'supply:ops_supplier_add' %}" data-title="Nouveau fournisseur" data-submit="Créer le fournisseur">Créer d'abord un fournisseur</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

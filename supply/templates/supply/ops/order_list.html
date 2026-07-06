@@ -1,0 +1,45 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}Commandes d'approvisionnement{% endblock %}
+{% block ops_subtitle %}Suivez les commandes des boutiques et pilotez leur avancement au hub.{% endblock %}
+
+{% block ops_content %}
+<div class="pb-panel">
+    <form class="pb-filter-bar" method="get">
+        <input class="pb-input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Boutique">
+        <select class="pb-input" name="status">
+            <option value="">Tous statuts</option>
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select class="pb-input" name="hub">
+            <option value="">Tous hubs</option>
+            {% for hub in hubs %}
+            <option value="{{ hub.pk }}" {% if request.GET.hub == hub.pk|stringformat:"s" %}selected{% endif %}>{{ hub.name }}</option>
+            {% endfor %}
+        </select>
+        <button class="pb-secondary pb-link-button" type="submit">Filtrer</button>
+    </form>
+    <div class="pb-table-wrap">
+        <table class="pb-table">
+            <thead><tr><th>Reference</th><th>Boutique</th><th>Hub</th><th>Paiement</th><th>Montant</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.tracking_reference }}</td>
+                    <td>{{ order.merchant_name }}<br><small>{{ order.commune }}</small></td>
+                    <td>{{ order.hub.name|default:"-" }}</td>
+                    <td>{{ order.get_payment_method_display }}</td>
+                    <td>${{ order.total_amount|floatformat:0 }}</td>
+                    <td><span class="pb-status">{{ order.get_status_display }}</span></td>
+                    <td class="pb-row-actions"><a href="{% url 'supply:ops_order_detail' order.pk %}">Traiter</a></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="pb-empty-cell">Aucune commande.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

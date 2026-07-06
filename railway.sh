@@ -13,7 +13,7 @@ import time
 import sys
 from django.core.management import execute_from_command_line
 import os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'redpos.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pembeny.settings')
 
 max_retries = 30
 retry_count = 0
@@ -62,7 +62,7 @@ echo "🚀 Starting Gunicorn server..."
 echo "======================================"
 
 # Start Gunicorn
-exec gunicorn redpos.wsgi:application \
+exec gunicorn pembeny.wsgi:application \
     --bind 0.0.0.0:${PORT:-8000} \
     --workers 3 \
     --timeout 120 \

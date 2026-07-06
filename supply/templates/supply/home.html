@@ -1,0 +1,403 @@
+{% extends 'supply/base.html' %}
+
+{% block title %}PEMBENY - Approvisionnement boutique{% endblock %}
+
+{% block content %}
+<section class="pb-hero">
+    <div class="pb-hero-copy">
+        <span class="pb-kicker">{{ site_settings.hero_badge }}</span>
+        <h1>{{ site_settings.hero_title }}</h1>
+        <p>{{ site_settings.hero_subtitle }}</p>
+        <div class="pb-hero-actions">
+            <a class="pb-hero-primary" href="{{ site_settings.primary_cta_url }}">{{ site_settings.primary_cta_text }}</a>
+            <a class="pb-hero-secondary" href="{{ site_settings.secondary_cta_url }}">{{ site_settings.secondary_cta_text }}</a>
+        </div>
+    </div>
+    <div class="pb-hero-stats" aria-label="Statistiques PEMBENY">
+        {% for stat in homepage_stats %}
+        <div><strong>{{ stat.value }}</strong><span>{{ stat.label }}</span></div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="pb-flow" aria-label="Logique PEMBENY">
+    <div><i class="bi bi-buildings"></i><strong>Fournisseurs</strong><span>Bralima, Beltexco, Marsavco</span></div>
+    <i class="bi bi-arrow-right"></i>
+    <div><i class="bi bi-boxes"></i><strong>Hubs PEMBENY</strong><span>Stock reserve par zone</span></div>
+    <i class="bi bi-arrow-right"></i>
+    <div><i class="bi bi-phone"></i><strong>Plateforme</strong><span>Commande + paiement</span></div>
+    <i class="bi bi-arrow-right"></i>
+    <div><i class="bi bi-shop"></i><strong>Votre boutique</strong><span>Livraison et suivi</span></div>
+</section>
+
+<section class="pb-story-section">
+    <div class="pb-section-title">
+        <div>
+            <span class="pb-eyebrow">Plateforme</span>
+            <h2>{{ site_settings.network_title }}</h2>
+            <p>{{ site_settings.network_subtitle }}</p>
+        </div>
+    </div>
+    <div class="pb-feature-grid">
+        {% for feature in features %}
+        <article class="pb-feature-card">
+            <i class="bi {{ feature.icon_class }}"></i>
+            <strong>{{ feature.title }}</strong>
+            <p>{{ feature.body }}</p>
+            {% if feature.badge %}<span>{{ feature.badge }}</span>{% endif %}
+        </article>
+        {% empty %}
+        <article class="pb-feature-card">
+            <i class="bi bi-boxes"></i>
+            <strong>Inventaire centralise</strong>
+            <p>Tous les fournisseurs et hubs deviennent accessibles depuis une seule interface.</p>
+            <span>Dynamique via backoffice</span>
+        </article>
+        <article class="pb-feature-card">
+            <i class="bi bi-truck"></i>
+            <strong>Livraison hub</strong>
+            <p>La commande est orientee vers le hub qui couvre la commune de la boutique.</p>
+            <span>Stock reserve</span>
+        </article>
+        <article class="pb-feature-card">
+            <i class="bi bi-credit-card"></i>
+            <strong>Paiement flexible</strong>
+            <p>Mobile money, virement, paiement livraison et credit marchandises.</p>
+            <span>B2B</span>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="pb-process-section">
+    <div class="pb-section-title">
+        <div>
+            <span class="pb-eyebrow">Processus</span>
+            <h2>De la creation de boutique a la livraison</h2>
+        </div>
+    </div>
+    <div class="pb-process-grid">
+        {% for step in process_steps %}
+        <article class="pb-process-card">
+            <span>{{ step.number }}</span>
+            <i class="bi {{ step.icon_class }}"></i>
+            <strong>{{ step.title }}</strong>
+            <p>{{ step.body }}</p>
+        </article>
+        {% empty %}
+        <article class="pb-process-card"><span>1</span><i class="bi bi-shop"></i><strong>Creez votre boutique</strong><p>Le vendeur cree son compte et renseigne sa commune.</p></article>
+        <article class="pb-process-card"><span>2</span><i class="bi bi-cart"></i><strong>Commandez</strong><p>Il choisit les produits disponibles par hub.</p></article>
+        <article class="pb-process-card"><span>3</span><i class="bi bi-box"></i><strong>Preparation hub</strong><p>Le stock est reserve puis prepare.</p></article>
+        <article class="pb-process-card"><span>4</span><i class="bi bi-check-circle"></i><strong>Livraison</strong><p>Le stock est deduit apres confirmation.</p></article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="pb-workspace" id="catalogue">
+    <aside class="pb-panel pb-filters">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Catalogue</span>
+                <h2>Inventaire PEMBENY</h2>
+            </div>
+            {% if nearest_hub %}
+            <span class="pb-chip"><i class="bi bi-geo-alt"></i>{{ nearest_hub.name }}</span>
+            {% endif %}
+        </div>
+        <label class="pb-search">
+            <i class="bi bi-search"></i>
+            <input id="supplySearch" type="search" placeholder="Produit, marque, fournisseur">
+        </label>
+        <div class="pb-tabs" id="categoryTabs">
+            <button type="button" class="is-active" data-category="all">Tous</button>
+            {% for category in category_tabs %}
+            <button type="button" data-category="{{ category.pk }}">{{ category.name }}</button>
+            {% endfor %}
+        </div>
+        <div class="pb-mini-grid">
+            {% for hub in hubs %}
+            <div class="pb-mini-card">
+                <strong>{{ hub.name }}</strong>
+                <span>{{ hub.commune }}</span>
+            </div>
+            {% empty %}
+            <div class="pb-mini-card">
+                <strong>Aucun hub</strong>
+                <span>Ajoutez des hubs dans l'admin.</span>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <section class="pb-catalog">
+        <div class="pb-section-title">
+            <div>
+                <span class="pb-eyebrow">Produits disponibles</span>
+                <h2>Commander par caisse, carton ou sac</h2>
+            </div>
+            <span id="productCount" class="pb-muted"></span>
+        </div>
+        <div id="productGrid" class="pb-product-grid"></div>
+    </section>
+
+</section>
+
+<section class="pb-cart-dock" id="cartDock">
+    <button class="pb-cart-toggle" id="cartToggle" type="button" aria-expanded="false" aria-controls="cartPanel">
+        <span class="pb-cart-toggle-icon">
+            <i class="bi bi-cart3"></i>
+            <span id="cartBadge">0</span>
+        </span>
+        <span class="pb-cart-toggle-copy">
+            <strong>Panier boutique</strong>
+            <small id="cartState">Ajoutez des produits pour preparer votre commande</small>
+        </span>
+        <span class="pb-cart-toggle-total" id="cartToggleTotal">$0</span>
+    </button>
+
+    <aside class="pb-panel pb-cart-panel pb-cart-horizontal" id="cartPanel">
+        <div class="pb-cart-main">
+            <div class="pb-panel-head">
+                <div>
+                    <span class="pb-eyebrow">Commande</span>
+                    <h2>Panier boutique</h2>
+                </div>
+                <span class="pb-chip pb-chip-gold" id="cartUnits">0 unite</span>
+            </div>
+
+            <div id="cartItems" class="pb-cart-items">
+                <div class="pb-empty">Ajoutez des produits au panier.</div>
+            </div>
+        </div>
+
+        <div class="pb-cart-total">
+            <div class="pb-total-box">
+                <div><span>Sous-total</span><strong id="cartSubtotal">$0</strong></div>
+                <div><span>Livraison hub</span><strong>A confirmer</strong></div>
+                <div class="pb-grand-total"><span>Total estime</span><strong id="cartTotal">$0</strong></div>
+            </div>
+        </div>
+
+        <form class="pb-order-form" method="post" action="{% url 'supply:create_order' %}">
+            {% csrf_token %}
+            <input type="hidden" name="cart_payload" id="cartPayload">
+            <div class="pb-form-grid">
+                <label>Nom de la boutique
+                    <input name="merchant_name" value="{{ merchant_defaults.merchant_name }}" required placeholder="Depot Fraicheur Ndjili">
+                </label>
+                <label>Commune
+                    <input name="commune" value="{{ merchant_defaults.commune }}" required placeholder="Ndjili">
+                </label>
+                <label class="pb-span-2">Adresse / repere livraison
+                    <input name="delivery_address" value="{{ merchant_defaults.delivery_address }}" required placeholder="Avenue, numero, repere du marche">
+                </label>
+                <label>WhatsApp
+                    <input name="contact_phone" value="{{ merchant_defaults.contact_phone }}" required placeholder="+243 ...">
+                </label>
+                <label>Paiement
+                    <select name="payment_method">
+                        <option value="m-pesa">M-Pesa</option>
+                        <option value="airtel">Airtel Money</option>
+                        <option value="orange">Orange Money</option>
+                        <option value="bank">Virement bancaire</option>
+                        <option value="credit">Credit marchandises</option>
+                        <option value="delivery-cash">Paiement a la livraison</option>
+                    </select>
+                </label>
+                <label class="pb-span-2">Reference paiement ou note
+                    <input name="payment_reference" placeholder="Reference M-Pesa, Airtel ou accord credit">
+                </label>
+            </div>
+            <button class="pb-primary pb-block" type="submit">
+                <i class="bi bi-truck"></i>
+                Valider l'approvisionnement
+            </button>
+        </form>
+    </aside>
+</section>
+
+<section class="pb-partners">
+    <div class="pb-section-title">
+        <div>
+            <span class="pb-eyebrow">Partenaires</span>
+            <h2>Fournisseurs connectes</h2>
+        </div>
+    </div>
+    <div class="pb-supplier-grid">
+        {% for supplier in suppliers %}
+        <div class="pb-supplier-card">
+            <strong>{{ supplier.name }}</strong>
+            <span>{{ supplier.supply_category.name|default:"-" }}</span>
+            <em>{{ supplier.product_count }} produit(s)</em>
+        </div>
+        {% empty %}
+        <div class="pb-supplier-card">
+            <strong>Catalogue a initialiser</strong>
+            <span>Lancez la commande seed PEMBENY pour charger des exemples.</span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.supplyProducts = JSON.parse('{{ products_json|escapejs }}');
+</script>
+<script>
+(function () {
+    const products = window.supplyProducts || [];
+    const cart = new Map();
+    let currentCategory = 'all';
+    const grid = document.getElementById('productGrid');
+    const count = document.getElementById('productCount');
+    const search = document.getElementById('supplySearch');
+    const cartItems = document.getElementById('cartItems');
+    const cartUnits = document.getElementById('cartUnits');
+    const cartSubtotal = document.getElementById('cartSubtotal');
+    const cartTotal = document.getElementById('cartTotal');
+    const cartPayload = document.getElementById('cartPayload');
+    const cartDock = document.getElementById('cartDock');
+    const cartToggle = document.getElementById('cartToggle');
+    const cartBadge = document.getElementById('cartBadge');
+    const cartState = document.getElementById('cartState');
+    const cartToggleTotal = document.getElementById('cartToggleTotal');
+    let cartUserCollapsed = false;
+
+    function money(value) {
+        return '$' + Number(value || 0).toFixed(0);
+    }
+
+    function filteredProducts() {
+        const term = (search.value || '').toLowerCase().trim();
+        return products.filter((product) => {
+            const byCategory = currentCategory === 'all' || product.category === currentCategory;
+            const haystack = [product.name, product.brand, product.supplier, product.unit].join(' ').toLowerCase();
+            return byCategory && (!term || haystack.includes(term));
+        });
+    }
+
+    function renderProducts() {
+        const rows = filteredProducts();
+        count.textContent = rows.length + ' produit(s)';
+        if (!rows.length) {
+            grid.innerHTML = '<div class="pb-empty">Aucun produit ne correspond a ce filtre.</div>';
+            return;
+        }
+        grid.innerHTML = rows.map((product) => {
+            const selected = cart.get(product.id);
+            const hub = product.hubs && product.hubs.length ? product.hubs[0] : null;
+            const stockClass = product.available > 0 ? 'pb-stock-ok' : 'pb-stock-out';
+            return `
+                <article class="pb-product-card ${selected ? 'is-selected' : ''}">
+                    <div class="pb-product-icon"><i class="bi ${product.icon}"></i></div>
+                    <div class="pb-product-main">
+                        <div class="pb-product-title">${product.name}</div>
+                        <div class="pb-product-meta">${product.supplier} - ${product.unit}</div>
+                        <div class="pb-product-bottom">
+                            <strong>${product.priceLabel}</strong>
+                            <span class="${stockClass}">${product.available} dispo</span>
+                        </div>
+                        ${hub ? `<div class="pb-hub-line"><i class="bi bi-geo-alt"></i>${hub.name}</div>` : ''}
+                    </div>
+                    <div class="pb-qty">
+                        <button type="button" data-dec="${product.id}">-</button>
+                        <span>${selected ? selected.quantity : 0}</span>
+                        <button type="button" data-inc="${product.id}">+</button>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    function renderCart() {
+        const entries = Array.from(cart.values());
+        const units = entries.reduce((sum, item) => sum + item.quantity, 0);
+        const total = entries.reduce((sum, item) => sum + item.quantity * item.price, 0);
+        cartUnits.textContent = units + (units > 1 ? ' unites' : ' unite');
+        cartSubtotal.textContent = money(total);
+        cartTotal.textContent = money(total);
+        cartBadge.textContent = units;
+        cartToggleTotal.textContent = money(total);
+        cartState.textContent = units
+            ? units + (units > 1 ? ' unites ajoutees' : ' unite ajoutee') + ' - finalisez votre commande'
+            : 'Ajoutez des produits pour preparer votre commande';
+        if (!entries.length) {
+            cartUserCollapsed = false;
+        }
+        const shouldOpen = units > 0 && !cartUserCollapsed;
+        cartDock.classList.toggle('is-open', shouldOpen);
+        cartDock.classList.toggle('has-items', units > 0);
+        cartToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+        cartPayload.value = JSON.stringify(entries.map((item) => ({
+            productId: item.id,
+            quantity: item.quantity
+        })));
+
+        if (!entries.length) {
+            cartItems.innerHTML = '<div class="pb-empty">Ajoutez des produits au panier.</div>';
+            return;
+        }
+
+        cartItems.innerHTML = entries.map((item) => `
+            <div class="pb-cart-row">
+                <div>
+                    <strong>${item.name}</strong>
+                    <span>${item.supplier} - ${item.unit}</span>
+                </div>
+                <em>${item.quantity} x ${money(item.price)}</em>
+            </div>
+        `).join('');
+    }
+
+    function changeQty(productId, delta) {
+        const product = products.find((item) => item.id === Number(productId));
+        if (!product) return;
+        const current = cart.get(product.id) || {
+            id: product.id,
+            name: product.name,
+            supplier: product.supplier,
+            unit: product.unit,
+            price: product.price,
+            quantity: 0
+        };
+        current.quantity = Math.max(0, current.quantity + delta);
+        if (current.quantity === 0) cart.delete(product.id);
+        else {
+            cart.set(product.id, current);
+            if (delta > 0) {
+                cartUserCollapsed = false;
+            }
+        }
+        renderProducts();
+        renderCart();
+    }
+
+    document.getElementById('categoryTabs').addEventListener('click', function (event) {
+        const button = event.target.closest('button[data-category]');
+        if (!button) return;
+        currentCategory = button.dataset.category;
+        this.querySelectorAll('button').forEach((node) => node.classList.remove('is-active'));
+        button.classList.add('is-active');
+        renderProducts();
+    });
+
+    grid.addEventListener('click', function (event) {
+        const inc = event.target.closest('[data-inc]');
+        const dec = event.target.closest('[data-dec]');
+        if (inc) changeQty(inc.dataset.inc, 1);
+        if (dec) changeQty(dec.dataset.dec, -1);
+    });
+
+    cartToggle.addEventListener('click', function () {
+        if (!cart.size) return;
+        cartUserCollapsed = cartDock.classList.contains('is-open');
+        renderCart();
+    });
+
+    search.addEventListener('input', renderProducts);
+    renderProducts();
+    renderCart();
+})();
+</script>
+{% endblock %}

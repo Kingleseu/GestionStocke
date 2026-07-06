@@ -1,0 +1,147 @@
+{% extends 'supply/base.html' %}
+
+{% block title %}Espace boutique PEMBENY{% endblock %}
+
+{% block content %}
+<section class="pb-page-head">
+    <div>
+        <span class="pb-kicker">Espace boutique</span>
+        <h1>{{ shop.name|default:"Ma boutique" }}</h1>
+        <p>Suivi des approvisionnements, paiements et prochaines livraisons.</p>
+    </div>
+    <a class="pb-primary pb-link-button" href="{% url 'supply:home' %}">
+        <i class="bi bi-plus-circle"></i>
+        Nouvelle commande
+    </a>
+</section>
+
+<section class="pb-dashboard-grid">
+    <div class="pb-metric">
+        <span>Commandes ce mois</span>
+        <strong>{{ monthly_orders_count }}</strong>
+        <em>{{ orders_count }} commande(s) au total</em>
+    </div>
+    <div class="pb-metric">
+        <span>Montant commande</span>
+        <strong>${{ monthly_total|floatformat:0 }}</strong>
+        <em>Volume du mois courant</em>
+    </div>
+    <div class="pb-metric">
+        <span>Prochaine livraison</span>
+        <strong>{% if next_order %}{{ next_order.get_status_display }}{% else %}Aucune{% endif %}</strong>
+        <em>{% if next_order %}{{ next_order.tracking_reference }}{% else %}Passez une commande{% endif %}</em>
+    </div>
+</section>
+
+<section class="pb-two-col">
+    <div class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Historique</span>
+                <h2>Dernieres commandes</h2>
+            </div>
+        </div>
+        <div class="pb-table-wrap">
+            <table class="pb-table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Hub</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td>{{ order.tracking_reference }}</td>
+                        <td>{{ order.hub.name|default:"-" }}</td>
+                        <td>${{ order.total_amount|floatformat:0 }}</td>
+                        <td><span class="pb-status">{{ order.get_status_display }}</span></td>
+                        <td><a href="{{ order.get_absolute_url }}">Voir</a></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="pb-empty-cell">Aucune commande pour le moment.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <aside class="pb-side-stack">
+        <div class="pb-panel">
+            <div class="pb-panel-head">
+                <div>
+                    <span class="pb-eyebrow">Compte</span>
+                    <h2>Mes informations</h2>
+                </div>
+            </div>
+            <div class="pb-info-grid">
+                <div>
+                    <span>Boutique</span>
+                    <strong>{{ shop.name|default:"Non liee" }}</strong>
+                </div>
+                <div>
+                    <span>Responsable</span>
+                    <strong>{{ merchant_account.owner_full_name|default:user.get_full_name|default:user.username }}</strong>
+                </div>
+                <div>
+                    <span>Type</span>
+                    <strong>{{ merchant_account.get_shop_type_display|default:"Non renseigne" }}</strong>
+                </div>
+                <div>
+                    <span>Prequalification</span>
+                    <strong>{{ merchant_account.prequalification_label|default:"A verifier" }}</strong>
+                </div>
+                <div>
+                    <span>Commune</span>
+                    <strong>{{ merchant_account.commune|default:"Non renseignee" }}</strong>
+                </div>
+                <div>
+                    <span>Telephone</span>
+                    <strong>{{ merchant_account.contact_phone|default:user.profile.phone|default:"Non renseigne" }}</strong>
+                </div>
+                <div>
+                    <span>Hub</span>
+                    <strong>{{ merchant_account.preferred_hub.name|default:"Selection automatique" }}</strong>
+                </div>
+            </div>
+            <div class="pb-form-actions pb-account-panel-actions">
+                <a class="pb-secondary pb-link-button" href="{% url 'accounts:profile' %}#profile-settings">
+                    <i class="bi bi-pencil-square"></i>
+                    Modifier mes informations
+                </a>
+                <a class="pb-secondary pb-link-button pb-account-logout" href="{% url 'accounts:logout' %}?next={% url 'supply:home' %}">
+                    <i class="bi bi-box-arrow-right"></i>
+                    Se deconnecter
+                </a>
+            </div>
+        </div>
+
+        <div class="pb-panel">
+            <div class="pb-panel-head">
+                <div>
+                    <span class="pb-eyebrow">Alertes reseau</span>
+                    <h2>Stocks a surveiller</h2>
+                </div>
+            </div>
+            <div class="pb-alert-list">
+                {% for item in low_stock_hub_items %}
+                <div class="pb-alert-item">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <div>
+                        <strong>{{ item.product.name }}</strong>
+                        <span>{{ item.hub.name }} - {{ item.sellable_quantity }} disponible(s)</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="pb-empty">Aucune alerte stock hub.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </aside>
+</section>
+{% endblock %}

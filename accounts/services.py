@@ -45,8 +45,8 @@ def account_space_for_user(user):
 
 def account_space_label(account_space):
     if account_space == ACCOUNT_SPACE_STAFF:
-        return 'personnel boutique'
-    return 'client boutique'
+        return 'manager PEMBENY'
+    return 'boutique PEMBENY'
 
 
 def role_label_for_user(user):
@@ -104,7 +104,7 @@ def roles_for_user(user):
 
 
 def _default_from_email():
-    return getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@mkaribu.local')
+    return getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@pembeny.local')
 
 
 def send_staff_invitation_email(invitation, invite_url, shop_name):
@@ -118,7 +118,7 @@ def send_staff_invitation_email(invitation, invite_url, shop_name):
     }
     message = render_to_string('accounts/emails/staff_invitation_email.txt', context)
     send_mail(
-        subject=f"Invitation MKARIBU - {invitation.get_role_display()}",
+        subject=f"Invitation PEMBENY - {invitation.get_role_display()}",
         message=message,
         from_email=_default_from_email(),
         recipient_list=[invitation.email],

@@ -28,11 +28,16 @@
         <div class="card-body">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <p class="mb-0 text-muted">Configurez le nom, l'adresse, les identifiants fiscaux (RCCM, NIF) et le
-                        taux de change pour vos factures.</p>
-                    <div class="mt-2 small">
-                        <strong>Actuel :</strong> {{ shop.name }} | <strong>Taux :</strong> {{ shop.usd_to_cdf_rate }}
-                        FC
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="{{ shop_logo_url }}" alt="{{ shop_logo_alt }}" class="border rounded bg-white p-2" style="height: 64px; width: 120px; object-fit: contain;">
+                        <div>
+                            <p class="mb-0 text-muted">Configurez le logo, le nom, l'adresse, les identifiants fiscaux (RCCM, NIF) et le
+                                taux de change pour vos factures.</p>
+                            <div class="mt-2 small">
+                                <strong>Actuel :</strong> {{ shop.name }} | <strong>Taux :</strong> {{ shop.usd_to_cdf_rate }}
+                                FC
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4 text-end">

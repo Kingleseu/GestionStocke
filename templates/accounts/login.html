@@ -1,20 +1,29 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Connexion OTP - MKARIBU{% endblock %}
+{% block title %}Connexion PEMBENY{% endblock %}
 
 {% block navbar %}{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center justify-content-center min-vh-100 py-5" style="background: linear-gradient(160deg, #fff7ed 0%, #eff6ff 100%);">
+<div class="d-flex align-items-center justify-content-center min-vh-100 py-5" style="background: linear-gradient(160deg, #f6e7f2 0%, #ffffff 52%, #eef3ff 100%);">
     <div class="col-md-6 col-lg-4">
         <div class="text-center mb-5">
-            <img src="{% static 'img/mkaribu_logo.png' %}" alt="MKARIBU" class="img-fluid mb-3" style="height: 120px; width: auto;">
-            <p class="text-muted fw-medium fs-5">Connectez-vous à votre compte client</p>
+            {% if supply_site_settings.logo %}
+            <img src="{{ supply_site_settings.logo.url }}" alt="PEMBENY" class="img-fluid mb-3" style="height: 120px; width: auto; max-width: 220px; object-fit: contain;">
+            {% else %}
+            <div class="mx-auto mb-3 d-flex align-items-center justify-content-center text-white fw-bold" style="width: 78px; height: 78px; border-radius: 18px; background: linear-gradient(135deg, #961e78, #3b2e8f); font-size: 2rem;">P</div>
+            {% endif %}
+            <p class="text-muted fw-medium fs-5">Connectez-vous a votre espace boutique PEMBENY</p>
         </div>
 
         <div class="card border-0 shadow-lg rounded-5 overflow-hidden bg-white">
             <div class="card-body p-4 p-lg-5">
+                <div class="mb-4">
+                    <div class="text-uppercase small fw-bold text-primary mb-1">Compte vendeur</div>
+                    <h1 class="h4 fw-bold mb-1">Acces approvisionnement</h1>
+                    <p class="text-muted small mb-0">Utilisez l'email et le mot de passe crees lors de l'inscription de votre boutique.</p>
+                </div>
                 <form method="post" novalidate>
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ next }}">
@@ -46,12 +55,12 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-4 shadow-sm mb-4">
+                    <button type="submit" class="btn w-100 py-3 fw-bold rounded-4 shadow-sm mb-4 text-white" style="background: linear-gradient(135deg, #961e78, #3b2e8f); border: none;">
                         Continuer
                     </button>
                     
                     <div class="text-center">
-                        <p class="text-muted small">Vous n'avez pas de compte ? <a href="{% url 'store:catalog' %}" class="fw-bold text-primary text-decoration-none">Inscrivez-vous en commandant</a></p>
+                        <p class="text-muted small">Vous n'avez pas de compte ? <a href="{% url 'supply:register' %}" class="fw-bold text-primary text-decoration-none">Inscrivez votre boutique PEMBENY</a></p>
                     </div>
                 </form>
             </div>
@@ -59,11 +68,11 @@
 
         <div class="text-center mt-5">
             <a href="{% url 'accounts:manager_login' %}" class="text-muted text-decoration-none small opacity-75">
-                <i class="bi bi-person-badge-fill me-1"></i> Accès réservé au personnel boutique
+                <i class="bi bi-person-badge-fill me-1"></i> Acces reserve au manager PEMBENY
             </a>
             <br>
-            <a href="{% url 'store:catalog' %}" class="text-muted text-decoration-none small mt-3 d-inline-block">
-                Retour à la boutique
+            <a href="{% url 'supply:home' %}" class="text-muted text-decoration-none small mt-3 d-inline-block">
+                Retour a PEMBENY
             </a>
         </div>
     </div>

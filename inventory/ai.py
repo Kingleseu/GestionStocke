@@ -1,7 +1,15 @@
 from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Sum, F
-from sales.models import SaleItem, Sale
+
+# Import optionnel pour compatibilité
+try:
+    from sales.models import SaleItem, Sale
+    SALES_AVAILABLE = True
+except (ImportError, RuntimeError):
+    SaleItem = None
+    Sale = None
+    SALES_AVAILABLE = False
 
 class StockBrain:
     """

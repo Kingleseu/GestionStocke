@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
 
-{% block title %}Creation Boutique - MKARIBU{% endblock %}
+{% block title %}Creation manager PEMBENY{% endblock %}
+
+{% block navbar %}{% endblock %}
 
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
             <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
-                <div class="card-header bg-dark text-white py-4 text-center">
-                    <h3 class="mb-2 fw-bold">Creer votre boutique</h3>
-                    <p class="mb-0 opacity-75">Parcours manager simplifie avec OTP par email</p>
+                <div class="card-header text-white py-4 text-center" style="background: linear-gradient(135deg, #961e78, #3b2e8f);">
+                    <h3 class="mb-2 fw-bold">Creer le manager PEMBENY</h3>
+                    <p class="mb-0 opacity-75">Compte interne pour gerer la plateforme, les boutiques et les stocks.</p>
                 </div>
                 <div class="card-body p-4 p-lg-5">
                     <form method="post" novalidate>
@@ -37,19 +39,19 @@
                         {% endfor %}
 
                         <div class="rounded-4 bg-light p-3 small text-muted mb-4">
-                            Nous creons votre compte manager, votre boutique, puis nous envoyons un code OTP sur votre email pour la premiere connexion.
+                            Nous creons le compte manager et l'espace de gestion lie. Ce compte donne acces au backoffice PEMBENY.
                         </div>
 
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-3">
-                                Creer ma boutique
+                                Creer le manager
                             </button>
                         </div>
                     </form>
                 </div>
                 <div class="card-footer text-center py-3 bg-light">
-                    <a href="{% url 'accounts:login' %}?space=staff" class="text-decoration-none">
-                        Deja un compte personnel ? Recevoir un code OTP
+                    <a href="{% url 'accounts:manager_login' %}" class="text-decoration-none">
+                        Deja un compte manager ? Se connecter
                     </a>
                 </div>
             </div>
@@ -62,7 +64,9 @@
     #id_first_name,
     #id_last_name,
     #id_email,
-    #id_phone {
+    #id_phone,
+    #id_password,
+    #id_password_confirm {
         width: 100%;
         padding: 0.75rem 1rem;
         border: 1px solid #d0d7de;
@@ -73,10 +77,12 @@
     #id_first_name:focus,
     #id_last_name:focus,
     #id_email:focus,
-    #id_phone:focus {
+    #id_phone:focus,
+    #id_password:focus,
+    #id_password_confirm:focus {
         outline: none;
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.12);
+        border-color: #961e78;
+        box-shadow: 0 0 0 0.25rem rgba(150, 30, 120, 0.12);
     }
 </style>
 {% endblock %}

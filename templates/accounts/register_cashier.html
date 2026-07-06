@@ -8,7 +8,9 @@
     <div class="col-md-7 col-lg-5">
         <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
             <div class="card-header bg-white text-center py-4 border-bottom">
-                <img src="{% static 'img/mkaribu_logo.png' %}" alt="MKARIBU" class="img-fluid mb-3" style="max-width: 110px;">
+                {% with invitation_shop=invitation.created_by.profile.shop %}
+                <img src="{% if invitation_shop.logo %}{{ invitation_shop.logo.url }}{% else %}{{ shop_logo_url }}{% endif %}" alt="{{ invitation_shop.name|default:shop_logo_alt }}" class="img-fluid mb-3" style="max-width: 110px; max-height: 90px; object-fit: contain;">
+                {% endwith %}
                 <h3 class="fw-bold mb-1">{{ invitation.get_role_display }}</h3>
                 <p class="mb-0 text-muted small">
                     Invitation envoyee par {{ invitation.created_by.get_full_name|default:invitation.created_by.username }}

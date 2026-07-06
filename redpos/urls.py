@@ -9,20 +9,19 @@ from django.views.generic import RedirectView
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # URLs des applications
-    path('accounts/', include('accounts.urls')),
-    path('products/', include('products.urls')),
-    path('purchases/', include('purchases.urls')),
-    path('inventory/', include('inventory.urls')),
-    path('reports/', include('reports.urls')),
-    path('store/', include('store.urls')),  # E-commerce
-    path('promotions/', include('promotions.urls')),  # Gestion des promotions
+    # PEMBENY B2B Platform URLs
+    path('accounts/', include('accounts.urls')),  # Authentification OTP
+    path('products/', include('products.urls')),  # Produits et catégories
+    path('purchases/', include('purchases.urls')),  # Achats / réapprovisionnement
+    path('inventory/', include('inventory.urls')),  # Gestion de stock
+    path('reports/', include('reports.urls')),  # Rapports
+    path('supply/', include('supply.urls')),  # ⭐ PEMBENY B2B (coeur de l'app)
+    path('promotions/', include('promotions.urls')),  # Promotions B2B
+    path('store/', include('store.urls')),  # Site e-commerce historique
+    path('pos/', include('sales.urls')),  # Caisse / POS
     
-    # Caisse (POS) - accessible via /pos/
-    path('pos/', include('sales.urls')),
-
-    # Page d'accueil - Redirige vers la boutique
-    path('', RedirectView.as_view(pattern_name='store:catalog', permanent=False)),
+    # Page d'accueil PEMBENY
+    path('', RedirectView.as_view(pattern_name='supply:home', permanent=False)),
 ]
 
 # Servir les fichiers media en développement

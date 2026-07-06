@@ -1,17 +1,21 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Espace Manager - MKARIBU{% endblock %}
+{% block title %}Backoffice PEMBENY{% endblock %}
 
 {% block navbar %}{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center justify-content-center min-vh-100 py-5" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+<div class="d-flex align-items-center justify-content-center min-vh-100 py-5" style="background: linear-gradient(135deg, #3b2e8f 0%, #64104f 58%, #1a3557 100%);">
     <div class="col-md-6 col-lg-4">
         <div class="text-center mb-5">
-            <img src="{% static 'img/mkaribu_logo.png' %}" alt="MKARIBU" class="img-fluid mb-4" style="height: 100px; width: auto; filter: brightness(0) invert(1);">
-            <h2 class="text-white fw-bold">Espace Personnel</h2>
-            <p class="text-light opacity-75">Veuillez vous authentifier pour accéder à la gestion</p>
+            {% if supply_site_settings.logo %}
+            <img src="{{ supply_site_settings.logo.url }}" alt="PEMBENY" class="img-fluid mb-4" style="height: 100px; width: auto; max-width: 220px; object-fit: contain;">
+            {% else %}
+            <div class="mx-auto mb-4 d-flex align-items-center justify-content-center text-white fw-bold" style="width: 76px; height: 76px; border-radius: 18px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); font-size: 2rem;">P</div>
+            {% endif %}
+            <h2 class="text-white fw-bold">Backoffice PEMBENY</h2>
+            <p class="text-light opacity-75">Connectez-vous pour piloter boutiques, fournisseurs, hubs, stocks et commandes.</p>
         </div>
 
         <div class="card border-0 shadow-2xl rounded-4 overflow-hidden" style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1) !important;">
@@ -53,13 +57,17 @@
                         {% endif %}
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-lg mb-4" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border: none;">
-                        Accéder au Tableau de Bord
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-lg mb-4" style="background: linear-gradient(135deg, #961e78 0%, #f5c518 100%); border: none;">
+                        Acceder au backoffice PEMBENY
                     </button>
                     
                     <div class="text-center">
-                        <a href="{% url 'store:catalog' %}" class="text-light opacity-50 text-decoration-none small">
-                            <i class="bi bi-arrow-left me-1"></i> Retour à la boutique publique
+                        <a href="{% url 'supply:home' %}" class="text-light opacity-75 text-decoration-none small">
+                            <i class="bi bi-arrow-left me-1"></i> Retour a PEMBENY
+                        </a>
+                        <span class="text-light opacity-25 mx-2">|</span>
+                        <a href="{% url 'accounts:signup' %}" class="text-light opacity-75 text-decoration-none small">
+                            Creer le premier manager
                         </a>
                     </div>
                 </form>
@@ -67,7 +75,7 @@
         </div>
         
         <div class="text-center mt-5">
-            <p class="text-light opacity-50 small">MKARIBU Operations &copy; 2024. Sécurisé par chiffrement AES-256.</p>
+            <p class="text-light opacity-50 small">PEMBENY Operations &copy; 2026. Acces securise.</p>
         </div>
     </div>
 </div>

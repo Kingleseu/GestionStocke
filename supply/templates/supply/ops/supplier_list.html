@@ -1,0 +1,55 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}Fournisseurs{% endblock %}
+{% block ops_subtitle %}Ajoutez, modifiez ou suspendez les fournisseurs qui alimentent le catalogue PEMBENY.{% endblock %}
+{% block ops_action %}
+<a class="pb-primary pb-link-button" href="{% url 'supply:ops_supplier_add' %}" data-modal data-title="Nouveau fournisseur" data-submit="Créer le fournisseur">
+    <i class="bi bi-plus-circle"></i>
+    Nouveau fournisseur
+</a>
+{% endblock %}
+
+{% block ops_content %}
+<div class="pb-panel">
+    <form class="pb-filter-bar" method="get">
+        <input class="pb-input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Rechercher fournisseur">
+        <select class="pb-input" name="status">
+            <option value="">Tous les statuts</option>
+            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Actifs</option>
+            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactifs</option>
+        </select>
+        <button class="pb-secondary pb-link-button" type="submit">Filtrer</button>
+    </form>
+    <div class="pb-table-wrap">
+        <table class="pb-table">
+            <thead><tr><th>Nom</th><th>Categorie</th><th>Produits</th><th>Contact</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+                {% for supplier in suppliers %}
+                <tr>
+                    <td>{{ supplier.name }}</td>
+                    <td>{{ supplier.supply_category.name|default:"-" }}</td>
+                    <td>{{ supplier.product_count }}</td>
+                    <td>{{ supplier.phone|default:"-" }}</td>
+                    <td><span class="pb-status">{{ supplier.is_active|yesno:"Actif,Inactif" }}</span></td>
+                    <td class="pb-row-actions">
+                        <a href="{% url 'supply:ops_supplier_edit' supplier.pk %}" data-modal data-title="Modifier {{ supplier.name }}" data-submit="Mettre à jour">Modifier</a>
+                        <form method="post" action="{% url 'supply:ops_toggle_active' 'supplier' supplier.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit">{{ supplier.is_active|yesno:"Suspendre,Activer" }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="pb-empty-cell">
+                        Aucun fournisseur.
+                        <button type="button" class="pb-link-button" data-modal data-url="{% url 'supply:ops_supplier_add' %}" data-title="Nouveau fournisseur" data-submit="Créer le fournisseur">Créer le premier fournisseur</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

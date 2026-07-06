@@ -1,9 +1,21 @@
 from django.db.models import Sum, F
 from django.utils import timezone
 from datetime import datetime, date, timedelta
-from sales.models import Sale
-from purchases.models import Purchase
 from .models import Expense, ExpenseCategory
+# Import optionnel pour compatibilité
+try:
+    from sales.models import Sale
+    SALES_AVAILABLE = True
+except (ImportError, RuntimeError):
+    Sale = None
+    SALES_AVAILABLE = False
+
+try:
+    from purchases.models import Purchase
+    PURCHASES_AVAILABLE = True
+except (ImportError, RuntimeError):
+    Purchase = None
+    PURCHASES_AVAILABLE = False
 
 class AccountingService:
     def __init__(self, shop):
@@ -15,23 +27,35 @@ class AccountingService:
         pour une période donnée.
         """
         # Filtrage par dates si fournies
-        sales_qs = Sale.objects.filter(shop=self.shop, is_cancelled=False)
-        purchases_qs = Purchase.objects.filter(shop=self.shop)
         expenses_qs = Expense.objects.filter(shop=self.shop)
 
+        if SALES_AVAILABLE and Sale:
+            sales_qs = Sale.objects.filter(shop=self.shop, is_cancelled=False)
+        else:
+            sales_qs = None
+            
+        if PURCHASES_AVAILABLE and Purchase:
+            purchases_qs = Purchase.objects.filter(shop=self.shop)
+        else:
+            purchases_qs = None
+
         if start_date:
-            sales_qs = sales_qs.filter(sale_date__date__gte=start_date)
-            purchases_qs = purchases_qs.filter(purchase_date__date__gte=start_date)
+            if sales_qs is not None:
+                sales_qs = sales_qs.filter(sale_date__date__gte=start_date)
+            if purchases_qs is not None:
+                purchases_qs = purchases_qs.filter(purchase_date__date__gte=start_date)
             expenses_qs = expenses_qs.filter(date__gte=start_date)
         
         if end_date:
-            sales_qs = sales_qs.filter(sale_date__date__lte=end_date)
-            purchases_qs = purchases_qs.filter(purchase_date__date__lte=end_date)
+            if sales_qs is not None:
+                sales_qs = sales_qs.filter(sale_date__date__lte=end_date)
+            if purchases_qs is not None:
+                purchases_qs = purchases_qs.filter(purchase_date__date__lte=end_date)
             expenses_qs = expenses_qs.filter(date__lte=end_date)
 
         # Calcul des agrégations
-        revenue = sales_qs.aggregate(total=Sum('total'))['total'] or 0
-        stock_costs = purchases_qs.aggregate(total=Sum('total'))['total'] or 0
+        revenue = sales_qs.aggregate(total=Sum('total'))['total'] or 0 if sales_qs is not None else 0
+        stock_costs = purchases_qs.aggregate(total=Sum('total'))['total'] or 0 if purchases_qs is not None else 0
         operating_expenses = expenses_qs.aggregate(total=Sum('amount'))['total'] or 0
 
         total_costs = stock_costs + operating_expenses
@@ -43,12 +67,12 @@ class AccountingService:
             'operating_expenses': operating_expenses,
             'total_costs': total_costs,
             'net_profit': net_profit,
-            'sales_count': sales_qs.count(),
-            'purchases_count': purchases_qs.count(),
+            'sales_count': sales_qs.count() if sales_qs is not None else 0,
+            'purchases_count': purchases_qs.count() if purchases_qs is not None else 0,
             'expenses_count': expenses_qs.count(),
             # Données pour les détails
-            'sales': sales_qs.order_by('-sale_date')[:50],  # Limite pour le dash
-            'purchases': purchases_qs.order_by('-purchase_date')[:50],
+            'sales': sales_qs.order_by('-sale_date')[:50] if sales_qs is not None else [],
+            'purchases': purchases_qs.order_by('-purchase_date')[:50] if purchases_qs is not None else [],
             'expenses': expenses_qs.order_by('-date')[:50],
         }
 

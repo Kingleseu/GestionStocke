@@ -1,0 +1,159 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}{{ merchant.shop.name }}{% endblock %}
+{% block ops_subtitle %}Fiche point de vente, prequalification et activite d'approvisionnement.{% endblock %}
+{% block ops_action %}
+<div class="pb-form-actions">
+    <a class="pb-secondary pb-link-button" href="{% url 'supply:ops_merchants' %}">
+        <i class="bi bi-arrow-left"></i>
+        Boutiques
+    </a>
+    <a class="pb-primary pb-link-button" href="{% url 'supply:ops_merchant_edit' merchant.pk %}">
+        <i class="bi bi-pencil-square"></i>
+        Modifier
+    </a>
+</div>
+{% endblock %}
+
+{% block ops_content %}
+<section class="pb-dashboard-grid">
+    <div class="pb-metric">
+        <span>Commandes</span>
+        <strong>{{ orders_count }}</strong>
+        <em>Total enregistre pour ce PDV</em>
+    </div>
+    <div class="pb-metric">
+        <span>Commandes actives</span>
+        <strong>{{ active_orders_count }}</strong>
+        <em>A preparer, livrer ou encaisser</em>
+    </div>
+    <div class="pb-metric">
+        <span>Livrees</span>
+        <strong>{{ delivered_orders_count }}</strong>
+        <em>Historique finalise</em>
+    </div>
+    <div class="pb-metric">
+        <span>Volume</span>
+        <strong>${{ orders_total|floatformat:0 }}</strong>
+        <em>Montant total commande</em>
+    </div>
+</section>
+
+<section class="pb-two-col">
+    <div class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Point de vente</span>
+                <h2>Informations terrain</h2>
+            </div>
+            <span class="pb-status {% if merchant.is_prequalified %}pb-status-success{% else %}pb-status-warning{% endif %}">
+                {{ merchant.prequalification_label }}
+            </span>
+        </div>
+
+        {% if merchant.storefront_photo %}
+        <a class="pb-storefront-photo" href="{{ merchant.storefront_photo.url }}" target="_blank" rel="noopener">
+            <img src="{{ merchant.storefront_photo.url }}" alt="Devanture {{ merchant.shop.name }}">
+        </a>
+        {% else %}
+        <div class="pb-empty">Aucune photo de devanture n'a encore ete ajoutee.</div>
+        {% endif %}
+
+        <div class="pb-info-grid">
+            <div><span>Boutique</span><strong>{{ merchant.shop.name }}</strong></div>
+            <div><span>Responsable</span><strong>{{ merchant.owner_full_name|default:merchant.shop.created_by.get_full_name|default:merchant.shop.created_by.username }}</strong></div>
+            <div><span>Type</span><strong>{{ merchant.get_shop_type_display }}</strong></div>
+            <div><span>Anciennete</span><strong>{{ merchant.get_business_age_display }}</strong></div>
+            <div><span>Commune</span><strong>{{ merchant.commune|default:"Non renseignee" }}</strong></div>
+            <div><span>Hub</span><strong>{{ merchant.preferred_hub.name|default:"Selection automatique" }}</strong></div>
+            <div><span>Telephone principal</span><strong>{{ merchant.contact_phone|default:"Non renseigne" }}</strong></div>
+            <div><span>Telephone secondaire</span><strong>{{ merchant.secondary_phone|default:"-" }}</strong></div>
+            <div><span>WhatsApp actif</span><strong>{% if merchant.whatsapp_active %}Oui{% else %}Non{% endif %}</strong></div>
+            <div><span>Email</span><strong>{{ merchant.shop.email|default:merchant.shop.created_by.email|default:"-" }}</strong></div>
+            <div><span>Credit</span><strong>{{ merchant.is_credit_enabled|yesno:"Actif,Inactif" }}</strong></div>
+            <div><span>Credit disponible</span><strong>${{ merchant.credit_available|floatformat:0 }}</strong></div>
+        </div>
+    </div>
+
+    <aside class="pb-side-stack">
+        <div class="pb-panel">
+            <div class="pb-panel-head">
+                <div>
+                    <span class="pb-eyebrow">Adresse</span>
+                    <h2>Localisation</h2>
+                </div>
+            </div>
+            <div class="pb-list-stack">
+                <div class="pb-list-row">
+                    <div>
+                        <strong>{{ merchant.shop.address|default:"Adresse non renseignee" }}</strong>
+                        <span>Point de livraison principal</span>
+                    </div>
+                </div>
+                <div class="pb-list-row">
+                    <div>
+                        <strong>{{ merchant.shop.created_at|date:"d/m/Y" }}</strong>
+                        <span>Date d'inscription</span>
+                    </div>
+                </div>
+                <div class="pb-list-row">
+                    <div>
+                        <strong>{% if last_order %}{{ last_order.created_at|date:"d/m/Y H:i" }}{% else %}Aucune{% endif %}</strong>
+                        <span>Derniere activite commande</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pb-panel">
+            <div class="pb-panel-head">
+                <div>
+                    <span class="pb-eyebrow">Compte</span>
+                    <h2>Utilisateur lie</h2>
+                </div>
+            </div>
+            <div class="pb-info-grid">
+                <div><span>Identifiant</span><strong>{{ merchant.shop.created_by.username }}</strong></div>
+                <div><span>Email</span><strong>{{ merchant.shop.created_by.email|default:"-" }}</strong></div>
+            </div>
+        </div>
+    </aside>
+</section>
+
+<section class="pb-panel">
+    <div class="pb-panel-head">
+        <div>
+            <span class="pb-eyebrow">Activite</span>
+            <h2>Dernieres commandes</h2>
+        </div>
+    </div>
+    <div class="pb-table-wrap">
+        <table class="pb-table">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Hub</th>
+                    <th>Statut</th>
+                    <th>Paiement</th>
+                    <th>Montant</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td><a href="{% url 'supply:ops_order_detail' order.pk %}">{{ order.tracking_reference }}</a></td>
+                    <td>{{ order.hub.name|default:"-" }}</td>
+                    <td><span class="pb-status">{{ order.get_status_display }}</span></td>
+                    <td>{{ order.get_payment_method_display }}</td>
+                    <td>${{ order.total_amount|floatformat:0 }}</td>
+                    <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="pb-empty-cell">Aucune commande pour ce point de vente.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

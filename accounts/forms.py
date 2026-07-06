@@ -3,7 +3,8 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from store.models import CustomerProfile
+# CustomerProfile désactivé (PEMBENY B2B uniquement)
+# from store.models import CustomerProfile
 
 from .models import (
     ACCOUNT_SPACE_CHOICES,
@@ -117,16 +118,6 @@ class CustomerSignupForm(forms.Form):
         )
         user.set_password(password)
         user.save()
-
-        CustomerProfile.objects.update_or_create(
-            user=user,
-            defaults={
-                'phone': self.cleaned_data['phone'].strip(),
-                'city': '',
-                'address': '',
-                'zip_code': '',
-            },
-        )
         return user
 
 

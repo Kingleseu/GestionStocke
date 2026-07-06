@@ -47,6 +47,9 @@
     <div class="receipt-container mx-auto">
         <div class="receipt-header text-center">
             {% if shop %}
+                {% if shop.logo %}
+                <img src="{{ shop.logo.url }}" alt="{{ shop.name }}" class="mb-2" style="max-height: 70px; max-width: 180px; object-fit: contain;">
+                {% endif %}
                 <h4 class="mb-1 font-weight-bold" style="font-size: 1.25rem;"><strong>{{ shop.name }}</strong></h4>
                 <p class="mb-0 small">{{ shop.address|default:'' }}</p>
                 {% if shop.rccm %}<p class="mb-0 small">RCCM : {{ shop.rccm }}</p>{% endif %}

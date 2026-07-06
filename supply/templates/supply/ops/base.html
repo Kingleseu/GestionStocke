@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Backoffice PEMBENY{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/pembeny_supply.css' %}?v=20260702-ops-modal">
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'js/pembeny_modal.js' %}?v=20260702-ops-modal"></script>
+{% endblock %}
+
+{% block content %}
+{% include 'supply/ops/_modal.html' %}
+<div class="pb-backoffice-wrap">
+    <section class="pb-page-head">
+        <div>
+            <span class="pb-kicker">Backoffice PEMBENY</span>
+            <h1>{% block ops_title %}Operations{% endblock %}</h1>
+            <p>{% block ops_subtitle %}Pilotez les fournisseurs, hubs, stocks et commandes sans toucher au code.{% endblock %}</p>
+        </div>
+        {% block ops_action %}{% endblock %}
+    </section>
+
+    <section class="pb-ops-shell pb-ops-shell-single">
+        <div class="pb-ops-content">
+            {% block ops_content %}{% endblock %}
+        </div>
+    </section>
+</div>
+{% endblock %}

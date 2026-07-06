@@ -7,7 +7,7 @@ from .models import CashierInvitation, EmailOTP, Shop, UserProfile
 class ShopAdmin(admin.ModelAdmin):
     list_display = ('name', 'created_by', 'phone', 'email', 'usd_to_cdf_rate', 'vat_percentage')
     fieldsets = (
-        (None, {'fields': ('name', 'created_by')}),
+        (None, {'fields': ('name', 'logo', 'created_by')}),
         (
             'Informations administratives',
             {'fields': ('address', 'rccm', 'id_nat', 'nif', 'bureau', 'phone', 'email')},

@@ -52,8 +52,8 @@ def _is_staff_user(user):
 
 def _default_redirect_for_user(user):
     if _is_staff_user(user):
-        return reverse('sales:pos')
-    return reverse('store:catalog')
+        return reverse('supply:ops_dashboard')
+    return reverse('supply:dashboard')
 
 
 def _resolve_redirect_target(request, user, explicit_next=None):
@@ -142,8 +142,8 @@ def manager_login_view(request):
 
     if request.user.is_authenticated:
         if _is_staff_user(request.user):
-            return redirect('store:admin_dashboard')
-        return redirect('store:catalog')
+            return redirect('supply:ops_dashboard')
+        return redirect('supply:dashboard')
 
     form = StaffLoginForm(request.POST or None)
 
@@ -151,7 +151,11 @@ def manager_login_view(request):
         user = form.user_cache
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         
-        redirect_url = request.POST.get('next') or reverse('store:admin_dashboard')
+        redirect_url = _resolve_redirect_target(
+            request,
+            user,
+            explicit_next=request.POST.get('next') or request.GET.get('next'),
+        )
         success_message = f"Session Manager ouverte pour {user.get_full_name().strip() or user.username}."
         messages.success(request, success_message)
 
@@ -172,13 +176,13 @@ def manager_login_view(request):
 
 
 def customer_signup_view(request):
-    """Creation de compte client, puis envoi du code OTP."""
+    """Creation de compte boutique depuis les anciens points d'entree publics."""
 
     if request.user.is_authenticated:
         return redirect(_resolve_redirect_target(request, request.user))
 
     if request.method != 'POST' and not _wants_json(request):
-        return redirect('store:catalog')
+        return redirect('supply:register')
 
     form = CustomerSignupForm(request.POST or None)
 
@@ -202,11 +206,11 @@ def customer_signup_view(request):
         return JsonResponse({'success': False, 'errors': _serialize_form_errors(form)}, status=400)
 
     messages.error(request, 'Impossible de creer le compte client.')
-    return redirect('store:catalog')
+    return redirect('supply:register')
 
 
 def signup_view(request):
-    """Inscription manager simplifiee, avec verification OTP."""
+    """Inscription manager PEMBENY."""
 
     if request.user.is_authenticated:
         return redirect(_resolve_redirect_target(request, request.user))
@@ -222,7 +226,7 @@ def signup_view(request):
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         messages.success(request, f"Boutique '{shop.name}' créée avec succès. Bienvenue on board !")
         
-        return redirect('store:admin_dashboard')
+        return redirect('supply:ops_dashboard')
 
     return render(request, 'accounts/signup.html', {'form': form})
 
@@ -324,7 +328,7 @@ def user_list(request):
 
     if not current_shop:
         messages.error(request, "Vous n'etes lie a aucune boutique.")
-        return redirect('sales:pos')
+        return redirect('supply:ops_dashboard')
 
     users = User.objects.filter(profile__shop=current_shop).select_related('profile').prefetch_related('groups')
 

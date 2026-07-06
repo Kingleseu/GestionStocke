@@ -46,17 +46,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     
-    # Nos applications
-    'accounts',
-    'products',
-    'sales',
-    'purchases',
-    'inventory',
-    'reports',
-    'store',  # E-commerce Storefront
-    'promotions',  # Gestion des promotions
+    # PEMBENY B2B Platform Apps
+    'accounts',      # Authentification OTP, profils boutiques
+    'sales',         # Caisse / POS historique
+    'products',      # Produits et catégories
+    'purchases',     # Achats / réapprovisionnement stock
+    'inventory',     # Gestion de stock dynamique
+    'store',         # Site e-commerce historique encore gere dans le backoffice
+    'supply',        # ⭐ PLATEFORME PEMBENY B2B (coeur)
+    'promotions',    # Promotions B2B adaptées
+    'reports',       # Rapports et analyses
     
-    # Cloudinary
+    # Cloudinary pour médias
     'cloudinary_storage',
     'cloudinary',
 ]
@@ -86,7 +87,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'store.context_processors.shop_branding',
                 'store.context_processors.order_notifications',
+                'supply.context_processors.supply_site_settings',
             ],
         },
     },
@@ -219,7 +222,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication settings
 LOGIN_URL = 'accounts:login'
-LOGIN_REDIRECT_URL = 'sales:pos'
+LOGIN_REDIRECT_URL = 'supply:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
 AUTHENTICATION_BACKENDS = [

@@ -1,0 +1,86 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}{{ order.tracking_reference }}{% endblock %}
+{% block ops_subtitle %}Commande de {{ order.merchant_name }} - {{ order.commune }} - {{ order.get_status_display }}{% endblock %}
+{% block ops_action %}
+<a class="pb-secondary pb-link-button" href="{% url 'supply:ops_orders' %}">
+    <i class="bi bi-arrow-left"></i>
+    Commandes
+</a>
+{% endblock %}
+
+{% block ops_content %}
+<section class="pb-order-layout pb-order-layout-inner">
+    <div class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Contenu</span>
+                <h2>Produits commandes</h2>
+            </div>
+            <span class="pb-chip pb-chip-gold">${{ order.total_amount|floatformat:0 }}</span>
+        </div>
+        <div class="pb-info-grid">
+            <div><span>Boutique</span><strong>{{ order.merchant_name }}</strong></div>
+            <div><span>Commune</span><strong>{{ order.commune }}</strong></div>
+            <div><span>Hub</span><strong>{{ order.hub.name|default:"-" }}</strong></div>
+            <div><span>WhatsApp</span><strong>{{ order.contact_phone }}</strong></div>
+            <div class="pb-span-2"><span>Adresse</span><strong>{{ order.delivery_address }}</strong></div>
+        </div>
+        <div class="pb-table-wrap">
+            <table class="pb-table">
+                <thead><tr><th>Produit</th><th>Fournisseur</th><th>Unite</th><th>Qte</th><th>Prix</th><th>Total</th></tr></thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.supplier_name }}</td>
+                        <td>{{ item.unit_label }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.unit_price|floatformat:0 }}</td>
+                        <td>${{ item.line_total|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <aside class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Workflow hub</span>
+                <h2>Changer le statut</h2>
+            </div>
+        </div>
+        <form class="pb-dynamic-form pb-status-form" method="post" action="{% url 'supply:ops_update_order_status' order.pk %}">
+            {% csrf_token %}
+            {% for field in status_form %}
+            <label>
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% for error in field.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+            </label>
+            {% endfor %}
+            <button class="pb-primary" type="submit">
+                <i class="bi bi-check2-circle"></i>
+                Mettre a jour
+            </button>
+        </form>
+
+        <div class="pb-timeline">
+            {% for event in timeline %}
+            <div class="pb-timeline-item">
+                <span></span>
+                <div>
+                    <strong>{{ event.label }}</strong>
+                    <p>{{ event.note }}</p>
+                    <em>{{ event.created_at|date:"d/m/Y H:i" }}</em>
+                </div>
+            </div>
+            {% empty %}
+            <div class="pb-empty">Aucun evenement.</div>
+            {% endfor %}
+        </div>
+    </aside>
+</section>
+{% endblock %}

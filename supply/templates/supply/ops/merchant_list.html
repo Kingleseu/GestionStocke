@@ -1,0 +1,89 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}Boutiques PEMBENY{% endblock %}
+{% block ops_subtitle %}Vue d'ensemble des points de vente inscrits, leur prequalification, leurs hubs, leur credit et leurs commandes associees.{% endblock %}
+
+{% block ops_content %}
+<div class="pb-panel">
+    <form class="pb-filter-bar" method="get">
+        <input class="pb-input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Boutique, email ou telephone">
+        <input class="pb-input" type="search" name="commune" value="{{ request.GET.commune }}" placeholder="Commune">
+        <select class="pb-input" name="hub">
+            <option value="">Tous hubs</option>
+            {% for hub in hubs %}
+            <option value="{{ hub.pk }}" {% if request.GET.hub == hub.pk|stringformat:"s" %}selected{% endif %}>{{ hub.name }}</option>
+            {% endfor %}
+        </select>
+        <select class="pb-input" name="credit">
+            <option value="">Credit: tous</option>
+            <option value="enabled" {% if request.GET.credit == 'enabled' %}selected{% endif %}>Credit actif</option>
+            <option value="disabled" {% if request.GET.credit == 'disabled' %}selected{% endif %}>Credit inactif</option>
+        </select>
+        <select class="pb-input" name="prequalification">
+            <option value="">Prequalification: toutes</option>
+            <option value="ready" {% if request.GET.prequalification == 'ready' %}selected{% endif %}>Prequalifiees</option>
+            <option value="review" {% if request.GET.prequalification == 'review' %}selected{% endif %}>A verifier</option>
+        </select>
+        <button class="pb-secondary pb-link-button" type="submit">Filtrer</button>
+    </form>
+    <div class="pb-table-wrap">
+        <table class="pb-table">
+            <thead>
+                <tr>
+                    <th>Boutique</th>
+                    <th>Responsable</th>
+                    <th>Type / anciennete</th>
+                    <th>Commune</th>
+                    <th>Hub</th>
+                    <th>Contact</th>
+                    <th>Commandes</th>
+                    <th>Credit</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for merchant in merchants %}
+                <tr>
+                    <td>
+                        <strong>{{ merchant.shop.name }}</strong><br>
+                        <small>{{ merchant.shop.email|default:"-" }}</small>
+                        {% if merchant.storefront_photo %}
+                        <br><a href="{{ merchant.storefront_photo.url }}" target="_blank" rel="noopener">Photo devanture</a>
+                        {% endif %}
+                    </td>
+                    <td>{{ merchant.owner_full_name|default:merchant.shop.created_by.get_full_name|default:merchant.shop.created_by.username }}</td>
+                    <td>
+                        {{ merchant.get_shop_type_display }}<br>
+                        <small>{{ merchant.get_business_age_display }}</small><br>
+                        <span class="pb-status {% if merchant.is_prequalified %}pb-status-success{% else %}pb-status-warning{% endif %}">
+                            {{ merchant.prequalification_label }}
+                        </span>
+                    </td>
+                    <td>{{ merchant.commune|default:"-" }}</td>
+                    <td>{{ merchant.preferred_hub.name|default:"Auto" }}</td>
+                    <td>
+                        {{ merchant.contact_phone|default:"-" }}<br>
+                        <small>Secondaire: {{ merchant.secondary_phone|default:"-" }}</small><br>
+                        <small>WhatsApp: {% if merchant.whatsapp_active %}{{ merchant.whatsapp|default:merchant.contact_phone }}{% else %}Non{% endif %}</small>
+                    </td>
+                    <td>
+                        <strong>{{ merchant.orders_count }}</strong><br>
+                        <small>${{ merchant.orders_total|default:0|floatformat:0 }}</small>
+                    </td>
+                    <td>
+                        <span class="pb-status">{{ merchant.is_credit_enabled|yesno:"Actif,Inactif" }}</span><br>
+                        <small>${{ merchant.credit_available|floatformat:0 }} disponible</small>
+                    </td>
+                    <td class="pb-row-actions">
+                        <a href="{% url 'supply:ops_merchant_detail' merchant.pk %}">Voir activite</a>
+                        <a href="{% url 'supply:ops_merchant_edit' merchant.pk %}">Modifier</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="pb-empty-cell">Aucune boutique PEMBENY inscrite.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

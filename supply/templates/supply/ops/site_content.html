@@ -1,0 +1,117 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}Contenu du site{% endblock %}
+{% block ops_subtitle %}Modifiez la page d'accueil publique PEMBENY sans toucher au code.{% endblock %}
+{% block ops_action %}
+<a class="pb-primary pb-link-button" href="{% url 'supply:ops_site_settings' %}">
+    <i class="bi bi-pencil-square"></i>
+    Modifier le hero
+</a>
+{% endblock %}
+
+{% block ops_content %}
+<section class="pb-panel">
+    <div class="pb-panel-head">
+        <div>
+            <span class="pb-eyebrow">Accueil</span>
+            <h2>{{ settings_obj.hero_title }}</h2>
+        </div>
+        <a class="pb-secondary pb-link-button" href="{% url 'supply:home' %}" target="_blank">Voir le site</a>
+    </div>
+    <div class="pb-info-grid">
+        <div><span>Badge</span><strong>{{ settings_obj.hero_badge }}</strong></div>
+        <div><span>CTA principal</span><strong>{{ settings_obj.primary_cta_text }}</strong></div>
+        <div><span>CTA secondaire</span><strong>{{ settings_obj.secondary_cta_text }}</strong></div>
+        <div><span>Contact</span><strong>{{ settings_obj.contact_phone }}</strong></div>
+        <div class="pb-span-2"><span>Sous-titre</span><strong>{{ settings_obj.hero_subtitle }}</strong></div>
+    </div>
+</section>
+
+<section class="pb-content-grid">
+    <div class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Statistiques</span>
+                <h2>Chiffres du hero</h2>
+            </div>
+            <a class="pb-secondary pb-link-button" href="{% url 'supply:ops_stat_add' %}">Ajouter</a>
+        </div>
+        <div class="pb-list-stack">
+            {% for stat in stats %}
+            <div class="pb-list-row">
+                <div><strong>{{ stat.value }}</strong><span>{{ stat.label }}</span></div>
+                <div class="pb-row-actions">
+                    <a href="{% url 'supply:ops_stat_edit' stat.pk %}">Modifier</a>
+                    <form method="post" action="{% url 'supply:ops_toggle_active' 'stat' stat.pk %}">
+                        {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit">{{ stat.is_active|yesno:"Masquer,Afficher" }}</button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="pb-empty">Aucune statistique personnalisee.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Avantages</span>
+                <h2>Cartes de presentation</h2>
+            </div>
+            <a class="pb-secondary pb-link-button" href="{% url 'supply:ops_feature_add' %}">Ajouter</a>
+        </div>
+        <div class="pb-list-stack">
+            {% for feature in features %}
+            <div class="pb-list-row">
+                <div><strong>{{ feature.title }}</strong><span>{{ feature.badge|default:"Sans badge" }}</span></div>
+                <div class="pb-row-actions">
+                    <a href="{% url 'supply:ops_feature_edit' feature.pk %}">Modifier</a>
+                    <form method="post" action="{% url 'supply:ops_toggle_active' 'feature' feature.pk %}">
+                        {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <button type="submit">{{ feature.is_active|yesno:"Masquer,Afficher" }}</button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <div class="pb-empty">Aucune carte avantage.</div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="pb-panel">
+    <div class="pb-panel-head">
+        <div>
+            <span class="pb-eyebrow">Processus</span>
+            <h2>Etapes affichees sur la page d'accueil</h2>
+        </div>
+        <a class="pb-secondary pb-link-button" href="{% url 'supply:ops_process_add' %}">Ajouter</a>
+    </div>
+    <div class="pb-table-wrap">
+        <table class="pb-table">
+            <thead><tr><th>No</th><th>Titre</th><th>Texte</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+                {% for step in process_steps %}
+                <tr>
+                    <td>{{ step.number }}</td>
+                    <td>{{ step.title }}</td>
+                    <td>{{ step.body|truncatechars:90 }}</td>
+                    <td><span class="pb-status">{{ step.is_active|yesno:"Visible,Masque" }}</span></td>
+                    <td class="pb-row-actions">
+                        <a href="{% url 'supply:ops_process_edit' step.pk %}">Modifier</a>
+                        <form method="post" action="{% url 'supply:ops_toggle_active' 'process' step.pk %}">
+                            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit">{{ step.is_active|yesno:"Masquer,Afficher" }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="pb-empty-cell">Aucune etape.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

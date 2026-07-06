@@ -1,0 +1,26 @@
+{% comment %}
+Modal universelle PEMBENY OPS
+Inclure dans base.html avec {% include 'supply/ops/_modal.html' %}
+Usage: pbModal.open('Titre', '/url/du/form/', options)
+{% endcomment %}
+<div id="pbModalOverlay" class="pb-modal-overlay">
+    <div class="pb-modal" role="dialog" aria-modal="true" aria-labelledby="pbModalTitle">
+        <div class="pb-modal-header">
+            <h3 id="pbModalTitle">Chargement...</h3>
+            <button type="button" class="pb-modal-close" data-modal-close aria-label="Fermer">&times;</button>
+        </div>
+        <div class="pb-modal-body" id="pbModalBody">
+            <div class="pb-modal-loader">
+                <div class="pb-spinner"></div>
+                <p>Chargement...</p>
+            </div>
+        </div>
+        <div class="pb-modal-footer" id="pbModalFooter" hidden>
+            <button type="button" class="pb-secondary pb-link-button" data-modal-close>Annuler</button>
+            <button type="button" class="pb-primary pb-link-button" id="pbModalSubmit">
+                <i class="bi bi-check-lg"></i>
+                <span id="pbModalSubmitText">Enregistrer</span>
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,292 @@
+{% extends 'supply/base.html' %}
+
+{% block title %}Creer ma boutique - PEMBENY{% endblock %}
+
+{% block content %}
+<section class="pb-register-shell">
+    <div class="pb-register-copy">
+        <span class="pb-kicker">Espace vendeur</span>
+        <h1>Declarez votre point de vente PEMBENY.</h1>
+        <p>PEMBENY identifie votre boutique, verifie son activite, puis vous donne acces au catalogue fournisseurs, au stock des hubs et au suivi de livraison.</p>
+        <div class="pb-register-points">
+            <div><i class="bi bi-shop-window"></i><span>Identification complete du PDV</span></div>
+            <div><i class="bi bi-diagram-3"></i><span>Profil commercial en quelques choix</span></div>
+            <div><i class="bi bi-camera"></i><span>Photo de devanture obligatoire</span></div>
+        </div>
+    </div>
+
+    <div class="pb-panel pb-register-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Inscription</span>
+                <h2>Information sur le point de vente</h2>
+            </div>
+        </div>
+
+        <form class="pb-dynamic-form pb-step-form" method="post" enctype="multipart/form-data" data-step-form novalidate>
+            {% csrf_token %}
+            {% if staff_creating_shop %}
+            <div class="pb-message pb-message-info">
+                Vous etes connecte comme manager. Cette action cree une boutique vendeur et vous garde dans le backoffice PEMBENY.
+            </div>
+            {% endif %}
+            <div class="pb-form-note">
+                Les champs marques * sont obligatoires. Les boutiques avec au moins 6 mois d'activite seront marquees comme prequalifiees.
+            </div>
+            {% if form.non_field_errors %}
+            <div class="pb-form-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="pb-stepper" aria-label="Etapes de creation de boutique">
+                <button type="button" class="pb-step-indicator is-active" data-step-target="0">
+                    <span>1</span>
+                    <strong>Identite</strong>
+                </button>
+                <button type="button" class="pb-step-indicator" data-step-target="1">
+                    <span>2</span>
+                    <strong>Profil</strong>
+                </button>
+                <button type="button" class="pb-step-indicator" data-step-target="2">
+                    <span>3</span>
+                    <strong>Validation</strong>
+                </button>
+            </div>
+
+            <div class="pb-step-panels">
+                <section class="pb-step-panel is-active" data-step-panel>
+                    <div class="pb-step-head">
+                        <span class="pb-eyebrow">Etape 1</span>
+                        <h3>Identite et contacts</h3>
+                    </div>
+                    <div class="pb-step-grid">
+                        <label>
+                            <span>{{ form.shop_name.label }}{% if form.shop_name.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.shop_name }}
+                            {% if form.shop_name.help_text %}<em>{{ form.shop_name.help_text }}</em>{% endif %}
+                            {% for error in form.shop_name.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <label>
+                            <span>{{ form.owner_full_name.label }}{% if form.owner_full_name.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.owner_full_name }}
+                            {% if form.owner_full_name.help_text %}<em>{{ form.owner_full_name.help_text }}</em>{% endif %}
+                            {% for error in form.owner_full_name.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <label>
+                            <span>{{ form.email.label }}{% if form.email.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.email }}
+                            {% if form.email.help_text %}<em>{{ form.email.help_text }}</em>{% endif %}
+                            {% for error in form.email.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <label>
+                            <span>{{ form.phone.label }}{% if form.phone.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.phone }}
+                            {% if form.phone.help_text %}<em>{{ form.phone.help_text }}</em>{% endif %}
+                            {% for error in form.phone.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <label>
+                            <span>{{ form.secondary_phone.label }}</span>
+                            {{ form.secondary_phone }}
+                            {% if form.secondary_phone.help_text %}<em>{{ form.secondary_phone.help_text }}</em>{% endif %}
+                            {% for error in form.secondary_phone.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <div class="pb-form-field">
+                            <div class="pb-field-heading">
+                                <span>{{ form.whatsapp_active.label }}{% if form.whatsapp_active.field.required %}<sup>*</sup>{% endif %}</span>
+                            </div>
+                            <div class="pb-choice-grid pb-choice-grid-compact">
+                                {% for choice in form.whatsapp_active %}
+                                <label class="pb-choice-card">
+                                    {{ choice.tag }}
+                                    <span class="pb-choice-control"></span>
+                                    <span class="pb-choice-copy"><strong>{{ choice.choice_label }}</strong></span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            {% for error in form.whatsapp_active.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </div>
+                    </div>
+                </section>
+
+                <section class="pb-step-panel" data-step-panel>
+                    <div class="pb-step-head">
+                        <span class="pb-eyebrow">Etape 2</span>
+                        <h3>Profil commercial</h3>
+                    </div>
+                    <div class="pb-step-stack">
+                        <div class="pb-form-field">
+                            <div class="pb-field-heading">
+                                <span>{{ form.shop_type.label }}{% if form.shop_type.field.required %}<sup>*</sup>{% endif %}</span>
+                                {% if form.shop_type.help_text %}<em>{{ form.shop_type.help_text }}</em>{% endif %}
+                            </div>
+                            <div class="pb-choice-grid">
+                                {% for choice in form.shop_type %}
+                                <label class="pb-choice-card">
+                                    {{ choice.tag }}
+                                    <span class="pb-choice-control"></span>
+                                    <span class="pb-choice-copy"><strong>{{ choice.choice_label }}</strong></span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            {% for error in form.shop_type.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </div>
+
+                        <div class="pb-form-field">
+                            <div class="pb-field-heading">
+                                <span>{{ form.business_age.label }}{% if form.business_age.field.required %}<sup>*</sup>{% endif %}</span>
+                                {% if form.business_age.help_text %}<em>{{ form.business_age.help_text }}</em>{% endif %}
+                            </div>
+                            <div class="pb-choice-grid">
+                                {% for choice in form.business_age %}
+                                <label class="pb-choice-card">
+                                    {{ choice.tag }}
+                                    <span class="pb-choice-control"></span>
+                                    <span class="pb-choice-copy"><strong>{{ choice.choice_label }}</strong></span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            {% for error in form.business_age.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </div>
+                    </div>
+                </section>
+
+                <section class="pb-step-panel" data-step-panel>
+                    <div class="pb-step-head">
+                        <span class="pb-eyebrow">Etape 3</span>
+                        <h3>Photo, adresse et acces</h3>
+                    </div>
+                    <div class="pb-step-grid">
+                        <label class="pb-wide-field">
+                            <span>{{ form.storefront_photo.label }}{% if form.storefront_photo.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.storefront_photo }}
+                            {% if form.storefront_photo.help_text %}<em>{{ form.storefront_photo.help_text }}</em>{% endif %}
+                            {% for error in form.storefront_photo.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <label>
+                            <span>{{ form.commune.label }}{% if form.commune.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.commune }}
+                            {% for error in form.commune.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <label class="pb-wide-field">
+                            <span>{{ form.address.label }}{% if form.address.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.address }}
+                            {% for error in form.address.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <label>
+                            <span>{{ form.password.label }}{% if form.password.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.password }}
+                            {% for error in form.password.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                        <label>
+                            <span>{{ form.password_confirm.label }}{% if form.password_confirm.field.required %}<sup>*</sup>{% endif %}</span>
+                            {{ form.password_confirm }}
+                            {% for error in form.password_confirm.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+                        </label>
+                    </div>
+                </section>
+            </div>
+
+            <div class="pb-step-actions">
+                <button class="pb-secondary pb-link-button" type="button" data-step-prev hidden>
+                    <i class="bi bi-arrow-left"></i>
+                    Retour
+                </button>
+                <button class="pb-primary pb-link-button" type="button" data-step-next>
+                    Continuer
+                    <i class="bi bi-arrow-right"></i>
+                </button>
+                <button class="pb-primary pb-link-button" type="submit" data-step-submit hidden>
+                    <i class="bi bi-check2-circle"></i>
+                    Creer ma boutique
+                </button>
+            </div>
+        </form>
+        <p class="pb-register-login">Vous avez deja un compte ? <a href="{% url 'accounts:login' %}?next={% url 'supply:dashboard' %}">Connectez-vous</a>.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const form = document.querySelector('[data-step-form]');
+    if (!form) return;
+
+    const panels = Array.from(form.querySelectorAll('[data-step-panel]'));
+    const indicators = Array.from(form.querySelectorAll('[data-step-target]'));
+    const prevButton = form.querySelector('[data-step-prev]');
+    const nextButton = form.querySelector('[data-step-next]');
+    const submitButton = form.querySelector('[data-step-submit]');
+    let currentStep = 0;
+
+    const fieldsForStep = (step) => {
+        return Array.from(panels[step].querySelectorAll('input, select, textarea'));
+    };
+
+    const validateStep = (step) => {
+        const fields = fieldsForStep(step);
+        for (const field of fields) {
+            if (!field.checkValidity()) {
+                field.reportValidity();
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const setStep = (step) => {
+        const nextStep = Math.max(0, Math.min(step, panels.length - 1));
+        const direction = nextStep >= currentStep ? 'forward' : 'back';
+        currentStep = nextStep;
+        panels.forEach((panel, index) => {
+            panel.classList.toggle('is-active', index === currentStep);
+            panel.dataset.stepDirection = direction;
+        });
+        indicators.forEach((indicator, index) => {
+            indicator.classList.toggle('is-active', index === currentStep);
+            indicator.classList.toggle('is-complete', index < currentStep);
+        });
+        prevButton.hidden = currentStep === 0;
+        nextButton.hidden = currentStep === panels.length - 1;
+        submitButton.hidden = currentStep !== panels.length - 1;
+    };
+
+    const syncChoices = () => {
+        form.querySelectorAll('.pb-choice-card').forEach((card) => {
+            const input = card.querySelector('input[type="radio"]');
+            card.classList.toggle('is-selected', Boolean(input && input.checked));
+        });
+    };
+
+    const firstErrorPanel = panels.findIndex((panel) => panel.querySelector('.pb-field-error'));
+    if (firstErrorPanel >= 0) {
+        setStep(firstErrorPanel);
+    } else {
+        setStep(0);
+    }
+    syncChoices();
+
+    nextButton.addEventListener('click', () => {
+        setStep(currentStep + 1);
+    });
+    prevButton.addEventListener('click', () => setStep(currentStep - 1));
+    indicators.forEach((indicator, index) => {
+        indicator.addEventListener('click', () => {
+            setStep(index);
+        });
+    });
+    form.addEventListener('change', syncChoices);
+    form.addEventListener('submit', (event) => {
+        for (let index = 0; index < panels.length; index += 1) {
+            setStep(index);
+            const fields = fieldsForStep(index);
+            const invalidField = fields.find((field) => !field.checkValidity());
+            if (invalidField) {
+                event.preventDefault();
+                window.setTimeout(() => invalidField.reportValidity(), 80);
+                return;
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

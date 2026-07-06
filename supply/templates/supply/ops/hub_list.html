@@ -1,0 +1,51 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}Hubs{% endblock %}
+{% block ops_subtitle %}Configurez les centres de distribution, communes couvertes et frais de livraison.{% endblock %}
+{% block ops_action %}
+<a class="pb-primary pb-link-button" href="{% url 'supply:ops_hub_add' %}" data-modal data-title="Nouveau hub" data-submit="Créer le hub">
+    <i class="bi bi-plus-circle"></i>
+    Nouveau hub
+</a>
+{% endblock %}
+
+{% block ops_content %}
+<div class="pb-panel">
+    <form class="pb-filter-bar" method="get">
+        <input class="pb-input" type="search" name="q" value="{{ request.GET.q }}" placeholder="Rechercher hub">
+        <button class="pb-secondary pb-link-button" type="submit">Filtrer</button>
+    </form>
+    <div class="pb-table-wrap">
+        <table class="pb-table">
+            <thead><tr><th>Hub</th><th>Code</th><th>Commune</th><th>Couverture</th><th>Stock</th><th>Livraison</th><th></th></tr></thead>
+            <tbody>
+                {% for hub in hubs %}
+                <tr>
+                    <td>{{ hub.name }}</td>
+                    <td>{{ hub.code }}</td>
+                    <td>{{ hub.commune }}</td>
+                    <td>{{ hub.coverage_communes|join:", " }}</td>
+                    <td>{{ hub.stock_lines }} lignes</td>
+                    <td>${{ hub.delivery_fee|floatformat:0 }}</td>
+                    <td class="pb-row-actions">
+                        <a href="{% url 'supply:ops_hub_edit' hub.pk %}" data-modal data-title="Modifier {{ hub.name }}" data-submit="Mettre à jour">Modifier</a>
+                        <form method="post" action="{% url 'supply:ops_toggle_active' 'hub' hub.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit">{{ hub.is_active|yesno:"Suspendre,Activer" }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="pb-empty-cell">
+                        Aucun hub.
+                        <button type="button" class="pb-link-button" data-modal data-url="{% url 'supply:ops_hub_add' %}" data-title="Nouveau hub" data-submit="Créer le hub">Créer le premier hub</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -6,9 +6,10 @@ from products.models import Category
 class ShopForm(forms.ModelForm):
     class Meta:
         model = Shop
-        fields = ['name', 'address', 'rccm', 'id_nat', 'nif', 'bureau', 'phone', 'email', 'usd_to_cdf_rate', 'vat_percentage']
+        fields = ['name', 'logo', 'address', 'rccm', 'id_nat', 'nif', 'bureau', 'phone', 'email', 'usd_to_cdf_rate', 'vat_percentage']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'logo': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'address': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'rccm': forms.TextInput(attrs={'class': 'form-control'}),
             'id_nat': forms.TextInput(attrs={'class': 'form-control'}),

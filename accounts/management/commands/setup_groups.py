@@ -1,11 +1,18 @@
 # accounts/management/commands/setup_groups.py
+# ⚠️ Command legacy - sales désactivé dans PEMBENY B2B
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from products.models import Product, Category
-from purchases.models import Purchase, PurchaseItem
-from sales.models import Sale, SaleItem
+from products.models import Product
+from purchases.models import Purchase
+# Sales désactivé (B2B)
+try:
+    from sales.models import Sale, SaleItem
+    SALES_AVAILABLE = True
+except (ImportError, RuntimeError):
+    Sale = SaleItem = None
+    SALES_AVAILABLE = False
 
 
 class Command(BaseCommand):

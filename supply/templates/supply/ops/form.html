@@ -1,0 +1,38 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block ops_title %}{{ form_title }}{% endblock %}
+{% block ops_subtitle %}Les donnees modifiees ici alimentent directement le catalogue, les hubs et les operations.{% endblock %}
+{% block ops_action %}
+<a class="pb-secondary pb-link-button" href="{{ back_url }}">
+    <i class="bi bi-arrow-left"></i>
+    Retour
+</a>
+{% endblock %}
+
+{% block ops_content %}
+<div class="pb-panel">
+    <form class="pb-dynamic-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+        <div class="pb-form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="pb-form-layout">
+            {% for field in form %}
+            <label class="{% if field.field.widget.input_type == 'checkbox' %}pb-check-row{% endif %}">
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% if field.help_text %}<em>{{ field.help_text }}</em>{% endif %}
+                {% for error in field.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+            </label>
+            {% endfor %}
+        </div>
+        <div class="pb-form-actions">
+            <button class="pb-primary pb-link-button" type="submit">
+                <i class="bi bi-check2"></i>
+                Enregistrer
+            </button>
+            <a class="pb-secondary pb-link-button" href="{{ back_url }}">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

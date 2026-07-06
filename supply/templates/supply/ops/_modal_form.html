@@ -1,0 +1,24 @@
+<form class="pb-modal-form" method="post" enctype="multipart/form-data" action="{{ request.path }}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="pb-form-errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <div class="pb-modal-form-grid">
+        {% for field in form %}
+            {% if field.field.widget.input_type == 'checkbox' %}
+            <label class="pb-modal-field pb-modal-check" for="{{ field.id_for_label }}">
+                {{ field }}
+                <span>{{ field.label }}</span>
+                {% for error in field.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+            </label>
+            {% else %}
+            <label class="pb-modal-field {% if field.field.widget.input_type == 'textarea' or field.field.widget.input_type == 'file' %}pb-modal-field-full{% endif %}" for="{{ field.id_for_label }}">
+                <span class="pb-modal-field-title">{{ field.label }}</span>
+                {{ field }}
+                {% if field.help_text %}<em class="pb-modal-help">{{ field.help_text }}</em>{% endif %}
+                {% for error in field.errors %}<strong class="pb-field-error">{{ error }}</strong>{% endfor %}
+            </label>
+            {% endif %}
+        {% endfor %}
+    </div>
+</form>

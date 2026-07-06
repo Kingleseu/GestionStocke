@@ -1,0 +1,76 @@
+{% extends 'supply/base.html' %}
+
+{% block title %}Commande {{ order.tracking_reference }}{% endblock %}
+
+{% block content %}
+<section class="pb-page-head">
+    <div>
+        <span class="pb-kicker">Suivi commande</span>
+        <h1>{{ order.tracking_reference }}</h1>
+        <p>{{ order.merchant_name }} - {{ order.commune }} - {{ order.hub.name|default:"Hub a confirmer" }}</p>
+    </div>
+    <a class="pb-secondary pb-link-button" href="{% url 'supply:dashboard' %}">
+        <i class="bi bi-arrow-left"></i>
+        Retour dashboard
+    </a>
+</section>
+
+<section class="pb-order-layout">
+    <div class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Produits</span>
+                <h2>Contenu de la commande</h2>
+            </div>
+            <span class="pb-chip pb-chip-gold">${{ order.total_amount|floatformat:0 }}</span>
+        </div>
+        <div class="pb-table-wrap">
+            <table class="pb-table">
+                <thead>
+                    <tr>
+                        <th>Produit</th>
+                        <th>Fournisseur</th>
+                        <th>Unite</th>
+                        <th>Qte</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.supplier_name }}</td>
+                        <td>{{ item.unit_label }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.line_total|floatformat:0 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <aside class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Timeline</span>
+                <h2>{{ order.get_status_display }}</h2>
+            </div>
+        </div>
+        <div class="pb-timeline">
+            {% for event in timeline %}
+            <div class="pb-timeline-item">
+                <span></span>
+                <div>
+                    <strong>{{ event.label }}</strong>
+                    <p>{{ event.note }}</p>
+                    <em>{{ event.created_at|date:"d/m/Y H:i" }}</em>
+                </div>
+            </div>
+            {% empty %}
+            <div class="pb-empty">Aucun evenement de suivi.</div>
+            {% endfor %}
+        </div>
+    </aside>
+</section>
+{% endblock %}

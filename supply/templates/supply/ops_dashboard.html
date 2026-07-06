@@ -1,0 +1,134 @@
+{% extends 'supply/ops/base.html' %}
+
+{% block title %}Operations PEMBENY{% endblock %}
+
+{% block ops_title %}Controle reseau PEMBENY{% endblock %}
+{% block ops_subtitle %}Vue interne pour suivre les commandes, hubs, fournisseurs et ruptures potentielles.{% endblock %}
+
+{% block ops_content %}
+<section class="pb-dashboard-grid">
+    <div class="pb-metric">
+        <span>Boutiques</span>
+        <strong>{{ merchant_count|default:0 }}</strong>
+        <em>Comptes approvisionnement</em>
+    </div>
+    <div class="pb-metric">
+        <span>Commandes</span>
+        <strong>{{ order_stats.total_orders|default:0 }}</strong>
+        <em>Total enregistre</em>
+    </div>
+    <div class="pb-metric">
+        <span>Commandes actives</span>
+        <strong>{{ pending_orders_count|default:0 }}</strong>
+        <em>A preparer, livrer ou encaisser</em>
+    </div>
+    <div class="pb-metric">
+        <span>Hubs</span>
+        <strong>{{ hub_stats|length }}</strong>
+        <em>Centres actifs ou configures</em>
+    </div>
+    <div class="pb-metric">
+        <span>Fournisseurs</span>
+        <strong>{{ supplier_count|default:0 }}</strong>
+        <em>Partenaires catalogue</em>
+    </div>
+    <div class="pb-metric">
+        <span>Stocks faibles</span>
+        <strong>{{ low_stock_count|default:0 }}</strong>
+        <em>Lignes sous seuil</em>
+    </div>
+</section>
+
+<section class="pb-ops-shortcuts">
+    <a href="{% url 'supply:ops_merchants' %}"><i class="bi bi-shop"></i><strong>Boutiques</strong><span>Comptes clients, communes, hubs, credit</span></a>
+    <a href="{% url 'supply:ops_orders' %}"><i class="bi bi-receipt"></i><strong>Traiter commandes</strong><span>Preparation, livraison, annulation</span></a>
+    <a href="{% url 'supply:ops_site_content' %}"><i class="bi bi-window-sidebar"></i><strong>Contenu site</strong><span>Hero, stats, avantages, processus</span></a>
+    <a href="{% url 'supply:ops_suppliers' %}"><i class="bi bi-buildings"></i><strong>Fournisseurs</strong><span>Contacts, activation, categories</span></a>
+    <a href="{% url 'supply:ops_hubs' %}"><i class="bi bi-diagram-3"></i><strong>Hubs</strong><span>Communes, frais, couverture</span></a>
+    <a href="{% url 'supply:ops_products' %}"><i class="bi bi-box-seam"></i><strong>Catalogue</strong><span>Prix gros, unites, visibilite</span></a>
+    <a href="{% url 'supply:ops_inventory' %}"><i class="bi bi-boxes"></i><strong>Stock hub</strong><span>Disponible, reserve, seuils</span></a>
+</section>
+
+<section class="pb-two-col">
+    <div class="pb-panel">
+        <div class="pb-panel-head">
+            <div>
+                <span class="pb-eyebrow">Commandes recentes</span>
+                <h2>File operations</h2>
+            </div>
+        </div>
+        <div class="pb-table-wrap">
+            <table class="pb-table">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Boutique</th>
+                        <th>Hub</th>
+                        <th>Statut</th>
+                        <th>Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td><a href="{% url 'supply:ops_order_detail' order.pk %}">{{ order.tracking_reference }}</a></td>
+                        <td>{{ order.merchant_name }}</td>
+                        <td>{{ order.hub.name|default:"-" }}</td>
+                        <td><span class="pb-status">{{ order.get_status_display }}</span></td>
+                        <td>${{ order.total_amount|floatformat:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="pb-empty-cell">Aucune commande.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <aside class="pb-side-stack">
+        <div class="pb-panel">
+            <div class="pb-panel-head">
+                <div>
+                    <span class="pb-eyebrow">Boutiques recentes</span>
+                    <h2>Reseau clients</h2>
+                </div>
+            </div>
+            <div class="pb-alert-list">
+                {% for merchant in recent_merchants %}
+                <div class="pb-alert-item pb-alert-item-neutral">
+                    <i class="bi bi-shop"></i>
+                    <div>
+                        <strong><a href="{% url 'supply:ops_merchant_detail' merchant.pk %}">{{ merchant.shop.name }}</a></strong>
+                        <span>{{ merchant.commune|default:"Commune non renseignee" }} - {{ merchant.prequalification_label }} - {{ merchant.orders_count }} commande(s)</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="pb-empty">Aucune boutique inscrite.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="pb-panel">
+            <div class="pb-panel-head">
+                <div>
+                    <span class="pb-eyebrow">Stocks faibles</span>
+                    <h2>Priorites hub</h2>
+                </div>
+            </div>
+            <div class="pb-alert-list">
+                {% for item in low_stock_items %}
+                <div class="pb-alert-item">
+                    <i class="bi bi-box-seam"></i>
+                    <div>
+                        <strong>{{ item.product.name }}</strong>
+                        <span>{{ item.hub.name }} - {{ item.sellable_quantity }} disponible(s)</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="pb-empty">Aucun stock hub configure.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </aside>
+</section>
+{% endblock %}

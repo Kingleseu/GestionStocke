@@ -78,6 +78,12 @@ class Shop(models.Model):
     """Boutique/Magasin appartenant a un manager."""
 
     name = models.CharField(max_length=100)
+    logo = models.ImageField(
+        upload_to='shop_logos/',
+        blank=True,
+        null=True,
+        verbose_name='Logo de la boutique',
+    )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_shops')
     created_at = models.DateTimeField(auto_now_add=True)
 
